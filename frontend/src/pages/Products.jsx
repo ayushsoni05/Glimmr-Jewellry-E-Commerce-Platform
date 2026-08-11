@@ -18,7 +18,11 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({});
-  const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist')) || []);
+  const [wishlist, setWishlist] = useState([]);
+  useEffect(() => {
+    localStorage.setItem('wishlist', '[]');
+    setWishlist([]);
+  }, []);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [isMetalMenuOpen, setIsMetalMenuOpen] = useState(false);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
@@ -99,14 +103,8 @@ const Products = () => {
   };
 
   const toggleWishlist = (productId) => {
-    let updatedWishlist;
-    if (wishlist.includes(productId)) {
-      updatedWishlist = wishlist.filter(id => id !== productId);
-    } else {
-      updatedWishlist = [...wishlist, productId];
-    }
-    setWishlist(updatedWishlist);
-    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+    setWishlist([]);
+    localStorage.setItem('wishlist', '[]');
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 

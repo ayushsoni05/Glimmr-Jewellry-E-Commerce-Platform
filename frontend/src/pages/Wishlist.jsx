@@ -25,33 +25,9 @@ const Wishlist = () => {
   const fetchWishlistProducts = async () => {
     setLoading(true);
     try {
-      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setWishlistItems(wishlist);
-
-      if (wishlist.length > 0) {
-        const fetchedList = [];
-        
-        for (const id of wishlist) {
-          // Synchronous Framer fallback lookup
-          const framerMatch = FRAMER_PRODUCTS.find(
-            p => p.id === id || p.id === id.toLowerCase() || p.name.toLowerCase().replace(/ /g, '-') === id.toLowerCase()
-          );
-
-          if (framerMatch) {
-            fetchedList.push(framerMatch);
-          } else {
-            try {
-              const res = await api.get(`/products/${id}`);
-              if (res.data) fetchedList.push(res.data);
-            } catch (err) {
-              console.warn(`Could not fetch product ${id}:`, err);
-            }
-          }
-        }
-        setProducts(fetchedList);
-      } else {
-        setProducts([]);
-      }
+      localStorage.setItem('wishlist', '[]');
+      setWishlistItems([]);
+      setProducts([]);
     } catch (err) {
       console.error('Error fetching wishlist products:', err);
       setProducts([]);

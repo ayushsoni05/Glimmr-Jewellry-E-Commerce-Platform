@@ -48,8 +48,8 @@ const Header = () => {
 
   useEffect(() => {
     const updateWishlistCount = () => {
-      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setWishlistCount(wishlist.length);
+      localStorage.setItem('wishlist', '[]');
+      setWishlistCount(0);
     };
     
     updateWishlistCount();
