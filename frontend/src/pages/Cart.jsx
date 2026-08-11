@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { getProductImage } from '../utils/productImages';
@@ -28,6 +29,7 @@ const Cart = () => {
   const [couponError, setCouponError] = useState('');
   const { user, loading: authLoading } = useAuth();
   const { updateCartCount } = useCart();
+  const { getLiveProductPrice } = useMetalRates();
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToast();
 
@@ -124,9 +126,16 @@ const Cart = () => {
     }
   };
 
+  const getItemPrice = (p) => {
+    if (!p) return 0;
+    const isFramerProduct = typeof p.id === 'string' && !p._id;
+    if (isFramerProduct) return Number(p.price) || 0;
+    return getLiveProductPrice(p).totalLivePrice;
+  };
+
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (item.product?.price || 0) * item.quantity;
+      return total + getItemPrice(item.product) * item.quantity;
     }, 0);
   };
 
@@ -355,7 +364,7 @@ const Cart = () => {
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item, index) => {
                   const p = item.product || {};
-                  const itemPrice = p.price || 0;
+                  const itemPrice = getItemPrice(p);
                   const itemTotal = itemPrice * item.quantity;
                   const itemId = p._id || p.id || item._id;
 

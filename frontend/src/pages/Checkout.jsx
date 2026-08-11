@@ -27,6 +27,7 @@ const Checkout = () => {
   const [step, setStep] = useState(1); // 1: Review, 2: Address, 3: Payment
   const { user, loading: authLoading } = useAuth();
   const { updateCartCount } = useCart();
+  const { getLiveProductPrice } = useMetalRates();
   const navigate = useNavigate();
   const { error: toastError, success: toastSuccess } = useToast();
   
@@ -257,11 +258,18 @@ const Checkout = () => {
     }
   };
 
-  const calculateSubtotal = () => {
-    return cart.items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const getItemPrice = (p) => {
+    if (!p) return 0;
+    const isFramerProduct = typeof p.id === 'string' && !p._id;
+    if (isFramerProduct) return Number(p.price) || 0;
+    return getLiveProductPrice(p).totalLivePrice;
   };
-  const calculateTax = () => Math.round(calculateSubtotal() * 0.03);
-  const calculateTotal = () => calculateSubtotal() + calculateTax();
+
+  const calculateSubtotal = () => {
+    return cart.items.reduce((sum, item) => sum + getItemPrice(item.product) * item.quantity, 0);
+  };
+  const calculateTax = () => 0; // Tax (3% GST) is included in totalLivePrice breakdown
+  const calculateTotal = () => calculateSubtotal();
 
   if (authLoading) {
     return (
@@ -399,7 +407,8 @@ const Checkout = () => {
                       <>
                         {cart.items.map((item, idx) => {
                           const p = item.product || {};
-                          const itemTotal = (p.price || 0) * item.quantity;
+                          const itemPrice = getItemPrice(p);
+                          const itemTotal = itemPrice * item.quantity;
                           return (
                             <div key={item._id || idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-4 bg-[#FAF9F7] border border-gray-200 hover:border-[#111111] transition-all">
                               <img 
