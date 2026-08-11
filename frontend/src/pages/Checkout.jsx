@@ -5,6 +5,7 @@ import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode } from '../utils/addressUtils';
 import { INDIAN_CITIES } from '../utils/indianCities';
 import { getProductImage } from '../utils/productImages';
