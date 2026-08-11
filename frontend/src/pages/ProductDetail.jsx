@@ -48,11 +48,7 @@ const ProductDetail = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const { getLiveProductPrice } = useMetalRates();
   const [product, setProduct] = useState(null);
-  const [wishlist, setWishlist] = useState([]);
-  useEffect(() => {
-    localStorage.setItem('wishlist', '[]');
-    setWishlist([]);
-  }, []);
+  const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist') || '[]'));
   const [perGramRates, setPerGramRates] = useState({ gold: 6500, silver: 80 });
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
@@ -133,8 +129,16 @@ const ProductDetail = () => {
   };
 
   const toggleWishlist = () => {
-    setWishlist([]);
-    localStorage.setItem('wishlist', '[]');
+    let updatedWishlist;
+    if (wishlist.includes(id)) {
+      updatedWishlist = wishlist.filter(itemId => itemId !== id);
+      toastSuccess('Removed from wishlist');
+    } else {
+      updatedWishlist = [...wishlist, id];
+      toastSuccess('Added to wishlist');
+    }
+    setWishlist(updatedWishlist);
+    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 
