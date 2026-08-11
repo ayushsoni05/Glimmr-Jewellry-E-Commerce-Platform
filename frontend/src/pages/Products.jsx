@@ -23,8 +23,17 @@ const Products = () => {
   const [isMetalMenuOpen, setIsMetalMenuOpen] = useState(false);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routeParams = useParams();
+  const { user } = useAuth();
+  const { updateCartCount } = useCart();
+  const [perGramGold, setPerGramGold] = useState(null);
+  const [perGramSilver, setPerGramSilver] = useState(null);
+  const { success: toastSuccess, error: toastError } = useToast();
+
   const handleFilter = (key, value) => {
-    setFilters({ ...filters, [key]: value });
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const toggleWishlist = (productId) => {
@@ -39,16 +48,7 @@ const Products = () => {
     setWishlist(updatedWishlist);
     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
     window.dispatchEvent(new Event('wishlist-updated'));
-  };  
-  
-  const location = useLocation();
-  const navigate = useNavigate();
-  const routeParams = useParams();
-  const { user } = useAuth();
-  const { updateCartCount } = useCart();
-  const [perGramGold, setPerGramGold] = useState(null);
-  const [perGramSilver, setPerGramSilver] = useState(null);
-  const { success: toastSuccess, error: toastError } = useToast();
+  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -111,16 +111,6 @@ const Products = () => {
     const interval = setInterval(fetchLatest, 60000);
     return () => { cancel = true; clearInterval(interval); };
   }, []);
-
-  const handleFilter = (key, value) => {
-    setFilters({ ...filters, [key]: value });
-  };
-
-  const toggleWishlist = (productId) => {
-    setWishlist([]);
-    localStorage.setItem('wishlist', '[]');
-    window.dispatchEvent(new Event('wishlist-updated'));
-  };
 
   const addToCart = async (productId) => {
     if (!user) {
