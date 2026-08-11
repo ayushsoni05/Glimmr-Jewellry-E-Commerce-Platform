@@ -1,0 +1,18 @@
+SMTP credentials not configured. Falling back to console email logger. Configure SMTP_* env vars for production.
+Starting Glimmr backend...
+(node:14944) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Port 5001 in use, attempting port 5002...
+Server running on port 5002
+Ô£à MongoDB Connected
+Ensured partial unique index `email_partial_unique` exists on email
+Ensured partial unique index `username_partial_unique` exists on username
+Automatic seeding is disabled. Set ENABLE_AUTO_SEED=true to enable.
+Admin user ensured successfully
+Admin Email: admin@glimmr.com
+Admin Password: admin123
+Admin Key: GLIMMR-ADMIN-DEFAULT
+2025-12-19T16:19:21.341Z - POST /api/auth/signup
+[AUTH] signup attempt
+2025-12-19T16:19:34.783Z - GET /api/cart/guest-k1og22ex2
+2025-12-19T16:19:34.895Z - GET /api/cart/guest-k1og22ex2

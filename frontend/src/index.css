@@ -1,0 +1,499 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Fragment+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   GLIMMR — Axels-Inspired Design System
+   ======================================== */
+
+/* --- Base Layer --- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background-color: #FFFFFF;
+    color: #222222;
+    line-height: 1.6;
+    font-size: 16px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #222222;
+  }
+
+  h1 { font-size: 3.5rem; }
+  h2 { font-size: 2.5rem; }
+  h3 { font-size: 1.75rem; }
+  h4 { font-size: 1.25rem; }
+
+  p {
+    color: #555555;
+    line-height: 1.7;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  ::selection {
+    background-color: rgba(181, 154, 108, 0.2);
+    color: #222222;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FAF9F7;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #B59A6C;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #A38B5F;
+  }
+
+  /* Utility to completely hide scrollbars */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  /* Custom scrollbar for tab navigation with no visible bar line */
+  .custom-luxury-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  .custom-luxury-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+}
+
+/* --- Component Layer --- */
+@layer components {
+
+  /* === Buttons === */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-primary text-white
+           px-8 py-3.5
+           rounded-full
+           font-body font-semibold text-sm
+           uppercase tracking-widest
+           transition-all duration-300 ease-elegant
+           hover:bg-hover hover:shadow-gold
+           active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-transparent text-textPrimary
+           border border-textPrimary
+           px-8 py-3.5
+           rounded-full
+           font-body font-semibold text-sm
+           uppercase tracking-widest
+           transition-all duration-300 ease-elegant
+           hover:bg-textPrimary hover:text-white
+           active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-textPrimary/30 focus:ring-offset-2;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2
+           bg-primary text-white
+           px-6 py-3
+           rounded-full
+           font-body font-medium text-sm
+           tracking-wide
+           transition-all duration-300 ease-elegant
+           hover:bg-hover hover:shadow-gold
+           active:scale-[0.98];
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center gap-2
+           bg-transparent text-primary
+           border border-primary
+           px-6 py-3
+           rounded-full
+           font-body font-medium text-sm
+           tracking-wide
+           transition-all duration-300 ease-elegant
+           hover:bg-primary hover:text-white
+           active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           bg-transparent text-textPrimary
+           px-4 py-2
+           rounded-full
+           font-body font-medium text-sm
+           transition-all duration-200
+           hover:bg-cream;
+  }
+
+  /* === Cards === */
+  .card {
+    @apply bg-white rounded-2xl shadow-soft
+           transition-all duration-300 ease-elegant
+           overflow-hidden;
+  }
+
+  .card-hover {
+    @apply bg-white rounded-2xl shadow-card
+           transition-all duration-300 ease-elegant
+           overflow-hidden
+           hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  .card-product {
+    @apply bg-white rounded-2xl shadow-card
+           transition-all duration-300 ease-elegant
+           overflow-hidden cursor-pointer
+           hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  .card-product .card-image {
+    @apply overflow-hidden;
+  }
+
+  .card-product .card-image img {
+    @apply transition-transform duration-500 ease-elegant;
+  }
+
+  .card-product:hover .card-image img {
+    @apply scale-105;
+  }
+
+  /* === Section Utilities === */
+  .section-padding {
+    @apply py-20 lg:py-28;
+  }
+
+  .section-padding-sm {
+    @apply py-12 lg:py-16;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* === Typography Utilities === */
+  .text-section-label {
+    @apply font-body text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4;
+  }
+
+  .text-section-heading {
+    @apply font-heading text-section-sm md:text-section text-textPrimary;
+  }
+
+  .text-hero-heading {
+    @apply font-heading text-hero-sm md:text-hero text-textPrimary;
+  }
+
+  .text-body-lg {
+    @apply font-body text-lg text-muted leading-relaxed;
+  }
+
+  /* === Form Inputs === */
+  .input-elegant {
+    @apply w-full px-5 py-3.5
+           bg-white border border-gray-200
+           rounded-xl
+           font-body text-sm text-textPrimary
+           placeholder-gray-400
+           transition-all duration-200
+           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10;
+  }
+
+  .input-pill {
+    @apply w-full px-6 py-3.5
+           bg-white border border-gray-200
+           rounded-full
+           font-body text-sm text-textPrimary
+           placeholder-gray-400
+           transition-all duration-200
+           focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10;
+  }
+
+  /* === Navigation === */
+  .nav-link {
+    @apply relative font-body text-sm font-medium text-textPrimary
+           tracking-wide uppercase
+           transition-colors duration-200
+           hover:text-primary;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute left-0 -bottom-1 w-0 h-0.5 bg-primary
+           transition-all duration-300 ease-elegant;
+  }
+
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  .nav-link-active {
+    @apply text-primary;
+  }
+
+  .nav-link-active::after {
+    @apply w-full;
+  }
+
+  /* === Badges === */
+  .badge {
+    @apply inline-flex items-center gap-1.5
+           px-3 py-1
+           rounded-full
+           font-body text-xs font-semibold
+           uppercase tracking-wider;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold-50 text-primary;
+  }
+
+  .badge-live {
+    @apply badge bg-green-50 text-green-600;
+  }
+
+  /* === Dividers === */
+  .divider {
+    @apply w-full h-px bg-gray-100;
+  }
+
+  .divider-gold {
+    @apply w-16 h-0.5 bg-primary mx-auto;
+  }
+
+  /* === Glassmorphism (kept for compatibility) === */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md
+           border border-white/30
+           rounded-2xl shadow-soft;
+  }
+
+  /* === Parallax background === */
+  .parallax-bg {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  /* === Page Hero Banner === */
+  .page-hero {
+    @apply relative py-20 lg:py-28 bg-cream overflow-hidden;
+  }
+
+  .page-hero-content {
+    @apply container-wide text-center;
+  }
+
+  .page-hero-title {
+    @apply font-heading text-display-sm md:text-display text-textPrimary mb-4;
+  }
+
+  .page-hero-subtitle {
+    @apply font-body text-lg text-muted max-w-2xl mx-auto;
+  }
+
+  /* === Accordion === */
+  .accordion-item {
+    @apply border-b border-gray-100 last:border-b-0;
+  }
+
+  .accordion-trigger {
+    @apply w-full flex items-center justify-between
+           py-5 px-1
+           font-body text-base font-medium text-textPrimary
+           text-left
+           transition-colors duration-200
+           hover:text-primary;
+  }
+
+  .accordion-content {
+    @apply overflow-hidden transition-all duration-300;
+  }
+}
+
+/* --- Utility Layer --- */
+@layer utilities {
+  .text-gold {
+    color: #B59A6C;
+  }
+
+  .bg-cream {
+    background-color: #FAF9F7;
+  }
+
+  .bg-dark {
+    background-color: #222222;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .font-heading {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'Fragment Mono', monospace;
+  }
+
+  /* Gold gradient text */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #B59A6C, #D4B373, #B59A6C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Hover image zoom container */
+  .image-zoom {
+    @apply overflow-hidden rounded-2xl;
+  }
+
+  .image-zoom img {
+    @apply transition-transform duration-500 ease-elegant;
+  }
+
+  .image-zoom:hover img {
+    @apply scale-105;
+  }
+}
+
+/* --- Performance Optimizations --- */
+.motion-safe {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+[class*="motion-"] {
+  will-change: transform, opacity;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-gold,
+.card-hover,
+.card-product {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- Responsive Typography --- */
+@media (max-width: 640px) {
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.375rem; }
+}
+
+/* --- Swiper Overrides --- */
+.swiper-pagination-bullet {
+  background: #B59A6C !important;
+  opacity: 0.4;
+}
+
+.swiper-pagination-bullet-active {
+  opacity: 1 !important;
+  width: 24px !important;
+  border-radius: 999px !important;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  color: #B59A6C !important;
+}
+
+/* --- Animation Delays (for stagger effects) --- */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ========================================
+   PRINT STYLES — Dedicated Tax Invoice Output
+   ======================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+
