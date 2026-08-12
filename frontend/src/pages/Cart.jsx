@@ -7,6 +7,7 @@ import { useMetalRates } from '../contexts/MetalRatesContext';
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { getProductImage } from '../utils/productImages';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { 
   ShoppingBagIcon, 
   TrashIcon, 
@@ -160,15 +161,7 @@ const Cart = () => {
   };
 
   if (loading || authLoading) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-2 border-[#111111] border-t-[#B59A6C] rounded-full"
-        />
-      </div>
-    );
+    return <GlimmrLoader subtitle="SYNCHRONIZING ATELIER CART..." fullScreen={true} />;
   }
 
   /* Webflow & Framer Motion Unauthenticated Visitor Auth Requirement Card */

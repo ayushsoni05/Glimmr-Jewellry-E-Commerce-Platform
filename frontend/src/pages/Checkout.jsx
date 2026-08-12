@@ -9,6 +9,7 @@ import { useMetalRates } from '../contexts/MetalRatesContext';
 import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode } from '../utils/addressUtils';
 import { INDIAN_CITIES } from '../utils/indianCities';
 import { getProductImage } from '../utils/productImages';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { 
   ShieldCheckIcon, 
   TruckIcon, 
@@ -272,16 +273,8 @@ const Checkout = () => {
   const calculateTax = () => 0; // Tax (3% GST) is included in totalLivePrice breakdown
   const calculateTotal = () => calculateSubtotal();
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center">
-        <motion.div 
-          animate={{ rotate: 360 }} 
-          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} 
-          className="w-12 h-12 border-2 border-[#111111] border-t-[#B59A6C] rounded-full" 
-        />
-      </div>
-    );
+  if (authLoading || loading) {
+    return <GlimmrLoader subtitle="INITIALIZING SECURE CHECKOUT..." fullScreen={true} />;
   }
 
   if (!user) return null;
