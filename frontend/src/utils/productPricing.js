@@ -135,13 +135,10 @@ export const calculateProductLivePrice = (product, liveRates) => {
     };
   }
 
-  // 6. Subtotal & 3% GST Tax
+  // 6. Subtotal & 3% GST Tax (100% Mathematically Justified Addition)
   const subtotal = rawMetalCost + makingCharges + gemstoneCost;
   const gstTax = Math.round(subtotal * 0.03); // 3% GST statutory rate
-  const calculatedTotal = subtotal + gstTax;
-
-  // Use maximum of calculated live price or hardcoded static price
-  const totalLivePrice = Math.max(calculatedTotal, Number(product.price) || 0);
+  const totalLivePrice = subtotal + gstTax;
 
   return {
     weight,
