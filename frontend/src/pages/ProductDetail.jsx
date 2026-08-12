@@ -278,37 +278,37 @@ const ProductDetail = () => {
               ₹{livePricing.totalLivePrice?.toLocaleString('en-IN')}
             </p>
 
-            {/* Real-Time Live Metal Rate Price Breakdown Card */}
+            {/* Real-Time Live Metal Rate Price Breakdown (Borderless & Seamless Inline Display) */}
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 p-6 bg-gradient-to-br from-[#FAF9F7] via-white to-[#FDF2F0] border border-[#B59A6C]/40 rounded-2xl shadow-sm space-y-4 relative overflow-hidden"
+              className="mb-8 space-y-3.5 pt-2"
             >
-              <div className="flex items-center justify-between border-b border-[#E5E2D9] pb-3">
+              <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-heading text-xs font-bold text-[#111111] uppercase tracking-wider">
+                  <span className="font-heading text-xs font-bold text-[#111111] uppercase tracking-[0.15em]">
                     REAL-TIME LIVE METAL & DIAMOND VALUATION
                   </span>
                 </div>
-                <span className="font-mono text-[9px] font-bold text-[#B59A6C] bg-white px-2.5 py-1 border border-[#B59A6C]/30 rounded-full shadow-2xs">
+                <span className="font-mono text-xs font-semibold text-[#B59A6C]">
                   IBJA LIVE RATE: ₹{livePricing.baseRatePerGram?.toLocaleString('en-IN')}/g
                 </span>
               </div>
 
-              <div className="space-y-2.5 font-body text-xs text-[#555555]">
-                <div className="flex justify-between items-center">
-                  <span>Net Metal Weight ({livePricing.weight}g • {livePricing.karat}K Gold • {livePricing.purityPercentageStr} Purity)</span>
+              <div className="space-y-2.5 font-body text-xs text-[#444444]">
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="text-gray-600">Net Metal Weight ({livePricing.weight}g • {livePricing.karat}K Gold • {livePricing.purityPercentageStr} Purity)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.rawMetalCost?.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>Artisan Making Charges (₹{livePricing.makingChargeRate}/g)</span>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="text-gray-600">Artisan Making Charges (₹{livePricing.makingChargeRate}/g)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.makingCharges?.toLocaleString('en-IN')}</span>
                 </div>
                 {livePricing.gemstoneCost > 0 && (
-                  <div className="flex justify-between items-center bg-[#FAF9F7] p-2.5 border border-[#B59A6C]/30 rounded-xl my-1">
+                  <div className="flex justify-between items-center py-1.5 border-y border-gray-100 my-1">
                     <div>
-                      <span className="font-semibold text-[#111111] block">Certified Diamond Valuation</span>
+                      <span className="font-bold text-[#111111] block">Certified Diamond Valuation</span>
                       <span className="text-[10px] text-gray-500 font-mono">
                         {livePricing.diamondDetails?.carat || 0.5} Carat • Cut: {String(livePricing.diamondDetails?.cut || 'excellent').toUpperCase()} • Color: {livePricing.diamondDetails?.color || 'G'} • Clarity: {livePricing.diamondDetails?.clarity || 'VVS1'}
                       </span>
@@ -316,24 +316,24 @@ const ProductDetail = () => {
                     <span className="font-mono font-bold text-[#B59A6C]">₹{livePricing.gemstoneCost?.toLocaleString('en-IN')}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-1 border-t border-gray-200/60">
-                  <span>Subtotal (Metal + Diamond + Making)</span>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200/80">
+                  <span className="font-semibold text-[#111111]">Subtotal (Metal + Diamond + Making)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.subtotal?.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center text-gray-500">
+                <div className="flex justify-between items-center text-gray-500 py-0.5">
                   <span>GST Tax (3%)</span>
                   <span className="font-mono">₹{livePricing.gstTax?.toLocaleString('en-IN')}</span>
                 </div>
               </div>             
               
-              <div className="pt-3 border-t border-[#B59A6C]/30 flex items-center justify-between bg-white/70 p-3 rounded-xl">
+              <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">FINAL PATRON LIVE PRICE</span>
-                  <span className="font-heading text-2xl font-bold text-[#111111]">
+                  <span className="font-heading text-3xl font-bold text-[#111111]">
                     ₹{livePricing.totalLivePrice?.toLocaleString('en-IN')}
                   </span>
                 </div>
-                <span className="text-[9px] font-mono font-bold text-[#B59A6C] uppercase tracking-widest border border-[#B59A6C]/40 px-3 py-1 rounded-full bg-[#FAF9F7]">
+                <span className="text-[10px] font-mono font-bold text-[#B59A6C] uppercase tracking-widest">
                   100% BIS HALLMARKED
                 </span>
               </div>
@@ -477,37 +477,6 @@ const ProductDetail = () => {
                     <div className="flex justify-between">
                       <span className="text-[#808080]">Clarity</span>
                       <span className="text-[#222222]">{diamondInfo.clarity || '—'}</span>
-                    </div>
-                  </div>
-                </Accordion>
-              )}
-
-              {product.priceBreakdown && (
-                <Accordion title="Price Breakdown">
-                  <div className="space-y-3">
-                    {product.priceBreakdown.metalCost !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-[#808080]">Metal Cost</span>
-                        <span className="text-[#222222]">{formatMoney(product.priceBreakdown.metalCost)}</span>
-                      </div>
-                    )}
-                    {product.priceBreakdown.diamondCost !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-[#808080]">Diamond Cost</span>
-                        <span className="text-[#222222]">{formatMoney(product.priceBreakdown.diamondCost)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-[#808080]">Making Charges</span>
-                      <span className="text-[#222222]">{formatMoney(product.priceBreakdown.makingCharges)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#808080]">GST (3%)</span>
-                      <span className="text-[#222222]">{formatMoney(product.priceBreakdown.gst)}</span>
-                    </div>
-                    <div className="flex justify-between pt-3 border-t border-gray-100 mt-2">
-                      <span className="font-semibold text-[#222222] uppercase tracking-wider text-xs">Total</span>
-                      <span className="font-semibold text-[#B59A6C]">{formatMoney(product.priceBreakdown.finalPrice)}</span>
                     </div>
                   </div>
                 </Accordion>
