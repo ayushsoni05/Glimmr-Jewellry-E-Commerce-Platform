@@ -63,9 +63,9 @@ function createMailTransport() {
       port,
       secure,
       auth: { user, pass },
-      connectionTimeout: 20000,
-      greetingTimeout: 20000,
-      socketTimeout: 30000,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 8000,
       pool: false,
       maxConnections: 1,
       maxMessages: Infinity,
@@ -355,7 +355,41 @@ async function sendOtpEmail(email, otp, context) {
     </html>
   `;
 
-  // Try Brevo API first (bypasses SMTP IP restrictions)
+  // 1. Try Resend REST API first (bypasses hosting provider SMTP TCP port blocks)
+  const resendKey = process.env.RESEND_API_KEY || (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith('re_') ? process.env.SMTP_PASS : null);
+  if (resendKey) {
+    try {
+      console.log('[OTP_EMAIL] Sending OTP via Resend REST API (HTTPS)...');
+      const fromAddress = process.env.RESEND_FROM_EMAIL || 'Glimmr Jewelry <onboarding@resend.dev>';
+      const response = await axios.post(
+        'https://api.resend.com/emails',
+        {
+          from: fromAddress,
+          to: [email],
+          subject,
+          html,
+          text: `Your OTP for ${context} is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes. If you did not request this, please ignore this message.`,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 8000,
+        }
+      );
+
+      console.log('[OTP_EMAIL] ✅ Email sent via Resend REST API successfully!');
+      console.log('[OTP_EMAIL] Resend ID:', response.data?.id);
+      return response.data;
+    } catch (resendError) {
+      const errDetail = resendError.response?.data?.message || resendError.response?.data?.name || resendError.message;
+      console.error('[OTP_EMAIL] ⚠️ Resend REST API failed:', errDetail);
+      console.log('[OTP_EMAIL] 🔄 Trying fallback transports...');
+    }
+  }
+
+  // 2. Try Brevo REST API
   if (process.env.BREVO_API_KEY) {
     try {
       console.log('[OTP_EMAIL] Sending OTP via Brevo REST API...');
@@ -374,7 +408,7 @@ async function sendOtpEmail(email, otp, context) {
             'api-key': process.env.BREVO_API_KEY,
             'Content-Type': 'application/json',
           },
-          timeout: 10000,
+          timeout: 8000,
         }
       );
 
@@ -388,13 +422,13 @@ async function sendOtpEmail(email, otp, context) {
     }
   }
 
-  // Try SMTP fallback
+  // 3. Try SMTP fallback
   if (mailTransport && mailTransport.sendMail) {
     const isRealTransport = mailTransport.options && mailTransport.options.host;
     
     if (isRealTransport) {
       try {
-        console.log('[OTP_EMAIL] Sending OTP via SMTP (Brevo SMTP)...');
+        console.log('[OTP_EMAIL] Sending OTP via SMTP...');
         console.log('[OTP_EMAIL] SMTP Host:', mailTransport.options.host);
         console.log('[OTP_EMAIL] SMTP Port:', mailTransport.options.port);
         

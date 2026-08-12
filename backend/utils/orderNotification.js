@@ -24,8 +24,8 @@ function createMailTransport() {
       pool: false,
       auth: { user, pass },
       tls: { rejectUnauthorized: false },
-      connectionTimeout: 20000,
-      socketTimeout: 30000,
+      connectionTimeout: 5000,
+      socketTimeout: 8000,
     });
   }
 
@@ -35,17 +35,70 @@ function createMailTransport() {
 
 const mailTransport = createMailTransport();
 
-// Helper function to send email: try SMTP, fallback to Brevo API
+// Helper function to send email: try Resend REST API, Brevo API, or SMTP
 async function sendEmail({ to, subject, html }) {
-  const fromEmail = process.env.BREVO_FROM_EMAIL || 'noreply@glimmr.com';
-  const fromName = 'Glimmr';
+  const fromEmail = process.env.BREVO_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const fromName = 'Glimmr Jewelry';
 
   console.log('[ORDER_EMAIL] Attempting to send...');
   console.log('[ORDER_EMAIL] To:', to);
   console.log('[ORDER_EMAIL] From:', fromEmail);
   console.log('[ORDER_EMAIL] Subject:', subject);
 
-  // Try SMTP first if configured
+  // 1. Try Resend REST API if key is present
+  const resendKey = process.env.RESEND_API_KEY || (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith('re_') ? process.env.SMTP_PASS : null);
+  if (resendKey) {
+    try {
+      console.log('[ORDER_EMAIL] Sending via Resend REST API (HTTPS)...');
+      const response = await axios.post(
+        'https://api.resend.com/emails',
+        {
+          from: process.env.RESEND_FROM_EMAIL || 'Glimmr Jewelry <onboarding@resend.dev>',
+          to: [to],
+          subject,
+          html,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 8000,
+        }
+      );
+      console.log('[ORDER_EMAIL] ✅ Sent via Resend REST API successfully:', response.data?.id);
+      return response.data;
+    } catch (resendError) {
+      const errDetail = resendError.response?.data?.message || resendError.message;
+      console.warn('[ORDER_EMAIL] Resend REST API failed:', errDetail);
+    }
+  }
+
+  // 2. Try Brevo API if available
+  if (process.env.BREVO_API_KEY) {
+    try {
+      console.log('[ORDER_EMAIL] Sending via Brevo REST API...');
+      const response = await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { email: fromEmail, name: fromName },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        },
+        {
+          headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
+          timeout: 8000,
+        }
+      );
+      console.log('[ORDER_EMAIL] ✅ Sent via Brevo API successfully:', response.data?.messageId || 'success');
+      return response.data;
+    } catch (brevoError) {
+      console.warn('[ORDER_EMAIL] Brevo API failed:', brevoError.message);
+    }
+  }
+
+  // 3. Try SMTP fallback
   try {
     const result = await mailTransport.sendMail({
       from: `${fromName} <${fromEmail}>`,
@@ -56,33 +109,8 @@ async function sendEmail({ to, subject, html }) {
     console.log('[ORDER_EMAIL] ✅ Sent via SMTP successfully:', result?.messageId || 'success');
     return result;
   } catch (smtpError) {
-    console.warn('[ORDER_EMAIL] SMTP failed, attempting Brevo API:', smtpError.message);
-  }
-
-  // Fallback to Brevo API if available
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error('Brevo API key not configured');
-  }
-
-  try {
-    const response = await axios.post(
-      'https://api.brevo.com/v3/smtp/email',
-      {
-        sender: { email: fromEmail, name: fromName },
-        to: [{ email: to }],
-        subject,
-        htmlContent: html,
-      },
-      {
-        headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' },
-        timeout: 20000,
-      }
-    );
-    console.log('[ORDER_EMAIL] ✅ Sent via Brevo API successfully!', response.data?.messageId || response.data);
-    return response.data;
-  } catch (apiError) {
-    console.error('[ORDER_EMAIL] ❌ Brevo API failed:', apiError.response?.data || apiError.message);
-    throw apiError;
+    console.warn('[ORDER_EMAIL] SMTP failed:', smtpError.message);
+    throw smtpError;
   }
 }
 
