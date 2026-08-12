@@ -10,6 +10,7 @@ import { useToast } from '../contexts/ToastContext';
 import { HeartIcon } from '../components/Icons';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage } from '../utils/productImages';
+import { FRAMER_IMAGES } from '../utils/framerAssets';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Products = () => {
