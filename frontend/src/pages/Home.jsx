@@ -18,19 +18,34 @@ const Home = () => {
   const [openFaq, setOpenFaq] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchProducts = async () => {
+      setLoading(true);
       try {
         const res = await api.get('/products/featured');
-        setFeaturedProducts(res.data.products || []);
+        const list = Array.isArray(res.data) ? res.data : (res.data?.products || []);
+        if (!cancelled && list.length > 0) {
+          setFeaturedProducts(list);
+        } else if (!cancelled) {
+          // Fallback to top general products
+          const res2 = await api.get('/products');
+          const list2 = Array.isArray(res2.data) ? res2.data : (res2.data?.products || []);
+          if (!cancelled) setFeaturedProducts(list2);
+        }
       } catch (err) {
         console.error('Error fetching featured products:', err);
-        setError('Failed to load featured products. Please try again later.');
+        try {
+          const res2 = await api.get('/products');
+          const list2 = Array.isArray(res2.data) ? res2.data : (res2.data?.products || []);
+          if (!cancelled) setFeaturedProducts(list2);
+        } catch {}
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchProducts();
+    return () => { cancelled = true; };
   }, []);
 
   const faqs = [

@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Products = () => {
   const { getLiveProductPrice } = useMetalRates();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({});
   const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist') || '[]'));
@@ -69,6 +69,7 @@ const Products = () => {
   useEffect(() => {
     let cancelled = false;
     async function fetchProducts() {
+      setLoading(true);
       setError(null);
       try {
         const params = { ...filters };
@@ -76,11 +77,13 @@ const Products = () => {
         if (params.maxPrice) params.maxPrice = Number(params.maxPrice);
 
         const res = await api.get('/products', { params });
-        if (!cancelled && Array.isArray(res.data.products) && res.data.products.length > 0) {
-          setProducts(res.data.products);
+        if (!cancelled) {
+          const list = Array.isArray(res.data) ? res.data : (res.data?.products || []);
+          setProducts(list);
         }
       } catch (err) {
         console.error('Error fetching products:', err);
+        if (!cancelled) setError('Failed to connect to Atelier database');
       } finally {
         if (!cancelled) setLoading(false);
       }

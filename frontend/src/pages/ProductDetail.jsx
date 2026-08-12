@@ -44,8 +44,8 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateCartCount } = useCart();
-  const { success: toastSuccess, error: toastError } = useToast();
-  const { getLiveProductPrice } = useMetalRates();  const [loading, setLoading] = useState(true);
+  const { getLiveProductPrice } = useMetalRates();
+  const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist') || '[]'));
