@@ -123,7 +123,7 @@ const ProductDetail = () => {
 
   if (loading || !product) {
     return <GlimmrLoader subtitle="LOADING PIECE SPECIFICATIONS..." />;
-  }l;
+  }
 
   const images = getProductImages(product);
   const prevImage = () => setActiveIndex((i) => (i - 1 + images.length) % images.length);
