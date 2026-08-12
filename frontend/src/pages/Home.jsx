@@ -44,12 +44,7 @@ const Home = () => {
     "Do you offer international shipping?",
   ];
 
-  const newArrivals = [
-    { name: "Silver Chain Watch", price: 14999, image: FRAMER_PRODUCTS[6]?.image },
-    { name: "Gold Pearl Ring", price: 38999, image: FRAMER_PRODUCTS[7]?.image },
-    { name: "Gold Chain Necklace", price: 11499, image: FRAMER_PRODUCTS[8]?.image },
-    { name: "Bronze Plants Earrings", price: 5999, image: FRAMER_PRODUCTS[2]?.image }
-  ];
+  const newArrivals = featuredProducts.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white font-body text-[#222222]">
@@ -325,19 +320,25 @@ const Home = () => {
         </motion.div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-12">
-          {newArrivals.map((item, index) => (
-            <motion.div key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
-              <Link to={`/products/${item.id || item._id || 'femme-chronos-watch'}`} className="block group">
-                <div className="aspect-square rounded-[20px] bg-[#FAF9F7] p-6 flex items-center justify-center mb-3 overflow-hidden group-hover:shadow-sm transition-all">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-contain max-h-[180px] sm:max-h-[210px] transition-transform duration-500 group-hover:scale-105" />
-                </div>
-                <h3 className="font-body text-sm font-medium text-[#222222] mt-3 text-center">{item.name}</h3>
-                <p className="font-body text-[#B59A6C] text-sm font-semibold mt-1 text-center">
-                  ₹{typeof item.price === 'number' ? item.price.toLocaleString('en-IN') : item.price}
-                </p>
-              </Link>
-            </motion.div>
-          ))}
+          {newArrivals.map((item, index) => {
+            const itemId = item._id || item.id;
+            const livePricing = getLiveProductPrice(item);
+            const priceText = `₹${livePricing.totalLivePrice.toLocaleString('en-IN')}`;
+
+            return (
+              <motion.div key={itemId || index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
+                <Link to={`/products/${itemId}`} className="block group">
+                  <div className="aspect-square rounded-[20px] bg-[#FAF9F7] p-6 flex items-center justify-center mb-3 overflow-hidden group-hover:shadow-sm transition-all">
+                    <img src={getProductImage(item)} alt={item.name} className="w-full h-full object-contain max-h-[180px] sm:max-h-[210px] transition-transform duration-500 group-hover:scale-105" />
+                  </div>
+                  <h3 className="font-body text-sm font-medium text-[#222222] mt-3 text-center">{item.name}</h3>
+                  <p className="font-body text-[#B59A6C] text-sm font-semibold mt-1 text-center">
+                    {priceText}
+                  </p>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
         <div className="text-center">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 350, damping: 22 }} className="inline-block">
