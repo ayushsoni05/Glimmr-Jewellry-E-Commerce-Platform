@@ -45,6 +45,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateCartCount } = useCart();
+  const { success: toastSuccess, error: toastError } = useToast();
   const { getLiveProductPrice } = useMetalRates();
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
