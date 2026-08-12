@@ -180,7 +180,7 @@ const ProductDetail = () => {
   };
 
   const priceFormatted = calculateDisplayPrice();
-  const diamondInfo = product?.diamond?.hasDiamond ? product.diamond : null;
+  const diamondInfo = product?.diamond?.hasDiamond ? product.diamond : livePricing?.diamondDetails;
 
   return (
     <div className="min-h-screen bg-white pt-8 lg:pt-12 relative">
@@ -220,11 +220,11 @@ const ProductDetail = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveIndex(idx)}
-                    className={`w-full aspect-square bg-[#FAF9F7] rounded-none p-2 flex items-center justify-center transition-all ${
-                      idx === activeIndex ? 'border border-[#B59A6C]' : 'border border-[#FAF9F7] hover:border-gray-200'
+                    className={`aspect-square bg-[#FAF9F7] border p-2 flex items-center justify-center transition-all ${
+                      activeIndex === idx ? 'border-[#111111] ring-1 ring-[#111111]' : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain max-h-[60px] sm:max-h-[75px]" />
+                    <img src={img} alt="" className="w-full h-full object-contain max-h-[50px]" />
                   </button>
                 ))}
               </div>
@@ -288,7 +288,7 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="font-heading text-xs font-bold text-[#111111] uppercase tracking-wider">
-                    REAL-TIME LIVE METAL PRICE BREAKDOWN
+                    REAL-TIME LIVE METAL & DIAMOND VALUATION
                   </span>
                 </div>
                 <span className="font-mono text-[9px] font-bold text-[#B59A6C] bg-white px-2.5 py-1 border border-[#B59A6C]/30 rounded-full shadow-2xs">
@@ -298,29 +298,34 @@ const ProductDetail = () => {
 
               <div className="space-y-2.5 font-body text-xs text-[#555555]">
                 <div className="flex justify-between items-center">
-                  <span>Net Metal Weight ({livePricing.weight}g × {livePricing.karat}K Purity)</span>
+                  <span>Net Metal Weight ({livePricing.weight}g • {livePricing.karat}K Gold • {livePricing.purityPercentageStr} Purity)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.rawMetalCost?.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span>Making Charges (₹{livePricing.makingChargeRate}/g)</span>
+                  <span>Artisan Making Charges (₹{livePricing.makingChargeRate}/g)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.makingCharges?.toLocaleString('en-IN')}</span>
                 </div>
                 {livePricing.gemstoneCost > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span>Certified Gemstone / Diamond Valuation</span>
+                  <div className="flex justify-between items-center bg-[#FAF9F7] p-2.5 border border-[#B59A6C]/30 rounded-xl my-1">
+                    <div>
+                      <span className="font-semibold text-[#111111] block">Certified Diamond Valuation</span>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {livePricing.diamondDetails?.carat || 0.5} Carat • Cut: {String(livePricing.diamondDetails?.cut || 'excellent').toUpperCase()} • Color: {livePricing.diamondDetails?.color || 'G'} • Clarity: {livePricing.diamondDetails?.clarity || 'VVS1'}
+                      </span>
+                    </div>
                     <span className="font-mono font-bold text-[#B59A6C]">₹{livePricing.gemstoneCost?.toLocaleString('en-IN')}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-1 border-t border-gray-200/60">
-                  <span>Subtotal (Metal + Making)</span>
+                  <span>Subtotal (Metal + Diamond + Making)</span>
                   <span className="font-mono font-bold text-[#111111]">₹{livePricing.subtotal?.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-500">
                   <span>GST Tax (3%)</span>
                   <span className="font-mono">₹{livePricing.gstTax?.toLocaleString('en-IN')}</span>
                 </div>
-              </div>
-
+              </div>             
+              
               <div className="pt-3 border-t border-[#B59A6C]/30 flex items-center justify-between bg-white/70 p-3 rounded-xl">
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">FINAL PATRON LIVE PRICE</span>

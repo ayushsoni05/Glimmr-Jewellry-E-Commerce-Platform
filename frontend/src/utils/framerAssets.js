@@ -80,6 +80,17 @@ export const FRAMER_PRODUCTS = [
     "name": "Diamond Drop Earrings",
     "price": 149.99,
     "category": "earring",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 4.5,
+    "diamond": {
+      "hasDiamond": true,
+      "carat": 0.75,
+      "cut": "excellent",
+      "color": "F",
+      "clarity": "VVS1",
+      "count": 2
+    },
     "image": "https://framerusercontent.com/images/j6TyciOzs67zpJRquJP98yqgqcY.png",
     "images": [
       "https://framerusercontent.com/images/j6TyciOzs67zpJRquJP98yqgqcY.png",
@@ -92,6 +103,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Golden Pearls Bracelet",
     "price": 159.99,
     "category": "bracelet",
+    "material": "gold",
+    "karat": 22,
+    "metalWeight": 6.2,
     "image": "https://framerusercontent.com/images/v1u0kIm7UakUhOyE1usi9HfLtg.png",
     "images": [
       "https://framerusercontent.com/images/v1u0kIm7UakUhOyE1usi9HfLtg.png",
@@ -104,6 +118,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Birthday Charm Bracelet",
     "price": 69.99,
     "category": "bracelet",
+    "material": "silver",
+    "karat": 925,
+    "metalWeight": 5.0,
     "image": "https://framerusercontent.com/images/nzBNzv6x3Rm6NFZ9ORgGrgetm4.png",
     "images": [
       "https://framerusercontent.com/images/nzBNzv6x3Rm6NFZ9ORgGrgetm4.png",
@@ -116,6 +133,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Simply Square Watch",
     "price": 179.99,
     "category": "watches",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 14.5,
     "image": "https://framerusercontent.com/images/2bFAR6RpTQgs91Rh3HFg94T3rJM.png",
     "images": [
       "https://framerusercontent.com/images/2bFAR6RpTQgs91Rh3HFg94T3rJM.png",
@@ -128,6 +148,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Mermaid Tears Earrings",
     "price": 79.99,
     "category": "earring",
+    "material": "silver",
+    "karat": 925,
+    "metalWeight": 4.0,
     "image": "https://framerusercontent.com/images/O2CACGADYqZxyeYNG45NPKY3MI0.png",
     "images": [
       "https://framerusercontent.com/images/O2CACGADYqZxyeYNG45NPKY3MI0.png",
@@ -140,6 +163,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Pearl Stud Earrings",
     "price": 49.99,
     "category": "earring",
+    "material": "silver",
+    "karat": 925,
+    "metalWeight": 3.2,
     "image": "https://framerusercontent.com/images/8sik1FvspOgcNwzDz5Fo9KQqoVM.png",
     "images": [
       "https://framerusercontent.com/images/8sik1FvspOgcNwzDz5Fo9KQqoVM.png",
@@ -152,6 +178,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Vintage Cuff Ring",
     "price": 79.99,
     "category": "rings",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 4.8,
     "image": "https://framerusercontent.com/images/oBOc46Cq9TAFQ29IrNZSARjiRk.png",
     "images": [
       "https://framerusercontent.com/images/oBOc46Cq9TAFQ29IrNZSARjiRk.png",
@@ -164,6 +193,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Bronze Silver Bracelet",
     "price": 99.99,
     "category": "bracelet",
+    "material": "silver",
+    "karat": 925,
+    "metalWeight": 7.5,
     "image": "https://framerusercontent.com/images/KxU1J3uLzxGMgvCJ7PQ6tZzkCY.png",
     "images": [
       "https://framerusercontent.com/images/KxU1J3uLzxGMgvCJ7PQ6tZzkCY.png",
@@ -176,6 +208,17 @@ export const FRAMER_PRODUCTS = [
     "name": "Diamond Rose Ring",
     "price": 259.99,
     "category": "rings",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 3.8,
+    "diamond": {
+      "hasDiamond": true,
+      "carat": 0.50,
+      "cut": "excellent",
+      "color": "E",
+      "clarity": "VVS1",
+      "count": 1
+    },
     "image": "https://framerusercontent.com/images/U02lzzCCrRdPattA5S0ZTxRrH0.png",
     "images": [
       "https://framerusercontent.com/images/U02lzzCCrRdPattA5S0ZTxRrH0.png",
@@ -188,6 +231,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Gold Steel Watch",
     "price": 159.99,
     "category": "watches",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 16.0,
     "image": "https://framerusercontent.com/images/JHtFqQAwK6IuaFURkoZpsWgZfiA.png",
     "images": [
       "https://framerusercontent.com/images/JHtFqQAwK6IuaFURkoZpsWgZfiA.png",
@@ -200,6 +246,17 @@ export const FRAMER_PRODUCTS = [
     "name": "Stack Diamond Ring",
     "price": 299.99,
     "category": "rings",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 4.2,
+    "diamond": {
+      "hasDiamond": true,
+      "carat": 0.85,
+      "cut": "excellent",
+      "color": "G",
+      "clarity": "VS1",
+      "count": 5
+    },
     "image": "https://framerusercontent.com/images/JvLQvNRx4FQTV0ihkqobwpRXI.png",
     "images": [
       "https://framerusercontent.com/images/JvLQvNRx4FQTV0ihkqobwpRXI.png",
@@ -212,6 +269,9 @@ export const FRAMER_PRODUCTS = [
     "name": "Gold Pearl Ring",
     "price": 499.99,
     "category": "rings",
+    "material": "gold",
+    "karat": 22,
+    "metalWeight": 5.5,
     "image": "https://framerusercontent.com/images/jzSJgPLbHnXk66bLSplMIGn0oLU.png",
     "images": [
       "https://framerusercontent.com/images/jzSJgPLbHnXk66bLSplMIGn0oLU.png",
@@ -224,6 +284,17 @@ export const FRAMER_PRODUCTS = [
     "name": "Leaf Diamond Ring",
     "price": 189.99,
     "category": "rings",
+    "material": "gold",
+    "karat": 14,
+    "metalWeight": 3.4,
+    "diamond": {
+      "hasDiamond": true,
+      "carat": 0.40,
+      "cut": "very-good",
+      "color": "H",
+      "clarity": "VVS2",
+      "count": 3
+    },
     "image": "https://framerusercontent.com/images/eTR3jxjN5EA4uQMl7h7olYnS6as.png",
     "images": [
       "https://framerusercontent.com/images/eTR3jxjN5EA4uQMl7h7olYnS6as.png",
@@ -236,6 +307,17 @@ export const FRAMER_PRODUCTS = [
     "name": "Pearl Diamond Bracelet",
     "price": 199.99,
     "category": "bracelet",
+    "material": "gold",
+    "karat": 18,
+    "metalWeight": 6.8,
+    "diamond": {
+      "hasDiamond": true,
+      "carat": 0.60,
+      "cut": "excellent",
+      "color": "G",
+      "clarity": "VS1",
+      "count": 6
+    },
     "image": "https://framerusercontent.com/images/1Akd38NBcHpBrTJNjC1coZMUP4.png",
     "images": [
       "https://framerusercontent.com/images/1Akd38NBcHpBrTJNjC1coZMUP4.png",
