@@ -2,7 +2,11 @@ import axios from 'axios';
 
 // Determine base URL dynamically (use local backend when on localhost)
 const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:5002/api' : 'https://glimmr-jewellry-e-commerce-platform-5.onrender.com/api');
+let API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:5002/api' : 'https://glimmr-jewellry-e-commerce-platform-5.onrender.com/api');
+// Ensure /api suffix is always present
+if (API_BASE_URL && !API_BASE_URL.endsWith('/api')) {
+  API_BASE_URL = API_BASE_URL.replace(/\/+$/, '') + '/api';
+}
 
 // Debug: surface the resolved base URL
 console.debug('[api] baseURL =', API_BASE_URL);
