@@ -6,8 +6,8 @@ import { useCart } from '../contexts/CartContext';
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { HeartIcon } from '../components/Icons';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage } from '../utils/productImages';
-import { FRAMER_PRODUCTS } from '../utils/framerAssets';
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -31,19 +31,11 @@ const Wishlist = () => {
       if (wishlist.length > 0) {
         const fetchedList = [];
         for (const id of wishlist) {
-          const framerMatch = FRAMER_PRODUCTS.find(
-            p => p.id === id || p.id === id.toLowerCase() || p.name.toLowerCase().replace(/ /g, '-') === id.toLowerCase()
-          );
-
-          if (framerMatch) {
-            fetchedList.push(framerMatch);
-          } else {
-            try {
-              const res = await api.get(`/products/${id}`);
-              if (res.data) fetchedList.push(res.data);
-            } catch (err) {
-              console.warn(`Could not fetch product ${id}:`, err);
-            }
+          try {
+            const res = await api.get(`/products/${id}`);
+            if (res.data) fetchedList.push(res.data);
+          } catch (err) {
+            console.warn(`Could not fetch product ${id}:`, err);
           }
         }
         setProducts(fetchedList);
@@ -107,18 +99,7 @@ const Wishlist = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center pt-16">
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-          className="w-12 h-12 rounded-full border-2 border-[#222222] border-t-transparent flex items-center justify-center"
-        />
-        <p className="font-body text-xs uppercase tracking-[0.2em] text-[#808080] mt-4 font-semibold">
-          Loading Wishlist...
-        </p>
-      </div>
-    );
+    return <GlimmrLoader subtitle="RETRIEVING SAVED WISHLIST..." fullScreen={true} />;
   }
 
   return (

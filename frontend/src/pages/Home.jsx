@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useMetalRates } from '../contexts/MetalRatesContext';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage } from '../utils/productImages';
-import { FRAMER_IMAGES, FRAMER_PRODUCTS, FRAMER_ICONS } from '../utils/framerAssets';
+import { FRAMER_IMAGES, FRAMER_ICONS } from '../utils/framerAssets';
 import MonthlyUpdatesNewsletter from '../components/MonthlyUpdatesNewsletter';
 
 const Home = () => {
@@ -246,30 +247,31 @@ const Home = () => {
           <h2 className="font-heading text-3xl text-center uppercase tracking-wider text-[#222222] mb-12 font-bold">Featured Collections</h2>
         </motion.div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {(featuredProducts.length > 0 ? featuredProducts : FRAMER_PRODUCTS).slice(0, 4).map((product, index) => {
-            const isFramerProduct = typeof product.id === 'string' && !product._id;
-            const productId = product._id || product.id;
-            const livePricing = isFramerProduct ? null : getLiveProductPrice(product);
-            const priceText = isFramerProduct 
-              ? `$${Number(product.price).toFixed(2)}` 
-              : `₹${livePricing.totalLivePrice.toLocaleString('en-IN')}`;
+        {loading ? (
+          <GlimmrLoader subtitle="LOADING FEATURED ATELIER PIECES..." />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {featuredProducts.slice(0, 4).map((product, index) => {
+              const productId = product._id || product.id;
+              const livePricing = getLiveProductPrice(product);
+              const priceText = `₹${livePricing.totalLivePrice.toLocaleString('en-IN')}`;
 
-            return (
-              <motion.div key={productId || index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
-                <Link to={`/products/${productId}`} className="block group">
-                  <div className="aspect-square rounded-[20px] bg-[#FAF9F7] p-6 flex items-center justify-center mb-3 overflow-hidden group-hover:shadow-sm transition-all">
-                    <img src={getProductImage(product)} alt={product.name} className="w-full h-full object-contain max-h-[180px] sm:max-h-[210px] transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                  <h3 className="font-body text-sm font-medium text-[#222222] mt-3 text-center">{product.name}</h3>
-                  <p className="font-body text-[#B59A6C] text-sm font-semibold mt-1 text-center">
-                    {priceText}
-                  </p>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
+              return (
+                <motion.div key={productId || index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}>
+                  <Link to={`/products/${productId}`} className="block group">
+                    <div className="aspect-square rounded-[20px] bg-[#FAF9F7] p-6 flex items-center justify-center mb-3 overflow-hidden group-hover:shadow-sm transition-all">
+                      <img src={getProductImage(product)} alt={product.name} className="w-full h-full object-contain max-h-[180px] sm:max-h-[210px] transition-transform duration-500 group-hover:scale-105" />
+                    </div>
+                    <h3 className="font-body text-sm font-medium text-[#222222] mt-3 text-center">{product.name}</h3>
+                    <p className="font-body text-[#B59A6C] text-sm font-semibold mt-1 text-center">
+                      {priceText}
+                    </p>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
         
         <div className="text-center mt-12">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 350, damping: 22 }} className="inline-block">

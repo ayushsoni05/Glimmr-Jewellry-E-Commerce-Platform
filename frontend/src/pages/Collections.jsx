@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FRAMER_IMAGES, FRAMER_PRODUCTS } from '../utils/framerAssets';
+import { FRAMER_IMAGES } from '../utils/framerAssets';
 
 const Collections = () => {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -12,7 +12,7 @@ const Collections = () => {
       title: 'Rings Collection',
       subtitle: 'SOLITAIRES & BANDS',
       description: 'Handcrafted engagement rings, stackable gold bands, and solitaire diamond rings.',
-      image: FRAMER_PRODUCTS.find(p => p.id === 'vintage-cuff-bracelet')?.image || FRAMER_IMAGES.goldenMemory,
+      image: FRAMER_IMAGES.goldenMemory,
       itemCount: '14 Pieces',
       link: '/store-grid/rings',
       tag: 'POPULAR'
@@ -22,7 +22,7 @@ const Collections = () => {
       title: 'Necklaces Collection',
       subtitle: 'PENDANTS & CHAINS',
       description: 'Graceful gold chains, statement knot necklaces, and diamond pendant pieces.',
-      image: FRAMER_PRODUCTS.find(p => p.id === 'real-knot-gold-necklace')?.image || FRAMER_IMAGES.hero,
+      image: FRAMER_IMAGES.hero,
       itemCount: '18 Pieces',
       link: '/store-grid/necklaces',
       tag: 'NEW'
@@ -32,7 +32,7 @@ const Collections = () => {
       title: 'Earrings Collection',
       subtitle: 'STUDS & DROPS',
       description: 'Lustrous pearls, brilliant drop earrings, and minimal gold leaf hoops.',
-      image: FRAMER_PRODUCTS.find(p => p.id === 'leaf-tears-earrings')?.image || FRAMER_IMAGES.hero2,
+      image: FRAMER_IMAGES.hero2,
       itemCount: '12 Pieces',
       link: '/store-grid/earrings',
       tag: 'ESSENTIAL'
@@ -42,7 +42,7 @@ const Collections = () => {
       title: 'Bracelets Collection',
       subtitle: 'BANGLES & CHARMS',
       description: 'Delicate chain bracelets, solid guardian bangles, and pearl link cuffs.',
-      image: FRAMER_PRODUCTS.find(p => p.id === 'guardian-bangle-bracelet')?.image || FRAMER_IMAGES.sparklePromo,
+      image: FRAMER_IMAGES.sparklePromo,
       itemCount: '15 Pieces',
       link: '/store-grid/bracelet',
       tag: 'FEATURED'
@@ -52,7 +52,7 @@ const Collections = () => {
       title: 'Timepieces Collection',
       subtitle: 'LUXURY WATCHES',
       description: 'Precision chronograph timepieces, classic steel chains, and gold watches.',
-      image: FRAMER_PRODUCTS.find(p => p.id === 'femme-chronos-watch')?.image || FRAMER_IMAGES.minimalMe,
+      image: FRAMER_IMAGES.minimalMe,
       itemCount: '8 Pieces',
       link: '/store-grid/watches',
       tag: 'EXCLUSIVE'

@@ -5,9 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import { useToast } from '../contexts/ToastContext';
 import { useMetalRates } from '../contexts/MetalRatesContext';
 import { HeartIcon } from '../components/Icons';
-import api from '../api';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage, getProductImages } from '../utils/productImages';
-import { FRAMER_PRODUCTS } from '../utils/framerAssets';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Accordion = ({ title, children, defaultOpen = false }) => {
@@ -46,8 +45,9 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { updateCartCount } = useCart();
   const { success: toastSuccess, error: toastError } = useToast();
-  const { getLiveProductPrice } = useMetalRates();
+  const { getLiveProductPrice } = useMetalRates();  const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist') || '[]'));
   const [perGramRates, setPerGramRates] = useState({ gold: 6500, silver: 80 });
   const [activeIndex, setActiveIndex] = useState(0);
@@ -65,46 +65,25 @@ const ProductDetail = () => {
       return;
     }
 
-    // Synchronously check FRAMER_PRODUCTS for 0ms instant loading
-    const framerItem = FRAMER_PRODUCTS.find(
-      p => p.id === id || p.id === id.toLowerCase() || p.name.toLowerCase().replace(/ /g, '-') === id.toLowerCase()
-    );
-    
-    if (framerItem) {
-      setProduct({
-        ...framerItem,
-        productNumber: '5672-9013-4826',
-        description: framerItem.description || `Introducing our exquisite ${framerItem.name}. Crafted with meticulous attention to detail, showcasing timeless beauty and elegance.`,
-        tags: `${framerItem.category.charAt(0).toUpperCase() + framerItem.category.slice(1)}, Accessories`,
-        categoryName: framerItem.category.charAt(0).toUpperCase() + framerItem.category.slice(1)
-      });
-    }
-
-    // Also fetch backend API if applicable
+    setLoading(true);
     api.get(`/products/${id}`)
       .then(res => {
-        if (res.data) setProduct(res.data);
-      })
-      .catch(() => {
-        if (!framerItem) {
-          const fallback = FRAMER_PRODUCTS[0];
-          setProduct({
-            ...fallback,
-            productNumber: '5672-9013-4826',
-            description: fallback.description || `Introducing our exquisite ${fallback.name}. Crafted with meticulous attention to detail, showcasing timeless beauty and elegance.`,
-            tags: `${fallback.category.charAt(0).toUpperCase() + fallback.category.slice(1)}, Accessories`,
-            categoryName: fallback.category.charAt(0).toUpperCase() + fallback.category.slice(1)
-          });
+        if (res.data) {
+          setProduct(res.data);
+          api.get('/products')
+            .then(allRes => {
+              const list = Array.isArray(allRes.data) ? allRes.data : (allRes.data?.products || []);
+              setRelatedProducts(list.filter(p => (p._id || p.id) !== (res.data._id || res.data.id)).slice(0, 4));
+            })
+            .catch(() => {});
         }
-      });
-
-    // Fetch live prices
-    api.get('/prices/latest')
-      .then(res => {
-        if (res.data.gold?.price) setPerGramRates(prev => ({ ...prev, gold: res.data.gold.price }));
-        if (res.data.silver?.price) setPerGramRates(prev => ({ ...prev, silver: res.data.silver.price }));
       })
-      .catch(() => {});
+      .catch(err => {
+        console.error('Error loading product details:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -117,7 +96,6 @@ const ProductDetail = () => {
       navigate('/auth');
       return;
     }
-
     try {
       await api.post('/cart', { userId: user.id || user._id, productId: id, quantity: 1 });
       updateCartCount();
@@ -142,7 +120,9 @@ const ProductDetail = () => {
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 
-  if (!product) return null;
+  if (loading || !product) {
+    return <GlimmrLoader subtitle="LOADING PIECE SPECIFICATIONS..." />;
+  }l;
 
   const images = getProductImages(product);
   const prevImage = () => setActiveIndex((i) => (i - 1 + images.length) % images.length);
@@ -486,42 +466,47 @@ const ProductDetail = () => {
         </div>
 
         {/* Related Products Section */}
-        <section className="py-16 mt-16 border-t border-gray-100">
-          <h2 className="font-heading text-3xl sm:text-4xl uppercase tracking-wider text-[#222222] mb-10 text-left font-normal">
-            Related Products
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {FRAMER_PRODUCTS.filter(fp => fp.id !== product.id && fp.id !== id).slice(0, 4).map((fp) => (
-              <motion.div key={fp.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group relative cursor-pointer bg-white border border-[#EAE7E1] hover:border-[#B59A6C] transition-all duration-300 rounded-none overflow-hidden flex flex-col justify-between">
-                <div className="relative aspect-square bg-[#FAF9F7] p-6 flex items-center justify-center overflow-hidden">
-                  <Link to={`/products/${fp.id}`} className="w-full h-full flex items-center justify-center">
-                    <img src={fp.image} alt={fp.name} className="w-full h-full object-contain max-h-[180px] transition-transform duration-500 group-hover:scale-105" />
-                  </Link>
-                </div>
-                <div className="p-5 text-left flex flex-col flex-1 justify-between bg-white">
-                  <div>
-                    <span className="font-body text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B59A6C] mb-1 block">
-                      {(fp.category || 'JEWELRY').toUpperCase()}
-                    </span>
-                    <Link to={`/products/${fp.id}`}>
-                      <h3 className="font-heading text-xl text-[#222222] font-normal truncate group-hover:text-[#B59A6C] transition-colors mb-1">{fp.name}</h3>
-                    </Link>
-                    <p className="font-heading text-base text-[#222222] font-bold mb-4">${fp.price.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <Link
-                      to={`/products/${fp.id}`}
-                      className="font-body text-xs font-bold text-[#222222] uppercase tracking-[0.15em] inline-flex items-center gap-2 group-hover:text-[#B59A6C] transition-colors"
-                    >
-                      <span>View Product</span>
-                      <span className="text-[#B59A6C] text-sm transition-transform group-hover:translate-x-1.5">→</span>
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+        {relatedProducts.length > 0 && (
+          <section className="py-16 mt-16 border-t border-gray-100">
+            <h2 className="font-heading text-3xl sm:text-4xl uppercase tracking-wider text-[#222222] mb-10 text-left font-normal">
+              Related Products
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {relatedProducts.map((fp) => {
+                const livePricingItem = getLiveProductPrice(fp);
+                return (
+                  <motion.div key={fp._id || fp.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group relative cursor-pointer bg-white border border-[#EAE7E1] hover:border-[#B59A6C] transition-all duration-300 rounded-none overflow-hidden flex flex-col justify-between">
+                    <div className="relative aspect-square bg-[#FAF9F7] p-6 flex items-center justify-center overflow-hidden">
+                      <Link to={`/products/${fp._id || fp.id}`} className="w-full h-full flex items-center justify-center">
+                        <img src={getProductImage(fp)} alt={fp.name} className="w-full h-full object-contain max-h-[180px] transition-transform duration-500 group-hover:scale-105" />
+                      </Link>
+                    </div>
+                    <div className="p-5 text-left flex flex-col flex-1 justify-between bg-white">
+                      <div>
+                        <span className="font-body text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B59A6C] mb-1 block">
+                          {(fp.category || 'JEWELRY').toUpperCase()}
+                        </span>
+                        <Link to={`/products/${fp._id || fp.id}`}>
+                          <h3 className="font-heading text-xl text-[#222222] font-normal truncate group-hover:text-[#B59A6C] transition-colors mb-1">{fp.name}</h3>
+                        </Link>
+                        <p className="font-heading text-base text-[#222222] font-bold mb-4">₹{livePricingItem.totalLivePrice.toLocaleString('en-IN')}</p>
+                      </div>
+                      <div>
+                        <Link
+                          to={`/products/${fp._id || fp.id}`}
+                          className="font-body text-xs font-bold text-[#222222] uppercase tracking-[0.15em] inline-flex items-center gap-2 group-hover:text-[#B59A6C] transition-colors"
+                        >
+                          <span>View Product</span>
+                          <span className="text-[#B59A6C] text-sm transition-transform group-hover:translate-x-1.5">→</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Newsletter Banner */}
         <motion.section 

@@ -8,8 +8,8 @@ import axios from 'axios';
 import apiClient from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { HeartIcon } from '../components/Icons';
+import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage } from '../utils/productImages';
-import { FRAMER_PRODUCTS, FRAMER_IMAGES } from '../utils/framerAssets';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Products = () => {
@@ -317,19 +317,11 @@ const Products = () => {
 
         {/* Products Grid / List */}
         {loading ? (
-          <div className={`grid gap-6 lg:gap-8 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-[#FAF9F7] aspect-square mb-3 rounded-[4px]"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              </div>
-            ))}
-          </div>
+          <GlimmrLoader subtitle="CURATING ATELIER COLLECTIONS..." />
         ) : (
           <div>
             {(() => {
-              const sourceList = (products.length > 0 ? products : FRAMER_PRODUCTS);
+              const sourceList = products;
               const displayList = sourceList.filter(product => {
                 if (filters.material && product.material) {
                   if (String(product.material).toLowerCase() !== String(filters.material).toLowerCase()) {
