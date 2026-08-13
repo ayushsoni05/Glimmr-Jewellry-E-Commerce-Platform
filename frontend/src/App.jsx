@@ -37,6 +37,10 @@ import ClientPrivacy from './pages/ClientPrivacy';
 import Sitemap from './pages/Sitemap';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import CustomAtelier from './pages/CustomAtelier';
+import CertificateVerifier from './pages/CertificateVerifier';
+import GiftingSuite from './pages/GiftingSuite';
+import GlimmrConcierge from './components/GlimmrConcierge';
 
 function App() {
   return (
@@ -85,11 +89,15 @@ function App() {
                   <Route path="/privacy" element={<ClientPrivacy />} />
                   <Route path="/sitemap" element={<Sitemap />} />
                   <Route path="/business-card" element={<BusinessCard />} />
+                  <Route path="/custom-atelier" element={<CustomAtelier />} />
+                  <Route path="/verify-certificate" element={<CertificateVerifier />} />
+                  <Route path="/gifting" element={<GiftingSuite />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatePresence>
             </main>
             <Footer />
+            <GlimmrConcierge />
           </div>
         </Router>
         </ToastProvider>

@@ -54,6 +54,7 @@ const ProductDetail = () => {
   const [perGramRates, setPerGramRates] = useState({ gold: 6500, silver: 80 });
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
+  const [lightFilter, setLightFilter] = useState('daylight');
   
   const livePricing = getLiveProductPrice(product);
 
@@ -170,12 +171,16 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Compact Main Image & Thumbnails (~40% width -> col-span-5) */}
           <div className="md:col-span-5 lg:col-span-5 max-w-[380px] sm:max-w-[420px] w-full space-y-3 ml-0 mr-auto">
-            {/* Main Image Box */}
-            <div className="relative w-full aspect-square bg-[#FAF9F7] rounded-none p-5 sm:p-6 flex items-center justify-center overflow-hidden group">
+            {/* Main Image Box with Interactive Lighting Filter */}
+            <div className={`relative w-full aspect-square rounded-none p-5 sm:p-6 flex items-center justify-center overflow-hidden group transition-colors duration-500 ${
+              lightFilter === 'candlelight' ? 'bg-[#2A1E17]' : lightFilter === 'spotlight' ? 'bg-[#111111]' : 'bg-[#FAF9F7]'
+            }`}>
               <img
                 src={images[activeIndex] || getProductImage(product)}
                 alt={product.name}
-                className="w-full h-full object-contain max-h-[200px] sm:max-h-[230px] transition-transform duration-700 group-hover:scale-105"
+                className={`w-full h-full object-contain max-h-[200px] sm:max-h-[230px] transition-all duration-700 group-hover:scale-105 ${
+                  lightFilter === 'spotlight' ? 'brightness-125 contrast-125 drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]' : lightFilter === 'candlelight' ? 'sepia-[0.3] brightness-110' : ''
+                }`}
               />
               {images.length > 1 && (
                 <>
@@ -193,6 +198,30 @@ const ProductDetail = () => {
                   </button>
                 </>
               )}
+            </div>
+
+            {/* Interactive Environmental Lighting Inspector Toolbar */}
+            <div className="p-3 bg-[#FAF9F7] border border-[#E5E2D9] rounded-xl flex items-center justify-between">
+              <span className="text-[10px] font-mono text-[#B59A6C] font-bold uppercase tracking-widest">
+                LIGHTING INSPECTOR:
+              </span>
+              <div className="flex gap-1.5">
+                {[
+                  { id: 'daylight', label: 'Daylight ☀️' },
+                  { id: 'candlelight', label: 'Candlelight 🕯️' },
+                  { id: 'spotlight', label: 'Spotlight 💡' }
+                ].map(l => (
+                  <button
+                    key={l.id}
+                    onClick={() => setLightFilter(l.id)}
+                    className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition-all ${
+                      lightFilter === l.id ? 'bg-[#111111] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200'
+                    }`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Thumbnail Squares Row */}

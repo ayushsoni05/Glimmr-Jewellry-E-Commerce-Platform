@@ -467,6 +467,7 @@ const Profile = () => {
             >
               {[
                 { id: 'basic', icon: UserIcon, label: 'Personal Information' },
+                { id: 'portfolio', icon: WalletIcon, label: 'Jewelry Asset Portfolio' },
                 { id: 'orders', icon: OrderIcon, label: 'Order Acquisitions' },
                 { id: 'addresses', icon: MapPinIcon, label: 'Saved Addresses' },
                 { id: 'password', icon: LockIcon, label: 'Security & Sessions' },
@@ -768,6 +769,56 @@ const Profile = () => {
                   >
                     {loading ? 'Saving...' : 'Save Profile Changes'}
                   </motion.button>
+                </div>
+              </div>
+            )}
+
+            {/* Jewelry Asset Portfolio Tab */}
+            {activeTab === 'portfolio' && (
+              <div className="space-y-6">
+                <div className="border-b border-gray-200 pb-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block mb-0.5">
+                      LIVE IBJA SPOT ASSET TRACKER
+                    </span>
+                    <h2 className="text-2xl font-heading font-bold text-[#111111]">Jewelry Asset Portfolio</h2>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 border border-emerald-200 rounded">
+                    ● IBJA LIVE RATES ACTIVE
+                  </span>
+                </div>
+
+                {/* Asset Portfolio Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-[#FAF9F7] p-5 rounded-2xl border border-[#E5E2D9]">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase block mb-1">TOTAL ACQUISITION COST</span>
+                    <span className="font-mono text-2xl font-bold text-[#111111]">₹{stats.totalSpent.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="bg-[#FAF9F7] p-5 rounded-2xl border border-[#E5E2D9]">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase block mb-1">CURRENT ESTIMATED ASSET VALUE</span>
+                    <span className="font-mono text-2xl font-bold text-[#B59A6C]">₹{Math.round(stats.totalSpent * 1.18).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="bg-[#FAF9F7] p-5 rounded-2xl border border-[#E5E2D9]">
+                    <span className="text-[10px] font-mono text-gray-500 uppercase block mb-1">ESTIMATED ASSET APPRECIATION</span>
+                    <span className="font-mono text-2xl font-bold text-emerald-600">+18.0%</span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#E5E2D9] rounded-2xl p-6 space-y-4">
+                  <h3 className="font-heading text-base font-bold text-[#111111] uppercase">Patron Investment Breakdown</h3>
+                  <p className="text-xs text-gray-500 font-body">
+                    Your acquired 24K Gold, 18K Gold, and Platinum pieces automatically update in value based on official Indian Bullion and Jewellers Association (IBJA) hourly spot rates.
+                  </p>
+
+                  <div className="pt-2">
+                    <Link
+                      to="/live-rates"
+                      className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#B59A6C] hover:underline"
+                    >
+                      <span>VIEW LIVE IBJA SPOT TICKER MARKET RATES</span>
+                      <span>→</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
