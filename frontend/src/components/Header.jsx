@@ -160,8 +160,8 @@ const Header = () => {
               STORE
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#222222] transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link to="/custom-atelier" className="relative group py-2 text-[#B59A6C] font-bold">
-              CUSTOM STUDIO ✨
+            <Link to="/custom-atelier" className="relative group py-2 hover:text-[#B59A6C] transition-colors">
+              CUSTOM STUDIO
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#B59A6C] transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link to="/gifting" className="relative group py-2">
