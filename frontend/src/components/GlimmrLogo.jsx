@@ -1,188 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const GlimmrLogo = ({ 
-  autoLoop = true, 
-  variant = 'dark', // 'dark' (light bg) | 'light' (dark bg)
-  size = 'md',      // 'sm' | 'md' | 'lg'
-  showSubtext = false
+/**
+ * GlimmrLogo — Pixel-perfect replica of the Reliqium logo.gif animation
+ * adapted for "GLIMMR".
+ *
+ * Animation timeline (3.71s total loop, matching 111 frames @ ~33ms):
+ *   Phase 1  Blank         0–700ms
+ *   Phase 2  Cursor blink  700–1700ms  (3 on/off cycles)
+ *   Phase 3  Typewriter    1700–2335ms (6 letters @ ~105ms each)
+ *   Phase 4  Hold          2335–3710ms
+ *
+ * Visual specs extracted from frame-by-frame pixel analysis:
+ *   Text color   #969696  (ultra-light silver-gray, anti-aliased)
+ *   Font         Josefin Sans weight 100  (hair-thin uppercase sans-serif)
+ *   Tracking     0.45em   (~7-8px gaps between letters at GIF scale)
+ *   Cursor       thin "|" bar, same gray, opacity blink
+ */
+
+const LETTERS = ['G', 'L', 'I', 'M', 'M', 'R'];
+
+// Timing constants (milliseconds) — matched to original GIF
+const PHASE_BLANK     = 700;
+const PHASE_CURSOR    = 1000;   // 3 blink cycles
+const LETTER_DELAY    = 105;    // ~105ms per letter typed
+const PHASE_HOLD      = 1375;   // hold full text until loop restarts
+
+const GlimmrLogo = ({
+  autoLoop = true,
+  variant = 'dark',   // 'dark' (light bg) | 'light' (dark bg)
+  size = 'md',        // 'sm' | 'md' | 'lg'
+  showSubtext = false,
 }) => {
-  const [phase, setPhase] = useState('expanded'); // 'ring' | 'expanding' | 'expanded' | 'contracting'
-  const [isHovered, setIsHovered] = useState(false);
+  const [phase, setPhase] = useState(autoLoop ? 'blank' : 'hold');
+  const [visibleCount, setVisibleCount] = useState(autoLoop ? 0 : LETTERS.length);
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const mounted = useRef(true);
 
-  // Auto-loop timing cycle matching Reliqium logo gif sequence (4.5s loop)
-  useEffect(() => {
-    if (!autoLoop) {
-      setPhase('expanded');
-      return;
-    }
+  // Run the full animation cycle
+  const runCycle = useCallback(async () => {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const ok = () => mounted.current;
 
-    let isMounted = true;
-    const runCycle = async () => {
-      while (isMounted) {
-        // Phase 1: Ring origin (0.8s)
-        setPhase('ring');
-        await new Promise(r => setTimeout(r, 900));
-        if (!isMounted) break;
+    while (ok()) {
+      // Phase 1: Blank
+      setPhase('blank');
+      setVisibleCount(0);
+      setCursorVisible(false);
+      await sleep(PHASE_BLANK);
+      if (!ok()) break;
 
-        // Phase 2: Expanding letters (0.8s)
-        setPhase('expanding');
-        await new Promise(r => setTimeout(r, 800));
-        if (!isMounted) break;
-
-        // Phase 3: Hold expanded with metallic sheen (2.2s)
-        setPhase('expanded');
-        await new Promise(r => setTimeout(r, 2200));
-        if (!isMounted) break;
-
-        // Phase 4: Contracting back to ring (0.7s)
-        setPhase('contracting');
-        await new Promise(r => setTimeout(r, 700));
+      // Phase 2: Cursor blink (3 on/off cycles @ ~167ms each half)
+      setPhase('cursor');
+      for (let i = 0; i < 3; i++) {
+        setCursorVisible(true);
+        await sleep(167);
+        if (!ok()) break;
+        setCursorVisible(false);
+        await sleep(167);
+        if (!ok()) break;
       }
-    };
+      if (!ok()) break;
 
-    runCycle();
-    return () => { isMounted = false; };
-  }, [autoLoop]);
+      // Phase 3: Typewriter — letters appear one by one left to right
+      setPhase('typing');
+      setCursorVisible(true);
+      for (let i = 1; i <= LETTERS.length; i++) {
+        setVisibleCount(i);
+        await sleep(LETTER_DELAY);
+        if (!ok()) break;
+      }
+      if (!ok()) break;
 
-  const isExpandedState = phase === 'expanding' || phase === 'expanded' || (!autoLoop && isHovered);
+      // Phase 4: Hold full text
+      setPhase('hold');
+      setCursorVisible(false);
+      await sleep(PHASE_HOLD);
+    }
+  }, []);
 
-  // Sizing maps
-  const sizeMap = {
-    sm: {
-      fontSize: 'text-xl sm:text-2xl',
-      ringSize: 'w-5 h-5',
-      tracking: 'tracking-[0.25em]',
-      gap: 'gap-1',
-    },
-    md: {
-      fontSize: 'text-2xl sm:text-3xl',
-      ringSize: 'w-7 h-7',
-      tracking: 'tracking-[0.3em]',
-      gap: 'gap-2',
-    },
-    lg: {
-      fontSize: 'text-4xl sm:text-5xl lg:text-6xl',
-      ringSize: 'w-10 h-10 sm:w-12 sm:h-12',
-      tracking: 'tracking-[0.35em]',
-      gap: 'gap-3 sm:gap-4',
-    },
+  useEffect(() => {
+    mounted.current = true;
+    if (autoLoop) {
+      runCycle();
+    } else {
+      setPhase('hold');
+      setVisibleCount(LETTERS.length);
+      setCursorVisible(false);
+    }
+    return () => { mounted.current = false; };
+  }, [autoLoop, runCycle]);
+
+  // Size presets
+  const sizeConfig = {
+    sm: { fontSize: '20px', cursorH: '16px', gap: '0.4em' },
+    md: { fontSize: '28px', cursorH: '22px', gap: '0.45em' },
+    lg: { fontSize: '42px', cursorH: '34px', gap: '0.45em' },
   };
+  const cfg = sizeConfig[size] || sizeConfig.md;
 
-  const currentSize = sizeMap[size] || sizeMap.md;
-
-  // Text color gradients based on variant
-  const textColorClass = variant === 'light'
-    ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#FAF9F7] via-[#E8DCC4] to-[#B59A6C]'
-    : 'text-transparent bg-clip-text bg-gradient-to-r from-[#111111] via-[#B59A6C] to-[#111111]';
-
-  const ringBorderClass = variant === 'light'
-    ? 'border-[#B59A6C]'
-    : 'border-[#111111] border-t-[#B59A6C]';
+  // Color based on variant
+  const textColor = variant === 'light' ? '#c0c0c0' : '#969696';
+  const cursorColor = variant === 'light' ? '#b0b0b0' : '#969696';
 
   return (
-    <div 
-      className="inline-flex flex-col items-center justify-center select-none cursor-pointer group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className={`relative flex items-center justify-center font-heading font-extrabold ${currentSize.fontSize} ${currentSize.gap}`}>
-        
-        {/* Left Branch Letters: G L I (slide left from center) */}
-        <AnimatePresence>
-          {(isExpandedState || phase === 'expanded') && (
-            <motion.div
-              initial={{ opacity: 0, x: 28, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, x: 28, filter: 'blur(4px)' }}
-              transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1.0] }}
-              className="flex items-center gap-1.5 sm:gap-2"
-            >
-              <span className={textColorClass}>G</span>
-              <span className={textColorClass}>L</span>
-              <span className={textColorClass}>I</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Center Ring Motif (Transforms between Ring Symbol & Center Letter) */}
-        <div className="relative flex items-center justify-center">
-          {/* Central Ring Symbol when collapsed */}
-          <AnimatePresence mode="wait">
-            {!isExpandedState && phase === 'ring' ? (
-              <motion.div
-                key="ring-symbol"
-                initial={{ scale: 0.4, opacity: 0, rotate: -90 }}
-                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                exit={{ scale: 0.4, opacity: 0, rotate: 90 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className={`${currentSize.ringSize} rounded-full border-2 ${ringBorderClass} relative flex items-center justify-center shadow-[0_0_12px_rgba(181,154,108,0.4)]`}
-              >
-                {/* Central Gold Core Gem Dot */}
-                <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C] animate-pulse" />
-              </motion.div>
-            ) : (
-              /* Center M Symbol when expanded */
+    <div className="inline-flex flex-col items-center justify-center select-none">
+      {/* Logo container — maintains fixed height to prevent layout shift */}
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          minHeight: cfg.cursorH,
+          fontFamily: "'Josefin Sans', 'DM Sans', sans-serif",
+          fontWeight: 100,
+          fontSize: cfg.fontSize,
+          letterSpacing: cfg.gap,
+          textTransform: 'uppercase',
+          color: textColor,
+          lineHeight: 1,
+        }}
+      >
+        {/* Letters */}
+        {phase !== 'blank' && (
+          <span className="inline-flex items-center">
+            {LETTERS.map((char, i) => (
               <motion.span
-                key="letter-m"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className={textColorClass}
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: i < visibleCount ? 1 : 0 }}
+                transition={{ duration: 0.06, ease: 'linear' }}
+                style={{
+                  display: 'inline-block',
+                  visibility: i < visibleCount ? 'visible' : 'hidden',
+                  width: i < visibleCount ? 'auto' : 0,
+                  overflow: 'hidden',
+                }}
               >
-                M
+                {char}
               </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
+            ))}
+          </span>
+        )}
 
-        {/* Right Branch Letters: M R (slide right from center) */}
-        <AnimatePresence>
-          {(isExpandedState || phase === 'expanded') && (
-            <motion.div
-              initial={{ opacity: 0, x: -28, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, x: -28, filter: 'blur(4px)' }}
-              transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1.0] }}
-              className="flex items-center gap-1.5 sm:gap-2"
-            >
-              <span className={textColorClass}>M</span>
-              <span className={textColorClass}>R</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Metallic Sheen Swipe Overlay Effect */}
-        {phase === 'expanded' && (
-          <motion.div
-            initial={{ x: '-100%', opacity: 0 }}
-            animate={{ x: '100%', opacity: [0, 0.6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1.2, ease: 'easeInOut' }}
-            className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+        {/* Cursor bar */}
+        {(phase === 'cursor' || phase === 'typing') && (
+          <motion.span
+            animate={{ opacity: cursorVisible ? 1 : 0 }}
+            transition={{ duration: 0.05 }}
+            style={{
+              display: 'inline-block',
+              width: '1.5px',
+              height: cfg.cursorH,
+              backgroundColor: cursorColor,
+              marginLeft: phase === 'cursor' ? 0 : '2px',
+              verticalAlign: 'middle',
+            }}
           />
         )}
       </div>
 
-      {/* Optional Atelier Subtext Tagline */}
-      {showSubtext && (
+      {/* Optional subtext */}
+      {showSubtext && phase === 'hold' && (
         <motion.span
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`font-body text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] mt-1 ${
-            variant === 'light' ? 'text-[#B59A6C]' : 'text-gray-400'
-          }`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          style={{
+            fontFamily: "'Josefin Sans', 'DM Sans', sans-serif",
+            fontWeight: 200,
+            fontSize: '9px',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: variant === 'light' ? '#B59A6C' : '#aaaaaa',
+            marginTop: '6px',
+          }}
         >
-          FINE JEWELRY • ATELIER
+          FINE JEWELRY
         </motion.span>
       )}
-
-      {/* Webflow Underline Accent on Hover */}
-      <div className="w-full h-[1.5px] bg-transparent relative overflow-hidden mt-1">
-        <span className={`absolute bottom-0 left-0 w-0 h-full transition-all duration-300 group-hover:w-full ${
-          variant === 'light' ? 'bg-[#B59A6C]' : 'bg-[#111111]'
-        }`} />
-      </div>
     </div>
   );
 };
