@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../contexts/CartContext';
 import { useToast } from '../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import RealisticRing from '../components/RealisticRing';
 
 const METALS = [
   { id: '24k-gold', name: '24K Pure Gold', purity: '99.9% Pure', color: '#E8DCC4', pricePerGram: 7580, badge: '24K GOLD' },
@@ -152,54 +153,16 @@ const CustomAtelier = () => {
             {...fadeUp}
             className="lg:col-span-5 lg:sticky lg:top-28"
           >
-            {/* Ring Preview Card — website's off-white canvas style */}
-            <div className="bg-[#FAF9F7] rounded-[20px] p-8 sm:p-10 aspect-square flex flex-col items-center justify-center relative overflow-hidden group">
-              
-              {/* Ring Visual Render */}
-              <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
-                {/* Metal Ring Band */}
-                <motion.div
-                  key={selectedMetal.id}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-                  className="w-52 h-52 sm:w-60 sm:h-60 rounded-full flex items-center justify-center relative"
-                  style={{
-                    border: `16px solid ${selectedMetal.color}`,
-                    boxShadow: `inset 0 4px 20px rgba(0,0,0,0.08), 0 8px 30px rgba(0,0,0,0.06)`
-                  }}
-                >
-                  {/* Inner Hollow */}
-                  <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-white flex items-center justify-center">
-                    {engravingText && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="font-heading italic text-[11px] text-[#808080] tracking-[0.15em] max-w-[110px] truncate text-center"
-                      >
-                        {engravingText}
-                      </motion.span>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Crown Gemstone */}
-                {selectedGem.id !== 'no-stone' && (
-                  <motion.div
-                    key={selectedGem.id + selectedCut.id + caratWeight}
-                    initial={{ scale: 0, y: 10, opacity: 0 }}
-                    animate={{ scale: 1, y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25, delay: 0.1 }}
-                    className={`absolute -top-4 w-14 h-14 ${selectedCut.shape} flex items-center justify-center`}
-                    style={{
-                      backgroundColor: selectedGem.color,
-                      boxShadow: `0 0 30px ${selectedGem.color}40, 0 4px 12px rgba(0,0,0,0.15)`
-                    }}
-                  >
-                    <div className="w-4 h-4 bg-white/50 rounded-full blur-[2px]" />
-                  </motion.div>
-                )}
-              </div>
+            {/* Ring Preview Card — Photorealistic SVG Ring */}
+            <div className="bg-[#FAF9F7] rounded-[20px] p-6 sm:p-8 aspect-square flex flex-col items-center justify-center relative overflow-hidden">
+              <RealisticRing
+                metal={selectedMetal}
+                gemstone={selectedGem}
+                cut={selectedCut}
+                caratWeight={caratWeight}
+                bandWeight={metalWeightGram}
+                engravingText={engravingText}
+              />
 
               {/* Metal Badge */}
               <span className="absolute top-5 left-5 text-[10px] font-mono font-bold text-[#B59A6C] px-2.5 py-1 bg-white border border-[#B59A6C]/20 rounded-full">
