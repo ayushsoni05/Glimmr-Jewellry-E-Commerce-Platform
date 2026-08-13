@@ -23,6 +23,7 @@ const orderRoutes = require('./routes/orders');
 const recommendRoutes = require('./routes/recommend');
 const priceRoutes = require('./routes/prices');
 const newsletterRoutes = require('./routes/newsletter');
+const customOrderRoutes = require('./routes/customOrders');
 
 const app = express();
 console.log('Starting Glimmr backend...');
@@ -275,6 +276,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/recommend', recommendRoutes);
 app.use('/api/prices', priceRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/custom-orders', customOrderRoutes);
 
 // Root endpoint - Useful for Render and deployment platforms
 app.get('/', (req, res) => {

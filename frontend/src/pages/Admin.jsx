@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AdminUsers from './AdminUsers';
 import DiamondPricingManager from '../components/DiamondPricingManager';
+import AdminBespokeOrders from './AdminBespokeOrders';
 import { getProductImage } from '../utils/productImages';
 
 const Admin = () => {
@@ -423,6 +424,7 @@ const Admin = () => {
             { id: 'products', label: 'PRODUCTS' },
             { id: 'users', label: 'USERS' },
             { id: 'orders', label: 'ORDERS' },
+            { id: 'custom-orders', label: 'BESPOKE REQUESTS' },
             { id: 'diamond-pricing', label: 'DIAMOND PRICING' },
           ].map((tab) => (
             <button
@@ -1208,6 +1210,17 @@ const Admin = () => {
               </div>
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* Custom Bespoke Orders Tab */}
+      {activeTab === 'custom-orders' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <AdminBespokeOrders />
         </motion.div>
       )}
       </div>
