@@ -142,7 +142,19 @@ const Header = () => {
         <nav className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
           <Link to="/" className="flex-shrink-0 flex items-center">
-            <GlimmrLogo size="sm" variant="dark" autoLoop={false} />
+            <span
+              style={{
+                fontFamily: "'Josefin Sans', 'DM Sans', sans-serif",
+                fontWeight: 100,
+                fontSize: '22px',
+                letterSpacing: '0.45em',
+                textTransform: 'uppercase',
+                color: '#969696',
+                lineHeight: 1,
+              }}
+            >
+              GLIMMR
+            </span>
           </Link>
 
           {/* Nav Links Center */}
