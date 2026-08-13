@@ -141,17 +141,10 @@ const Header = () => {
       <header className={`bg-white sticky top-0 z-50 transition-all duration-300 h-20 border-b border-gray-100/80 relative ${isScrolled ? 'shadow-soft' : ''}`}>
         <nav className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
-          <Link to="/" className="flex-shrink-0 flex items-center">
+          <Link to="/" className="flex-shrink-0 flex items-center group">
             <span
-              style={{
-                fontFamily: "'Josefin Sans', 'DM Sans', sans-serif",
-                fontWeight: 100,
-                fontSize: '22px',
-                letterSpacing: '0.45em',
-                textTransform: 'uppercase',
-                color: '#969696',
-                lineHeight: 1,
-              }}
+              className="font-heading text-2xl sm:text-3xl font-bold tracking-[0.25em] text-[#111111] uppercase transition-colors group-hover:text-[#B59A6C]"
+              style={{ lineHeight: 1 }}
             >
               GLIMMR
             </span>
