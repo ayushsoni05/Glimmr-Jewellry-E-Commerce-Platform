@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
+import GlimmrLogo from './GlimmrLogo';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -141,7 +142,7 @@ const Header = () => {
         <nav className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
           <Link to="/" className="flex-shrink-0 flex items-center">
-            <span className="font-heading text-2xl tracking-widest text-[#222222] uppercase font-bold">GLIMMR</span>
+            <GlimmrLogo size="sm" variant="dark" autoLoop={false} />
           </Link>
 
           {/* Nav Links Center */}

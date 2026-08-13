@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import GlimmrLogo from './GlimmrLogo';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -30,8 +31,8 @@ const Footer = () => {
             viewport={{ once: true }}
             className="col-span-1 lg:col-span-1"
           >
-            <Link to="/">
-              <h2 className="text-3xl font-heading text-[#B59A6C] tracking-wider uppercase mb-4">GLIMMR</h2>
+            <Link to="/" className="inline-block mb-4">
+              <GlimmrLogo size="md" variant="light" showSubtext={true} autoLoop={false} />
             </Link>
             <p className="text-white/60 font-body text-xs max-w-xs mb-6">
               Indulge in the opulence of Golden Memory, a mesmerizing jewelry collection fit for a queen.
