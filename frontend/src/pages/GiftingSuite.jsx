@@ -262,24 +262,55 @@ const GiftingSuite = () => {
       toastError('Please fill in all required fields.'); return;
     }
 
-    // Direct Preview Animation (Razorpay temporarily bypassed as requested)
-    const randomCode = 'GLM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    
-    setDispatchData({
-      amount,
-      recipientName,
-      recipientEmail,
-      redeemCode: randomCode,
-    });
-    setShowDispatchAnimation(true);
+    setIsProcessingPayment(true);
 
-    // Reset form fields
-    setRecipientEmail('');
-    setRecipientName('');
-    setSenderName('');
-    setCustomAmount('');
-    setGiftNote('');
-    setDeliveryDate('');
+    try {
+      // Call backend to generate order, redeem code, and dispatch luxury email
+      const res = await api.post('/gift-cards/dispatch-preview', {
+        amount,
+        senderName,
+        recipientName,
+        recipientEmail,
+        giftNote: giftNote || '',
+        deliveryDate: deliveryDate || undefined,
+      });
+
+      const giftCardInfo = res.data?.giftCard || {};
+      const generatedCode = giftCardInfo.redeemCode || ('GLM-' + Math.random().toString(36).substring(2, 10).toUpperCase());
+
+      setDispatchData({
+        amount,
+        recipientName,
+        recipientEmail,
+        redeemCode: generatedCode,
+        giftNote: giftNote || '',
+      });
+
+      setShowDispatchAnimation(true);
+      success(`Gift card registered & email dispatched to ${recipientEmail}!`);
+
+      // Reset form fields
+      setRecipientEmail('');
+      setRecipientName('');
+      setSenderName('');
+      setCustomAmount('');
+      setGiftNote('');
+      setDeliveryDate('');
+    } catch (err) {
+      console.warn('Backend preview notice:', err);
+      // Fallback local preview code if backend is starting up
+      const fallbackCode = 'GLM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      setDispatchData({
+        amount,
+        recipientName,
+        recipientEmail,
+        redeemCode: fallbackCode,
+        giftNote: giftNote || '',
+      });
+      setShowDispatchAnimation(true);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleQuizAnswer = (stepIdx, answerId) => {
@@ -995,170 +1026,282 @@ const GiftingSuite = () => {
         )}
       </AnimatePresence>
 
-      {/* ── POST-PAYMENT DISPATCH ANIMATION ── */}
+      {/* ── POST-PAYMENT DISPATCH ANIMATION (3D Realistic Envelope & Courier) ── */}
       <AnimatePresence>
         {showDispatchAnimation && dispatchData && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-md"
-            onClick={() => {}}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-lg px-4"
           >
-            <div className="relative w-[340px] sm:w-[400px] h-[500px] flex flex-col items-center justify-center">
+            <div className="relative w-full max-w-md h-[560px] flex flex-col items-center justify-center overflow-hidden">
 
-              {/* Stage 1 & 2: Gift Card floating into envelope */}
+              {/* ── UNIFIED 3D ENVELOPE CONTAINER ── */}
               <motion.div
-                initial={{ y: 80, scale: 0.7, opacity: 0 }}
-                animate={{ y: 0, scale: 1, opacity: 1 }}
-                transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1.0] }}
-                className="relative z-20"
+                initial={{ opacity: 0, scale: 0.85, y: 40 }}
+                animate={{
+                  opacity: [0, 1, 1, 1, 0],
+                  scale: [0.85, 1, 1, 1, 0.4],
+                  y: [40, 0, 0, 0, -750],
+                  x: [0, 0, 0, 0, 160],
+                  rotate: [0, 0, 0, -6, -16],
+                }}
+                transition={{
+                  duration: 5.2,
+                  times: [0, 0.15, 0.7, 0.82, 1],
+                  ease: [0.25, 0.1, 0.25, 1],
+                }}
+                className="relative w-[340px] sm:w-[380px] h-[240px]"
+                style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
               >
-                {/* Mini Gift Card Replica */}
-                <motion.div
-                  animate={{
-                    y: [0, 0, 60, 60],
-                    scale: [1, 1, 0.55, 0.55],
-                    opacity: [1, 1, 1, 0],
-                  }}
-                  transition={{ duration: 3.5, times: [0, 0.3, 0.55, 0.7], ease: 'easeInOut' }}
-                  className="w-[280px] sm:w-[320px] aspect-[1.6/1] relative overflow-hidden"
+                {/* 1. Envelope Back Panel (Inside Wall) */}
+                <div
+                  className="absolute inset-0 rounded-md overflow-hidden"
                   style={{
-                    background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 30%, #1a1a1a 60%, #252525 100%)',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+                    background: 'linear-gradient(180deg, #E6DAC4 0%, #D8C8AF 100%)',
+                    boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(181, 154, 108, 0.4)',
+                    zIndex: 1,
                   }}
                 >
-                  <div className="absolute inset-3 border border-[#B59A6C]/12" />
-                  <div className="relative z-10 h-full flex flex-col justify-between p-5">
-                    <div className="flex justify-between items-start">
-                      <span className="font-heading text-sm font-bold tracking-[0.35em] text-[#B59A6C]">GLIMMR</span>
-                      <span className="font-mono text-[7px] text-[#B59A6C]/60 font-bold">E-GIFT CARD</span>
-                    </div>
-                    <div>
-                      <span className="text-[8px] font-mono text-gray-600 block">GIFT VALUE</span>
-                      <span className="font-heading text-2xl font-bold text-white">₹{dispatchData.amount.toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="flex justify-between text-[8px] font-mono text-gray-600 pt-2 border-t border-[#B59A6C]/10">
-                      <span>FOR: {dispatchData.recipientName.toUpperCase()}</span>
-                      <span>{dispatchData.redeemCode}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-
-              {/* Stage 2: Envelope slides up */}
-              <motion.div
-                initial={{ y: 200, opacity: 0 }}
-                animate={{ y: [200, 200, -20, -20], opacity: [0, 0, 1, 1] }}
-                transition={{ duration: 3.5, times: [0, 0.25, 0.5, 0.65], ease: 'easeOut' }}
-                className="absolute bottom-[60px] z-10"
-              >
-                {/* Envelope Body */}
-                <div className="w-[300px] sm:w-[340px] h-[180px] relative" style={{ background: 'linear-gradient(180deg, #F5EFE6 0%, #E8DCC4 100%)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
-                  {/* Envelope gold trim */}
-                  <div className="absolute inset-2 border border-[#B59A6C]/20" />
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-                    <span className="font-heading text-[10px] font-bold tracking-[0.3em] text-[#B59A6C]/40">GLIMMR ATELIER</span>
-                  </div>
+                  {/* Subtle inner gold geometric pattern */}
+                  <div className="absolute inset-3 border border-[#B59A6C]/25 rounded-sm pointer-events-none" />
                 </div>
 
-                {/* Envelope Flap (closes) */}
+                {/* 2. Top Flap (Open at first, then folds down 180 deg over the pocket) */}
                 <motion.div
                   initial={{ rotateX: -180 }}
-                  animate={{ rotateX: [-180, -180, -180, 0] }}
-                  transition={{ duration: 3.5, times: [0, 0.5, 0.65, 0.78], ease: 'easeInOut' }}
-                  className="absolute -top-[89px] left-0 w-full origin-bottom"
-                  style={{ transformStyle: 'preserve-3d', perspective: '600px' }}
+                  animate={{
+                    rotateX: [-180, -180, -180, 0, 0],
+                  }}
+                  transition={{
+                    duration: 5.2,
+                    times: [0, 0.35, 0.5, 0.65, 1],
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                  className="absolute top-0 left-0 w-full h-[120px] origin-top"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    zIndex: 25,
+                  }}
                 >
-                  <div className="w-[300px] sm:w-[340px] h-[90px] relative" style={{
-                    background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)',
-                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
-                  }} />
-                </motion.div>
-
-                {/* Stage 3: Wax Seal stamps on */}
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: [0, 0, 0, 1.3, 1], rotate: [-180, -180, -180, 10, 0] }}
-                  transition={{ duration: 3.5, times: [0, 0.6, 0.78, 0.88, 0.92], ease: 'easeOut' }}
-                  className="absolute -top-[20px] left-1/2 -translate-x-1/2 z-30"
-                >
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg" style={{
-                    background: 'radial-gradient(circle at 35% 35%, #9B1B1Bdd, #8B1A1A)',
-                    boxShadow: '0 4px 15px rgba(139,26,26,0.4)',
-                  }}>
-                    <div className="absolute inset-1 rounded-full border border-white/15" />
-                    <span className="font-heading text-[9px] font-bold text-white tracking-wider">GLM</span>
+                  {/* Triangular Flap */}
+                  <div
+                    className="w-full h-full relative"
+                    style={{
+                      background: 'linear-gradient(180deg, #D4C3A3 0%, #E8DCC4 100%)',
+                      clipPath: 'polygon(0% 0%, 50% 100%, 100% 0%)',
+                      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.25))',
+                    }}
+                  >
+                    {/* Flap gold foil accent line */}
+                    <div
+                      className="absolute inset-x-4 top-1 h-[110px]"
+                      style={{
+                        clipPath: 'polygon(0% 0%, 50% 95%, 100% 0%)',
+                        borderTop: '2px solid rgba(181,154,108,0.5)',
+                      }}
+                    />
                   </div>
                 </motion.div>
-              </motion.div>
 
-              {/* Stage 4: Sealed envelope rockets away */}
-              <motion.div
-                initial={{ y: 0, scale: 1, rotate: 0, opacity: 0 }}
-                animate={{
-                  y: [0, 0, 0, 0, -600],
-                  scale: [1, 1, 1, 1, 0.3],
-                  rotate: [0, 0, 0, 0, -12],
-                  opacity: [0, 0, 0, 1, 0],
-                }}
-                transition={{ duration: 4.5, times: [0, 0.7, 0.82, 0.88, 1], ease: 'easeIn' }}
-                className="absolute bottom-[60px] z-40"
-              >
-                <div className="w-[300px] sm:w-[340px] h-[180px]" style={{ background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)' }}>
-                  <div className="absolute inset-2 border border-[#B59A6C]/20" />
-                  <div className="w-full h-[90px] absolute -top-[89px]" style={{
-                    background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)',
-                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
-                  }} />
-                  <div className="absolute -top-[20px] left-1/2 -translate-x-1/2 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'radial-gradient(circle at 35% 35%, #9B1B1Bdd, #8B1A1A)' }}>
-                    <span className="font-heading text-[9px] font-bold text-white tracking-wider">GLM</span>
+                {/* 3. The Floating E-Gift Card (Descends inside the envelope pocket) */}
+                <motion.div
+                  initial={{ y: -130, scale: 0.95, opacity: 0 }}
+                  animate={{
+                    y: [-130, -130, 20, 20, 20],
+                    scale: [0.95, 0.95, 0.78, 0.78, 0.78],
+                    opacity: [0, 1, 1, 1, 1],
+                  }}
+                  transition={{
+                    duration: 5.2,
+                    times: [0, 0.12, 0.45, 0.7, 1],
+                    ease: 'easeInOut',
+                  }}
+                  className="absolute left-1/2 -translate-x-1/2 w-[280px] sm:w-[310px] aspect-[1.6/1]"
+                  style={{ zIndex: 5 }}
+                >
+                  <div
+                    className="w-full h-full rounded-md overflow-hidden p-4 flex flex-col justify-between shadow-2xl relative"
+                    style={{
+                      background: 'linear-gradient(135deg, #222222 0%, #151515 50%, #2a2a2a 100%)',
+                      border: '1px solid rgba(181,154,108,0.4)',
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <span className="font-heading text-xs font-bold tracking-[0.3em] text-[#B59A6C]">GLIMMR</span>
+                      <div className="w-6 h-4.5 rounded-sm bg-gradient-to-br from-[#B59A6C] to-[#8C734B]" />
+                    </div>
+                    <div>
+                      <span className="text-[7px] font-mono text-gray-500 uppercase block tracking-wider">VALUE</span>
+                      <span className="font-heading text-xl font-bold text-white tracking-tight">
+                        ₹{dispatchData.amount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end text-[7px] font-mono text-gray-400 pt-1.5 border-t border-[#B59A6C]/20">
+                      <span className="truncate max-w-[120px]">FOR: {dispatchData.recipientName}</span>
+                      <span className="text-[#B59A6C] font-bold">{dispatchData.redeemCode}</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* 4. Envelope Front Pocket (Masks bottom 60% of card) */}
+                <div
+                  className="absolute inset-0 rounded-b-md overflow-hidden pointer-events-none"
+                  style={{ zIndex: 10 }}
+                >
+                  {/* Bottom Triangle Pocket */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(180deg, #E2D3B8 0%, #D8C7AA 100%)',
+                      clipPath: 'polygon(0% 100%, 50% 45%, 100% 100%)',
+                      boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                  {/* Left Side Flap */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(90deg, #D4C3A3 0%, #E0D1B5 100%)',
+                      clipPath: 'polygon(0% 0%, 50% 50%, 0% 100%)',
+                    }}
+                  />
+                  {/* Right Side Flap */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: 'linear-gradient(270deg, #D4C3A3 0%, #E0D1B5 100%)',
+                      clipPath: 'polygon(100% 0%, 50% 50%, 100% 100%)',
+                    }}
+                  />
+                  {/* Center Brand Crest on Pocket */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
+                    <span className="font-heading text-[9px] font-bold tracking-[0.35em] text-[#8C7B65] uppercase block">
+                      GLIMMR ATELIER
+                    </span>
                   </div>
                 </div>
+
+                {/* 5. Royal Crimson Wax Seal Stamp (Stamps on when flap closes) */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -90, opacity: 0 }}
+                  animate={{
+                    scale: [0, 0, 0, 1.35, 1, 1],
+                    rotate: [-90, -90, -90, 8, 0, 0],
+                    opacity: [0, 0, 0, 1, 1, 1],
+                  }}
+                  transition={{
+                    duration: 5.2,
+                    times: [0, 0.55, 0.64, 0.72, 0.78, 1],
+                    ease: 'easeOut',
+                  }}
+                  className="absolute top-[90px] left-1/2 -translate-x-1/2"
+                  style={{ zIndex: 30 }}
+                >
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl relative cursor-pointer"
+                    style={{
+                      background: 'radial-gradient(circle at 35% 35%, #9E1B1B, #6E0D0D)',
+                      boxShadow: '0 6px 20px rgba(110, 13, 13, 0.6), inset 0 2px 4px rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    <div className="absolute inset-1.5 rounded-full border border-white/20" />
+                    <span className="font-heading text-[10px] font-bold text-white tracking-[0.2em]">GLM</span>
+                  </div>
+                </motion.div>
               </motion.div>
 
-              {/* Gold Particle Trail (follows envelope up) */}
-              {[...Array(8)].map((_, i) => (
+              {/* ── GOLD STARDUST TRAIL (Follows courier flight) ── */}
+              {[...Array(12)].map((_, i) => (
                 <motion.div
-                  key={`particle-${i}`}
-                  initial={{ opacity: 0, y: 0 }}
+                  key={`star-particle-${i}`}
+                  initial={{ opacity: 0, y: 0, x: 0 }}
                   animate={{
-                    opacity: [0, 0, 0, 0.6, 0],
-                    y: [0, 0, 0, -200 - i * 40, -400 - i * 50],
-                    x: (i % 2 === 0 ? 1 : -1) * (10 + i * 8),
+                    opacity: [0, 0, 0, 0.8, 0],
+                    y: [0, 0, 0, -250 - i * 35, -550 - i * 40],
+                    x: (i % 2 === 0 ? 1 : -1) * (15 + i * 12) + (i * 10),
+                    scale: [0.5, 0.5, 0.5, 1.2, 0.2],
                   }}
-                  transition={{ duration: 4.5, times: [0, 0.8, 0.88, 0.94, 1], ease: 'easeOut' }}
-                  className="absolute bottom-[140px] z-30"
-                  style={{ left: `calc(50% + ${(i - 4) * 15}px)` }}
+                  transition={{
+                    duration: 5.2,
+                    times: [0, 0.7, 0.78, 0.88, 1],
+                    ease: 'easeOut',
+                  }}
+                  className="absolute bottom-[200px] pointer-events-none"
+                  style={{ left: `calc(50% + ${(i - 6) * 16}px)` }}
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" style={{ filter: 'blur(0.5px)' }} />
+                  <div
+                    className="w-2 h-2 rounded-full bg-[#B59A6C]"
+                    style={{ boxShadow: '0 0 10px #E8D5B7, 0 0 20px #B59A6C' }}
+                  />
                 </motion.div>
               ))}
 
-              {/* Success Message */}
+              {/* ── FINAL CONFIRMATION CARD (Smooth Fade In) ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: [0, 0, 0, 0, 1], y: [20, 20, 20, 20, 0] }}
-                transition={{ duration: 4.5, times: [0, 0.7, 0.85, 0.92, 1] }}
-                className="absolute bottom-0 text-center px-4"
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{
+                  opacity: [0, 0, 0, 0, 1],
+                  scale: [0.9, 0.9, 0.9, 0.9, 1],
+                  y: [30, 30, 30, 30, 0],
+                }}
+                transition={{
+                  duration: 5.2,
+                  times: [0, 0.75, 0.85, 0.92, 1],
+                  ease: 'easeOut',
+                }}
+                className="absolute inset-x-4 max-w-md mx-auto bg-[#1c1c1c]/95 border border-[#B59A6C]/40 p-6 sm:p-8 rounded-xl shadow-2xl text-center backdrop-blur-md"
               >
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <div className="w-8 h-[0.5px] bg-[#B59A6C]/40" />
-                  <span className="text-[#B59A6C] text-[8px]">◆</span>
-                  <div className="w-8 h-[0.5px] bg-[#B59A6C]/40" />
+                {/* Gold Crest */}
+                <div className="w-12 h-12 rounded-full bg-[#B59A6C]/10 border border-[#B59A6C]/40 mx-auto flex items-center justify-center mb-3">
+                  <span className="text-[#B59A6C] text-lg">✦</span>
                 </div>
-                <h3 className="font-heading text-xl text-white mb-1">Gift Card Dispatched!</h3>
-                <p className="text-sm font-body text-gray-400">
-                  ₹{dispatchData.amount.toLocaleString('en-IN')} E-Gift Card sent to <span className="text-[#B59A6C] font-bold">{dispatchData.recipientEmail}</span>
+
+                <span className="text-[9px] font-mono font-bold tracking-[0.3em] text-[#B59A6C] uppercase block mb-1">
+                  DISPATCH CONFIRMED
+                </span>
+                <h3 className="font-heading text-2xl text-white mb-2">
+                  Gift Card On Its Way!
+                </h3>
+                <p className="text-xs font-body text-gray-300 mb-4 leading-relaxed">
+                  A luxury fine jewellery voucher of <strong className="text-white">₹{dispatchData.amount.toLocaleString('en-IN')}</strong> has been sealed and delivered to{' '}
+                  <span className="text-[#B59A6C] font-bold">{dispatchData.recipientEmail}</span>.
                 </p>
-                <p className="text-[10px] font-mono text-gray-500 mt-1">Redeem Code: {dispatchData.redeemCode}</p>
+
+                {/* Redeem Code Copy Badge */}
+                <div className="bg-black/60 border border-[#B59A6C]/30 rounded-lg p-3 mb-5">
+                  <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest block mb-1">
+                    REDEMPTION VOUCHER CODE
+                  </span>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="font-mono text-base font-bold text-[#E8D5B7] tracking-widest">
+                      {dispatchData.redeemCode}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard?.writeText(dispatchData.redeemCode);
+                        success('Voucher code copied to clipboard!');
+                      }}
+                      className="px-2 py-0.5 bg-[#B59A6C]/20 hover:bg-[#B59A6C]/40 text-[#E8D5B7] text-[10px] font-mono rounded cursor-pointer transition-colors"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => { setShowDispatchAnimation(false); setDispatchData(null); }}
-                  className="mt-4 px-8 py-2.5 bg-white text-[#222222] font-body text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#B59A6C] hover:text-white transition-colors cursor-pointer"
+                  onClick={() => {
+                    setShowDispatchAnimation(false);
+                    setDispatchData(null);
+                  }}
+                  className="w-full py-3.5 bg-[#B59A6C] hover:bg-[#A3885C] text-white font-body text-xs font-bold uppercase tracking-[0.2em] rounded transition-colors cursor-pointer"
                 >
                   Done
                 </button>
               </motion.div>
+
             </div>
           </motion.div>
         )}

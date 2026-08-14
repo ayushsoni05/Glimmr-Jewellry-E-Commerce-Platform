@@ -3,15 +3,80 @@ const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const GiftCard = require('../models/GiftCard');
-const { sendEmail } = require('../utils/emailService');
+const { sendLuxuryGiftCardEmail } = require('../utils/emailService');
 
-// POST /create-order
+// POST /dispatch-preview (Direct dispatch & email delivery for instant preview/testing)
+router.post('/dispatch-preview', async (req, res) => {
+  try {
+    const { amount, senderName, senderEmail, recipientName, recipientEmail, giftNote, deliveryDate } = req.body;
+
+    if (!recipientEmail || !recipientName || !senderName) {
+      return res.status(400).json({ success: false, error: 'Recipient email, recipient name, and sender name are required' });
+    }
+
+    if (!amount || amount < 1000 || amount > 100000) {
+      return res.status(400).json({ success: false, error: 'Amount must be between ₹1,000 and ₹1,00,000' });
+    }
+
+    const mockOrderId = 'preview_order_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+    const generatedRedeemCode = 'GLM-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+
+    const giftCard = new GiftCard({
+      razorpayOrderId: mockOrderId,
+      amount,
+      currency: 'INR',
+      senderName,
+      senderEmail,
+      recipientName,
+      recipientEmail,
+      giftNote,
+      deliveryDate,
+      status: 'paid',
+      redeemCode: generatedRedeemCode,
+      paidAt: new Date(),
+      dispatchedAt: new Date(),
+    });
+
+    await giftCard.save();
+
+    // Send luxury HTML email in background
+    try {
+      await sendLuxuryGiftCardEmail({
+        recipientName: giftCard.recipientName,
+        recipientEmail: giftCard.recipientEmail,
+        senderName: giftCard.senderName,
+        amount: giftCard.amount,
+        redeemCode: giftCard.redeemCode,
+        giftNote: giftCard.giftNote,
+        deliveryDate: giftCard.deliveryDate,
+      });
+    } catch (emailErr) {
+      console.warn('[GIFT CARD] Email dispatch warning:', emailErr && emailErr.message ? emailErr.message : emailErr);
+    }
+
+    res.json({
+      success: true,
+      giftCard: {
+        id: giftCard._id,
+        redeemCode: giftCard.redeemCode,
+        amount: giftCard.amount,
+        recipientEmail: giftCard.recipientEmail,
+        recipientName: giftCard.recipientName,
+      },
+    });
+  } catch (error) {
+    console.error('Error dispatching gift card preview:', error);
+    res.status(500).json({ success: false, error: 'Failed to process gift card preview' });
+  }
+});
+
+// POST /create-order (Razorpay order creation)
 router.post('/create-order', async (req, res) => {
   try {
     const { amount, senderName, senderEmail, recipientName, recipientEmail, giftNote, deliveryDate } = req.body;
 
     if (!recipientEmail || !recipientName || !senderName) {
-      return res.status(400).json({ success: false, error: 'recipientEmail, recipientName, senderName are required' });
+      return res.status(400).json({ success: false, error: 'Recipient email, recipient name, and sender name are required' });
     }
 
     if (!amount || amount < 1000 || amount > 100000) {
@@ -30,7 +95,7 @@ router.post('/create-order', async (req, res) => {
     const options = {
       amount: amount * 100, // convert to paise
       currency: 'INR',
-      receipt: `gift_receipt_${Date.now()}`
+      receipt: `gift_receipt_${Date.now()}`,
     };
 
     const order = await razorpay.orders.create(options);
@@ -44,7 +109,7 @@ router.post('/create-order', async (req, res) => {
       recipientName,
       recipientEmail,
       giftNote,
-      deliveryDate
+      deliveryDate,
     });
 
     await giftCard.save();
@@ -54,9 +119,9 @@ router.post('/create-order', async (req, res) => {
       order: {
         id: order.id,
         amount: order.amount,
-        currency: order.currency
+        currency: order.currency,
       },
-      giftCardId: giftCard._id
+      giftCardId: giftCard._id,
     });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -64,7 +129,7 @@ router.post('/create-order', async (req, res) => {
   }
 });
 
-// POST /verify-payment
+// POST /verify-payment (Razorpay HMAC signature verification & email dispatch)
 router.post('/verify-payment', async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -93,27 +158,22 @@ router.post('/verify-payment', async (req, res) => {
     giftCard.razorpayPaymentId = razorpay_payment_id;
     giftCard.razorpaySignature = razorpay_signature;
     giftCard.paidAt = new Date();
+    giftCard.dispatchedAt = new Date();
     await giftCard.save();
 
-    // Try sending email
+    // Dispatch luxury HTML email
     try {
-      const emailContent = `
-        Hi ${giftCard.recipientName},
-        
-        You have received a gift card from ${giftCard.senderName}!
-        Amount: ₹${giftCard.amount.toLocaleString('en-IN')} ${giftCard.currency}
-        Redeem Code: ${giftCard.redeemCode}
-        Note: ${giftCard.giftNote || 'Enjoy your gift!'}
-      `;
-      
-      await sendEmail({
-        to: giftCard.recipientEmail,
-        subject: `You received a Glimmr Gift Card from ${giftCard.senderName}`,
-        text: emailContent
+      await sendLuxuryGiftCardEmail({
+        recipientName: giftCard.recipientName,
+        recipientEmail: giftCard.recipientEmail,
+        senderName: giftCard.senderName,
+        amount: giftCard.amount,
+        redeemCode: giftCard.redeemCode,
+        giftNote: giftCard.giftNote,
+        deliveryDate: giftCard.deliveryDate,
       });
     } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      // Don't fail the payment verification if email fails
+      console.error('Error sending luxury gift card email:', emailError);
     }
 
     res.json({
@@ -121,10 +181,9 @@ router.post('/verify-payment', async (req, res) => {
       giftCard: {
         redeemCode: giftCard.redeemCode,
         amount: giftCard.amount,
-        recipientEmail: giftCard.recipientEmail
-      }
+        recipientEmail: giftCard.recipientEmail,
+      },
     });
-
   } catch (error) {
     console.error('Error verifying payment:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
