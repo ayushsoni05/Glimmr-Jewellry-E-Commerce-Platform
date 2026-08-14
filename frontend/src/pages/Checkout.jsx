@@ -10,6 +10,7 @@ import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode } from '../utils
 import { INDIAN_CITIES } from '../utils/indianCities';
 import { getProductImage } from '../utils/productImages';
 import GlimmrLoader from '../components/GlimmrLoader';
+import JewelryOrderStoryModal from '../components/JewelryOrderStoryModal';
 import { 
   ShieldCheckIcon, 
   TruckIcon, 
@@ -56,6 +57,10 @@ const Checkout = () => {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  
+  // Jewelry Order Story Animation State
+  const [showStoryModal, setShowStoryModal] = useState(false);
+  const [storyOrderData, setStoryOrderData] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -239,16 +244,15 @@ const Checkout = () => {
         paymentMethod
       });
       const orderData = response.data.order || response.data;
-      toastSuccess('Order placed successfully! Redirecting...');
       setCart({ items: [] });
       try {
         await updateCartCount();
       } catch (e) {
         console.warn('Failed to update cart count:', e);
       }
-      setTimeout(() => {
-        navigate('/thank-you', { state: { orderData: orderData } });
-      }, 500);
+      // Trigger the 5-Act Jewelry Order Story Animation
+      setStoryOrderData(orderData);
+      setShowStoryModal(true);
     } catch (err) {
       let errorMessage = 'Checkout failed. Please try again.';
       if (err.response?.data?.error) {
@@ -835,6 +839,13 @@ const Checkout = () => {
 
         </div>
       </div>
+
+      {/* 5-Act Cinematic Jewelry Order Story Modal */}
+      <JewelryOrderStoryModal
+        isOpen={showStoryModal}
+        orderData={storyOrderData}
+        onClose={() => setShowStoryModal(false)}
+      />
     </div>
   );
 };
