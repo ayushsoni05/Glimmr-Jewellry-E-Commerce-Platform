@@ -378,41 +378,155 @@ const GiftingSuite = () => {
             
             {/* Left: Live Parchment Note Preview */}
             <div className="lg:col-span-5">
-              <div className="bg-[#FAF9F7] p-6 sm:p-8 relative overflow-hidden" style={{ minHeight: '420px' }}>
-                {/* Parchment Card */}
-                <div className="bg-[#FBF7F0] p-8 shadow-lg relative" style={{ border: '2px solid #E8DCC4', minHeight: '340px' }}>
-                  {/* Gold Foil Border Inner */}
-                  <div className="absolute inset-2 border border-[#B59A6C]/30 pointer-events-none" />
+              <motion.div
+                whileHover={{ rotateY: -2, rotateX: 1.5, scale: 1.01 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                className="relative"
+                style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+              >
+                {/* Outer Velvet Box Frame */}
+                <div className="relative p-1.5" style={{ background: `linear-gradient(135deg, ${selectedBox.color}18, ${selectedBox.color}08)` }}>
+                  
+                  {/* Metallic Gold Edge Shimmer */}
+                  <div className="absolute inset-0 pointer-events-none" style={{
+                    background: 'linear-gradient(135deg, rgba(181,154,108,0.15) 0%, transparent 30%, transparent 70%, rgba(181,154,108,0.15) 100%)'
+                  }} />
 
-                  {/* Wax Seal Stamp */}
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center text-white text-[10px] font-heading font-bold shadow-lg z-10" style={{ backgroundColor: selectedRibbon.color }}>
-                    GLM
-                  </div>
+                  {/* Main Parchment Card */}
+                  <div
+                    className="relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(170deg, #FDF8F0 0%, #F8F0E3 40%, #FBF5EC 100%)',
+                      minHeight: '440px',
+                      boxShadow: 'inset 0 0 60px rgba(181,154,108,0.06), 0 20px 60px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {/* Decorative Gold Corner Filigree Ornaments */}
+                    <svg className="absolute top-0 left-0 w-16 h-16 text-[#B59A6C]/20" viewBox="0 0 64 64" fill="none">
+                      <path d="M0 0 C0 0, 40 0, 55 5 C62 8, 64 12, 64 20 C58 14, 48 8, 30 4 C15 2, 0 4, 0 4 Z" fill="currentColor" />
+                      <path d="M0 0 C0 0, 0 40, 5 55 C8 62, 12 64, 20 64 C14 58, 8 48, 4 30 C2 15, 4 0, 4 0 Z" fill="currentColor" />
+                    </svg>
+                    <svg className="absolute top-0 right-0 w-16 h-16 text-[#B59A6C]/20 rotate-90" viewBox="0 0 64 64" fill="none">
+                      <path d="M0 0 C0 0, 40 0, 55 5 C62 8, 64 12, 64 20 C58 14, 48 8, 30 4 C15 2, 0 4, 0 4 Z" fill="currentColor" />
+                      <path d="M0 0 C0 0, 0 40, 5 55 C8 62, 12 64, 20 64 C14 58, 8 48, 4 30 C2 15, 4 0, 4 0 Z" fill="currentColor" />
+                    </svg>
+                    <svg className="absolute bottom-0 left-0 w-16 h-16 text-[#B59A6C]/20 -rotate-90" viewBox="0 0 64 64" fill="none">
+                      <path d="M0 0 C0 0, 40 0, 55 5 C62 8, 64 12, 64 20 C58 14, 48 8, 30 4 C15 2, 0 4, 0 4 Z" fill="currentColor" />
+                      <path d="M0 0 C0 0, 0 40, 5 55 C8 62, 12 64, 20 64 C14 58, 8 48, 4 30 C2 15, 4 0, 4 0 Z" fill="currentColor" />
+                    </svg>
+                    <svg className="absolute bottom-0 right-0 w-16 h-16 text-[#B59A6C]/20 rotate-180" viewBox="0 0 64 64" fill="none">
+                      <path d="M0 0 C0 0, 40 0, 55 5 C62 8, 64 12, 64 20 C58 14, 48 8, 30 4 C15 2, 0 4, 0 4 Z" fill="currentColor" />
+                      <path d="M0 0 C0 0, 0 40, 5 55 C8 62, 12 64, 20 64 C14 58, 8 48, 4 30 C2 15, 4 0, 4 0 Z" fill="currentColor" />
+                    </svg>
 
-                  {/* Ribbon Stripe */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-5" style={{ backgroundColor: selectedRibbon.color }} />
+                    {/* Inner Gold Border Frame */}
+                    <div className="absolute inset-4 pointer-events-none" style={{ border: '1px solid rgba(181,154,108,0.18)' }} />
+                    <div className="absolute inset-5 pointer-events-none" style={{ border: '0.5px solid rgba(181,154,108,0.10)' }} />
 
-                  <div className="pt-8 text-center">
-                    <span className="text-[9px] font-mono font-bold uppercase tracking-[0.3em] text-[#B59A6C] block mb-4">
-                      PERSONAL GIFT MESSAGE
-                    </span>
-                    <p className="font-heading italic text-base text-[#444444] leading-relaxed min-h-[80px] px-4">
-                      {giftNote || '"Your heartfelt message will appear here in luxury calligraphic print..."'}
-                    </p>
-                    <div className="mt-8 pt-4 border-t border-[#E8DCC4]/60 flex justify-between text-[10px] font-body text-[#808080]">
-                      <span>With love, {senderName || 'Sender'}</span>
-                      <span>For {recipientName || 'Recipient'}</span>
+                    {/* Animated Ribbon Drape */}
+                    <motion.div
+                      initial={{ scaleY: 0 }}
+                      animate={{ scaleY: 1 }}
+                      transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' }}
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] origin-top"
+                      style={{ backgroundColor: selectedRibbon.color, height: '36px' }}
+                    />
+
+                    {/* Animated Wax Seal */}
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 15 }}
+                      whileHover={{ scale: 1.12, rotate: 5 }}
+                      className="absolute -top-1 left-1/2 -translate-x-1/2 z-20 cursor-pointer"
+                    >
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center shadow-xl relative"
+                        style={{
+                          background: `radial-gradient(circle at 35% 35%, ${selectedRibbon.color}dd, ${selectedRibbon.color})`,
+                          boxShadow: `0 4px 20px ${selectedRibbon.color}50, inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.15)`,
+                        }}
+                      >
+                        {/* Seal Texture Ring */}
+                        <div className="absolute inset-1.5 rounded-full border border-white/15" />
+                        <div className="absolute inset-3 rounded-full border border-white/10" />
+                        <span className="font-heading text-[11px] font-bold text-white tracking-[0.15em] relative z-10">GLM</span>
+                      </div>
+                    </motion.div>
+
+                    {/* Card Content */}
+                    <div className="pt-14 pb-8 px-8 text-center relative z-10">
+                      {/* Diamond Divider */}
+                      <div className="flex items-center justify-center gap-3 mb-5">
+                        <div className="w-12 h-[0.5px] bg-[#B59A6C]/30" />
+                        <span className="text-[#B59A6C]/50 text-[8px]">◆</span>
+                        <div className="w-12 h-[0.5px] bg-[#B59A6C]/30" />
+                      </div>
+
+                      <span className="text-[8px] font-body font-bold uppercase tracking-[0.4em] text-[#B59A6C]/60 block mb-6">
+                        PERSONAL GIFT MESSAGE
+                      </span>
+
+                      {/* Calligraphic Message */}
+                      <motion.p
+                        key={giftNote}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="font-heading italic text-lg text-[#3D3428] leading-[1.8] min-h-[100px] px-4"
+                      >
+                        {giftNote || '"Your heartfelt message will appear here in luxury calligraphic print on handmade parchment..."'}
+                      </motion.p>
+
+                      {/* Bottom Diamond Divider */}
+                      <div className="flex items-center justify-center gap-3 mt-6 mb-5">
+                        <div className="w-16 h-[0.5px] bg-[#B59A6C]/25" />
+                        <span className="text-[#B59A6C]/40 text-[6px]">◆ ◆ ◆</span>
+                        <div className="w-16 h-[0.5px] bg-[#B59A6C]/25" />
+                      </div>
+
+                      {/* Sender / Recipient */}
+                      <div className="flex justify-between items-center text-[10px] font-body px-2">
+                        <div className="text-left">
+                          <span className="text-[8px] font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]/50 block">FROM</span>
+                          <span className="text-[#5C4E3C] font-bold">{senderName || 'Your Name'}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[8px] font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]/50 block">FOR</span>
+                          <span className="text-[#5C4E3C] font-bold">{recipientName || 'Recipient'}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Box Color Swatch */}
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#808080]">VELVET BOX:</span>
-                  <div className="w-5 h-5 rounded-full shadow-sm" style={{ backgroundColor: selectedBox.color }} />
-                  <span className="text-[10px] font-mono font-bold text-[#222222]">{selectedBox.name}</span>
-                </div>
-              </div>
+                {/* Box & Ribbon Indicator Strip */}
+                <motion.div
+                  layout
+                  className="mt-3 flex items-center justify-between bg-[#FAF9F7] px-4 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      key={selectedBox.id}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-4 h-4 rounded-full shadow-sm"
+                      style={{ backgroundColor: selectedBox.color }}
+                    />
+                    <span className="text-[10px] font-mono font-bold text-[#222222]">{selectedBox.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      key={selectedRibbon.id}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-4 h-4 rounded-full shadow-sm"
+                      style={{ backgroundColor: selectedRibbon.color }}
+                    />
+                    <span className="text-[10px] font-mono font-bold text-[#808080]">{selectedRibbon.name} Ribbon</span>
+                  </div>
+                </motion.div>
+              </motion.div>
             </div>
 
             {/* Right: Customizer Controls */}
@@ -521,34 +635,133 @@ const GiftingSuite = () => {
                 Glimmr Luxury E-Gift Cards
               </h2>
 
-              <motion.div
-                whileHover={{ rotateY: 4, rotateX: 4, scale: 1.02 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="bg-[#222222] p-8 text-white relative overflow-hidden"
-                style={{ perspective: '1000px', transformStyle: 'preserve-3d' }}
-              >
-                {/* Subtle Gold Grain Overlay */}
-                <div className="absolute inset-0 opacity-[0.03]" style={{ background: 'repeating-linear-gradient(45deg, #B59A6C 0, #B59A6C 1px, transparent 0, transparent 8px)' }} />
+              {/* 3D Gift Card Container */}
+              <div style={{ perspective: '1200px' }}>
+                <motion.div
+                  whileHover={{ rotateY: -6, rotateX: 4, scale: 1.03 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+                  className="relative aspect-[1.6/1] overflow-hidden cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 30%, #1a1a1a 60%, #252525 100%)',
+                    transformStyle: 'preserve-3d',
+                    boxShadow: '0 30px 60px rgba(0,0,0,0.25), 0 0 1px rgba(181,154,108,0.3)',
+                  }}
+                >
+                  {/* Animated Gold Shimmer Sweep */}
+                  <motion.div
+                    animate={{ x: ['0%', '200%'] }}
+                    transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(105deg, transparent 30%, rgba(181,154,108,0.06) 45%, rgba(181,154,108,0.12) 50%, rgba(181,154,108,0.06) 55%, transparent 70%)',
+                      width: '200%',
+                    }}
+                  />
 
-                <div className="flex justify-between items-start mb-16 relative z-10">
-                  <span className="font-heading text-xl font-bold tracking-[0.3em] text-[#B59A6C]">GLIMMR</span>
-                  <span className="font-mono text-[9px] text-[#B59A6C] font-bold border border-[#B59A6C]/40 px-2 py-0.5">
-                    E-GIFT CARD
-                  </span>
-                </div>
+                  {/* Embossed Gold Border */}
+                  <div className="absolute inset-3 pointer-events-none" style={{ border: '1px solid rgba(181,154,108,0.12)' }} />
+                  <div className="absolute inset-4 pointer-events-none" style={{ border: '0.5px solid rgba(181,154,108,0.06)' }} />
 
-                <div className="space-y-1 mb-10 relative z-10">
-                  <span className="text-[10px] font-mono text-gray-500 uppercase block">GIFT VALUE</span>
-                  <span className="font-mono text-4xl font-bold text-white">
-                    ₹{(customAmount ? parseInt(customAmount) || 0 : giftCardAmount).toLocaleString('en-IN')}
-                  </span>
-                </div>
+                  {/* Diamond Watermark Emblem */}
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-[0.04]">
+                    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                      <path d="M60 5 L90 40 L60 115 L30 40 Z" stroke="white" strokeWidth="1.5" />
+                      <path d="M30 40 L90 40" stroke="white" strokeWidth="1" />
+                      <path d="M60 5 L45 40 M60 5 L75 40" stroke="white" strokeWidth="0.8" />
+                      <path d="M45 40 L60 115 M75 40 L60 115" stroke="white" strokeWidth="0.8" />
+                    </svg>
+                  </div>
 
-                <div className="flex justify-between items-end text-[10px] font-mono text-gray-500 pt-4 border-t border-white/10 relative z-10">
-                  <span>FOR: {recipientName || 'VALUED PATRON'}</span>
-                  <span>FROM: {senderName || 'GLIMMR PATRON'}</span>
+                  {/* Card Content */}
+                  <div className="relative z-10 h-full flex flex-col justify-between p-6 sm:p-8">
+                    {/* Top Row: Brand + Badge */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2, duration: 0.5 }}
+                          className="font-heading text-lg font-bold tracking-[0.35em] block"
+                          style={{ color: '#B59A6C' }}
+                        >
+                          GLIMMR
+                        </motion.span>
+                        <span className="text-[8px] font-mono text-gray-600 tracking-[0.3em] block mt-0.5">FINE JEWELLERY</span>
+                      </div>
+                      
+                      {/* Animated Chip */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4, duration: 0.4 }}
+                        className="flex flex-col items-end gap-1.5"
+                      >
+                        <div className="w-8 h-6 rounded-sm relative overflow-hidden" style={{
+                          background: 'linear-gradient(135deg, #B59A6C 0%, #D4B896 30%, #B59A6C 60%, #997D56 100%)',
+                          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.3), inset 0 -1px 2px rgba(0,0,0,0.2)',
+                        }}>
+                          <div className="absolute inset-0.5 grid grid-cols-2 grid-rows-2 gap-[0.5px] opacity-40">
+                            <div className="bg-white/20" /><div className="bg-white/10" />
+                            <div className="bg-white/10" /><div className="bg-white/20" />
+                          </div>
+                        </div>
+                        <span className="font-mono text-[8px] text-[#B59A6C]/60 font-bold tracking-[0.15em]">E-GIFT CARD</span>
+                      </motion.div>
+                    </div>
+
+                    {/* Center: Amount */}
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-mono text-gray-600 uppercase tracking-[0.2em] block">GIFT VALUE</span>
+                      <motion.div
+                        key={customAmount || giftCardAmount}
+                        initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="flex items-baseline gap-1"
+                      >
+                        <span className="font-heading text-4xl sm:text-5xl font-bold text-white tracking-tight">
+                          ₹{(customAmount ? parseInt(customAmount) || 0 : giftCardAmount).toLocaleString('en-IN')}
+                        </span>
+                      </motion.div>
+                    </div>
+
+                    {/* Bottom Row: Recipient & Sender */}
+                    <div className="flex justify-between items-end pt-3" style={{ borderTop: '1px solid rgba(181,154,108,0.12)' }}>
+                      <div>
+                        <span className="text-[7px] font-mono text-gray-600 uppercase block tracking-[0.2em]">PRESENTED TO</span>
+                        <motion.span
+                          key={recipientName}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-[11px] font-body font-bold text-[#B59A6C] block mt-0.5"
+                        >
+                          {recipientName || 'VALUED PATRON'}
+                        </motion.span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[7px] font-mono text-gray-600 uppercase block tracking-[0.2em]">WITH LOVE FROM</span>
+                        <motion.span
+                          key={senderName}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-[11px] font-body font-bold text-gray-400 block mt-0.5"
+                        >
+                          {senderName || 'GLIMMR PATRON'}
+                        </motion.span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Security Strip */}
+              <div className="mt-2 flex items-center justify-between px-2">
+                <span className="text-[9px] font-mono text-[#808080]">Redeemable across all Glimmr collections</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
+                  <span className="text-[9px] font-mono text-[#808080]">Secured</span>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Right: Gift Card Controls */}
