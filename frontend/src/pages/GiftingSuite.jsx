@@ -262,98 +262,24 @@ const GiftingSuite = () => {
       toastError('Please fill in all required fields.'); return;
     }
 
-    setIsProcessingPayment(true);
+    // Direct Preview Animation (Razorpay temporarily bypassed as requested)
+    const randomCode = 'GLM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    
+    setDispatchData({
+      amount,
+      recipientName,
+      recipientEmail,
+      redeemCode: randomCode,
+    });
+    setShowDispatchAnimation(true);
 
-    try {
-      // Step 1: Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        toastError('Payment gateway failed to load. Please check your internet connection.');
-        setIsProcessingPayment(false);
-        return;
-      }
-
-      // Step 2: Create order on backend
-      const orderRes = await api.post('/gift-cards/create-order', {
-        amount,
-        senderName,
-        senderEmail: '', // optional
-        recipientName,
-        recipientEmail,
-        giftNote: giftNote || '',
-        deliveryDate: deliveryDate || undefined,
-      });
-
-      const { order, giftCardId } = orderRes.data;
-
-      // Step 3: Open Razorpay Checkout Modal
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TPbEB3YuhLq4SK',
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'Glimmr Fine Jewellery',
-        description: `E-Gift Card — ₹${amount.toLocaleString('en-IN')}`,
-        order_id: order.id,
-        prefill: {
-          name: senderName,
-          email: recipientEmail,
-        },
-        theme: { color: '#222222' },
-        handler: async (response) => {
-          // Step 4: Verify payment on backend
-          try {
-            const verifyRes = await api.post('/gift-cards/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-
-            if (verifyRes.data.success) {
-              // Payment verified — show dispatch animation
-              setDispatchData({
-                amount,
-                recipientName,
-                recipientEmail,
-                redeemCode: verifyRes.data.giftCard?.redeemCode || 'GLM-XXXXXXXX',
-              });
-              setShowDispatchAnimation(true);
-
-              // Reset form
-              setRecipientEmail('');
-              setRecipientName('');
-              setSenderName('');
-              setCustomAmount('');
-              setGiftNote('');
-              setDeliveryDate('');
-            } else {
-              toastError('Payment verification failed. Please contact support.');
-            }
-          } catch (verifyErr) {
-            console.error('Payment verification error:', verifyErr);
-            toastError('Payment verification failed. Your payment is safe — please contact support.');
-          }
-          setIsProcessingPayment(false);
-        },
-        modal: {
-          ondismiss: () => {
-            setIsProcessingPayment(false);
-            toastError('Payment was cancelled.');
-          },
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', (response) => {
-        setIsProcessingPayment(false);
-        toastError(`Payment failed: ${response.error?.description || 'Unknown error'}`);
-      });
-      rzp.open();
-    } catch (err) {
-      console.error('Order creation error:', err);
-      const msg = err?.response?.data?.error || 'Failed to create payment order. Please try again.';
-      toastError(msg);
-      setIsProcessingPayment(false);
-    }
+    // Reset form fields
+    setRecipientEmail('');
+    setRecipientName('');
+    setSenderName('');
+    setCustomAmount('');
+    setGiftNote('');
+    setDeliveryDate('');
   };
 
   const handleQuizAnswer = (stepIdx, answerId) => {
