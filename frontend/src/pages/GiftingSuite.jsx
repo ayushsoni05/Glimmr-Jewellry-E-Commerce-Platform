@@ -186,6 +186,23 @@ const GiftingSuite = () => {
   const [showDispatchAnimation, setShowDispatchAnimation] = useState(false);
   const [dispatchData, setDispatchData] = useState(null);
   const [amountError, setAmountError] = useState('');
+  const [giftCardPhase, setGiftCardPhase] = useState(0);
+
+  // Gift Card Phase Timer
+  React.useEffect(() => {
+    if (!showDispatchAnimation) {
+      setGiftCardPhase(0);
+      return;
+    }
+    const t1 = setTimeout(() => setGiftCardPhase(1), 1400);
+    const t2 = setTimeout(() => setGiftCardPhase(2), 2900);
+    const t3 = setTimeout(() => setGiftCardPhase(3), 4400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [showDispatchAnimation]);
 
   // Gift Finder Quiz State
   const [showQuiz, setShowQuiz] = useState(false);
@@ -1033,31 +1050,84 @@ const GiftingSuite = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 backdrop-blur-xl px-4"
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-[#09090b]/92 backdrop-blur-2xl px-4 select-none overflow-hidden"
           >
-            <div className="relative w-full max-w-md h-[580px] flex flex-col items-center justify-center overflow-hidden">
+            {/* Background Atmospheric Studio Glow */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#B59A6C]/10 rounded-full blur-[130px]" />
+              <div className="absolute bottom-10 right-1/4 w-[350px] h-[350px] bg-[#8B1A1A]/10 rounded-full blur-[110px]" />
+              <div
+                className="absolute inset-0 opacity-[0.03]"
+                style={{ backgroundImage: 'radial-gradient(#B59A6C 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+              />
+            </div>
+
+            <div className="relative w-full max-w-md h-[620px] flex flex-col items-center justify-between py-6">
+
+              {/* ── LIVE CINEMATIC NARRATIVE SCRIPT HUD ── */}
+              <div className="w-full text-center relative z-20">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={giftCardPhase}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.4 }}
+                    className="inline-flex flex-col items-center"
+                  >
+                    <div className="flex items-center gap-2 px-3 py-1 bg-[#1c1c1f]/80 border border-[#B59A6C]/30 rounded-full shadow-lg mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C] animate-pulse" />
+                      <span className="text-[9px] font-mono tracking-[0.25em] text-[#E8D5B7] uppercase font-bold">
+                        {giftCardPhase === 0 && '01 / 04'}
+                        {giftCardPhase === 1 && '02 / 04'}
+                        {giftCardPhase === 2 && '03 / 04'}
+                        {giftCardPhase === 3 && '04 / 04'}
+                      </span>
+                      <span className="text-gray-500 text-[10px]">|</span>
+                      <span className="text-[9px] font-body tracking-[0.2em] text-[#B59A6C] uppercase font-bold">
+                        {giftCardPhase === 0 && 'MINTING BESPOKE E-CARD'}
+                        {giftCardPhase === 1 && 'COTTON PARCHMENT SLEEVE'}
+                        {giftCardPhase === 2 && '24K WAX CREST SEALING'}
+                        {giftCardPhase === 3 && 'ENCRYPTED DISPATCH'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-body text-gray-400 tracking-wide max-w-xs text-center italic">
+                      {giftCardPhase === 0 && `"Generating ₹${dispatchData.amount.toLocaleString('en-IN')} authentic digital gold voucher"`}
+                      {giftCardPhase === 1 && `"Encasing inside handmade deckle-edge Italian parchment"`}
+                      {giftCardPhase === 2 && `"Compressing 24K gold-dusted molten crimson wax seal"`}
+                      {giftCardPhase === 3 && `"Delivering encrypted credentials to ${dispatchData.recipientEmail}"`}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
               {/* ── UNIFIED 3D ENVELOPE CONTAINER ── */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85, y: 30 }}
-                animate={{
-                  opacity: [0, 1, 1, 1, 0],
-                  scale: [0.85, 1, 1, 1, 0.35],
-                  y: [30, 0, 0, 0, -800],
-                  x: [0, 0, 0, 0, 180],
-                  rotate: [0, 0, 0, -6, -18],
-                }}
-                transition={{
-                  duration: 5.4,
-                  times: [0, 0.15, 0.72, 0.84, 1],
-                  ease: [0.25, 0.1, 0.25, 1],
-                }}
-                className="relative w-[340px] sm:w-[380px] h-[230px]"
-                style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
+              <div
+                className="relative w-[340px] sm:w-[380px] h-[270px] flex items-center justify-center"
+                style={{ perspective: '1400px' }}
               >
-                {/* 1. Envelope Back Panel (Inside Wall) */}
-                <div
-                  className="absolute inset-0 rounded-lg overflow-hidden"
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, rotateX: 18, y: 30 }}
+                  animate={{
+                    opacity: [0, 1, 1, 1, 0],
+                    scale: [0.85, 1, 1, 1, 0.35],
+                    rotateX: [18, 10, 10, 10, -22],
+                    rotateY: [0, -5, 5, 0, 14],
+                    rotateZ: [0, 0, 0, -4, -14],
+                    y: [30, 0, 0, 0, -820],
+                    x: [0, 0, 0, 0, 170],
+                  }}
+                  transition={{
+                    duration: 5.4,
+                    times: [0, 0.15, 0.72, 0.84, 1],
+                    ease: [0.25, 0.1, 0.25, 1],
+                  }}
+                  className="relative w-[320px] sm:w-[360px] h-[230px]"
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  {/* 1. Envelope Back Panel (Inside Wall) */}
+                  <div
+                    className="absolute inset-0 rounded-lg overflow-hidden"
                   style={{
                     background: 'linear-gradient(180deg, #DFD2BC 0%, #CEBEA1 100%)',
                     boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
@@ -1233,17 +1303,18 @@ const GiftingSuite = () => {
                   </div>
                 </motion.div>
               </motion.div>
+            </div>
 
-              {/* ── GOLD STARDUST TRAIL (Follows courier flight) ── */}
-              {[...Array(14)].map((_, i) => (
+            {/* ── GOLD STARDUST TRAIL (Follows courier flight) ── */}
+              {[...Array(16)].map((_, i) => (
                 <motion.div
                   key={`star-particle-${i}`}
                   initial={{ opacity: 0, y: 0, x: 0 }}
                   animate={{
-                    opacity: [0, 0, 0, 0.9, 0],
-                    y: [0, 0, 0, -280 - i * 35, -600 - i * 40],
-                    x: (i % 2 === 0 ? 1 : -1) * (18 + i * 14) + (i * 12),
-                    scale: [0.4, 0.4, 0.4, 1.4, 0.1],
+                    opacity: [0, 0, 0, 0.95, 0],
+                    y: [0, 0, 0, -300 - i * 35, -650 - i * 40],
+                    x: (i % 2 === 0 ? 1 : -1) * (20 + i * 14) + (i * 12),
+                    scale: [0.4, 0.4, 0.4, 1.5, 0.1],
                   }}
                   transition={{
                     duration: 5.4,
@@ -1251,21 +1322,21 @@ const GiftingSuite = () => {
                     ease: 'easeOut',
                   }}
                   className="absolute bottom-[200px] pointer-events-none"
-                  style={{ left: `calc(50% + ${(i - 7) * 16}px)` }}
+                  style={{ left: `calc(50% + ${(i - 8) * 16}px)` }}
                 >
                   <div
                     className="w-2 h-2 rounded-full bg-[#B59A6C]"
-                    style={{ boxShadow: '0 0 10px #E8D5B7, 0 0 20px #B59A6C' }}
+                    style={{ boxShadow: '0 0 12px #E8D5B7, 0 0 24px #B59A6C' }}
                   />
                 </motion.div>
               ))}
 
               {/* ── FINAL CONFIRMATION CARD (Smooth Fade In) ── */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                initial={{ opacity: 0, scale: 0.92, y: 30 }}
                 animate={{
                   opacity: [0, 0, 0, 0, 1],
-                  scale: [0.9, 0.9, 0.9, 0.9, 1],
+                  scale: [0.92, 0.92, 0.92, 0.92, 1],
                   y: [30, 30, 30, 30, 0],
                 }}
                 transition={{
@@ -1273,7 +1344,7 @@ const GiftingSuite = () => {
                   times: [0, 0.78, 0.86, 0.94, 1],
                   ease: 'easeOut',
                 }}
-                className="absolute inset-x-4 max-w-md mx-auto bg-[#1a1a1a]/95 border border-[#B59A6C]/45 p-6 sm:p-8 rounded-xl shadow-2xl text-center backdrop-blur-md"
+                className="w-full max-w-md bg-[#161618]/95 border border-[#B59A6C]/45 p-6 sm:p-7 rounded-2xl shadow-2xl text-center backdrop-blur-xl relative z-30"
               >
                 <div className="w-12 h-12 rounded-full bg-[#B59A6C]/15 border border-[#B59A6C]/50 mx-auto flex items-center justify-center mb-3 shadow-lg">
                   <span className="text-[#B59A6C] text-lg font-bold">✦</span>
@@ -1282,7 +1353,7 @@ const GiftingSuite = () => {
                 <span className="text-[9px] font-mono font-bold tracking-[0.3em] text-[#B59A6C] uppercase block mb-1">
                   DISPATCH CONFIRMED
                 </span>
-                <h3 className="font-heading text-2xl text-white mb-2">
+                <h3 className="font-heading text-2xl text-white mb-1">
                   Gift Card On Its Way!
                 </h3>
                 <p className="text-xs font-body text-gray-300 mb-4 leading-relaxed">
