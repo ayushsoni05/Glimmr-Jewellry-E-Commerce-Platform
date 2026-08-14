@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../contexts/CartContext';
 import { useToast } from '../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
 // Generated Gift Set Product Images
 const GIFT_IMAGES = {
@@ -180,6 +181,12 @@ const GiftingSuite = () => {
   const [customAmount, setCustomAmount] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
 
+  // Payment State
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showDispatchAnimation, setShowDispatchAnimation] = useState(false);
+  const [dispatchData, setDispatchData] = useState(null);
+  const [amountError, setAmountError] = useState('');
+
   // Gift Finder Quiz State
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizStep, setQuizStep] = useState(0);
@@ -212,19 +219,141 @@ const GiftingSuite = () => {
     success(`${gift.name} with ${selectedBox.name} box added to your cart!`);
   };
 
-  const handlePurchaseGiftCard = (e) => {
-    e.preventDefault();
+  // Amount validation helper
+  const getValidatedAmount = useCallback(() => {
     const amount = customAmount ? parseInt(customAmount) : giftCardAmount;
-    if (!amount || amount < 1000) {
-      toastError('Please select or enter a valid gift card amount (minimum ₹1,000).');
-      return;
+    if (!amount || isNaN(amount)) return { valid: false, amount: 0, error: 'Please enter a valid amount.' };
+    if (amount < 1000) return { valid: false, amount, error: 'Minimum amount is ₹1,000.' };
+    if (amount > 100000) return { valid: false, amount, error: 'Maximum amount is ₹1,00,000.' };
+    return { valid: true, amount, error: '' };
+  }, [customAmount, giftCardAmount]);
+
+  // Handle custom amount change with validation
+  const handleCustomAmountChange = (e) => {
+    const val = e.target.value;
+    setCustomAmount(val);
+    if (val) {
+      const num = parseInt(val);
+      if (isNaN(num) || num < 1000) setAmountError('Minimum ₹1,000');
+      else if (num > 100000) setAmountError('Maximum ₹1,00,000');
+      else setAmountError('');
+    } else {
+      setAmountError('');
     }
-    success(`Luxury E-Gift Card for ₹${amount.toLocaleString('en-IN')} dispatched to ${recipientEmail}!`);
-    setRecipientEmail('');
-    setRecipientName('');
-    setSenderName('');
-    setCustomAmount('');
-    setDeliveryDate('');
+  };
+
+  // Load Razorpay checkout script dynamically
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) { resolve(true); return; }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
+  };
+
+  const handlePurchaseGiftCard = async (e) => {
+    e.preventDefault();
+    const { valid, amount, error } = getValidatedAmount();
+    if (!valid) { toastError(error); return; }
+    if (!recipientEmail || !recipientName || !senderName) {
+      toastError('Please fill in all required fields.'); return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      // Step 1: Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toastError('Payment gateway failed to load. Please check your internet connection.');
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // Step 2: Create order on backend
+      const orderRes = await api.post('/gift-cards/create-order', {
+        amount,
+        senderName,
+        senderEmail: '', // optional
+        recipientName,
+        recipientEmail,
+        giftNote: giftNote || '',
+        deliveryDate: deliveryDate || undefined,
+      });
+
+      const { order, giftCardId } = orderRes.data;
+
+      // Step 3: Open Razorpay Checkout Modal
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TPbEB3YuhLq4SK',
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'Glimmr Fine Jewellery',
+        description: `E-Gift Card — ₹${amount.toLocaleString('en-IN')}`,
+        order_id: order.id,
+        prefill: {
+          name: senderName,
+          email: recipientEmail,
+        },
+        theme: { color: '#222222' },
+        handler: async (response) => {
+          // Step 4: Verify payment on backend
+          try {
+            const verifyRes = await api.post('/gift-cards/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.data.success) {
+              // Payment verified — show dispatch animation
+              setDispatchData({
+                amount,
+                recipientName,
+                recipientEmail,
+                redeemCode: verifyRes.data.giftCard?.redeemCode || 'GLM-XXXXXXXX',
+              });
+              setShowDispatchAnimation(true);
+
+              // Reset form
+              setRecipientEmail('');
+              setRecipientName('');
+              setSenderName('');
+              setCustomAmount('');
+              setGiftNote('');
+              setDeliveryDate('');
+            } else {
+              toastError('Payment verification failed. Please contact support.');
+            }
+          } catch (verifyErr) {
+            console.error('Payment verification error:', verifyErr);
+            toastError('Payment verification failed. Your payment is safe — please contact support.');
+          }
+          setIsProcessingPayment(false);
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPayment(false);
+            toastError('Payment was cancelled.');
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response) => {
+        setIsProcessingPayment(false);
+        toastError(`Payment failed: ${response.error?.description || 'Unknown error'}`);
+      });
+      rzp.open();
+    } catch (err) {
+      console.error('Order creation error:', err);
+      const msg = err?.response?.data?.error || 'Failed to create payment order. Please try again.';
+      toastError(msg);
+      setIsProcessingPayment(false);
+    }
   };
 
   const handleQuizAnswer = (stepIdx, answerId) => {
@@ -786,15 +915,25 @@ const GiftingSuite = () => {
                   ))}
                 </div>
 
-                {/* Custom Amount */}
+                {/* Custom Amount with Validation */}
                 <div className="mt-3">
                   <input
                     type="number"
                     value={customAmount}
-                    onChange={(e) => setCustomAmount(e.target.value)}
-                    placeholder="Or enter custom amount (min ₹1,000)"
-                    className="w-full px-4 py-2.5 bg-white border border-gray-200 text-sm font-mono text-[#222222] focus:outline-none focus:ring-1 focus:ring-[#222222]"
+                    onChange={handleCustomAmountChange}
+                    min="1000"
+                    max="100000"
+                    placeholder="Or enter custom amount (₹1,000 – ₹1,00,000)"
+                    className={`w-full px-4 py-2.5 bg-white border text-sm font-mono text-[#222222] focus:outline-none focus:ring-1 ${
+                      amountError ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-[#222222]'
+                    }`}
                   />
+                  {amountError && (
+                    <span className="text-[10px] font-body font-bold text-red-500 mt-1 block">{amountError}</span>
+                  )}
+                  {customAmount && !amountError && parseInt(customAmount) >= 1000 && parseInt(customAmount) <= 100000 && (
+                    <span className="text-[10px] font-body font-bold text-green-600 mt-1 block flex items-center gap-1">✓ Valid amount</span>
+                  )}
                 </div>
               </div>
 
@@ -838,9 +977,21 @@ const GiftingSuite = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-4 bg-[#222222] text-white font-body text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#B59A6C] transition-colors cursor-pointer"
+                  disabled={isProcessingPayment || !!amountError}
+                  className={`w-full py-4 font-body text-xs font-bold uppercase tracking-[0.2em] transition-colors cursor-pointer ${
+                    isProcessingPayment || amountError
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-[#222222] text-white hover:bg-[#B59A6C]'
+                  }`}
                 >
-                  Purchase & Dispatch E-Gift Card
+                  {isProcessingPayment ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+                      Processing Payment...
+                    </span>
+                  ) : (
+                    `Pay ₹${(customAmount ? parseInt(customAmount) || 0 : giftCardAmount).toLocaleString('en-IN')} & Dispatch E-Gift Card`
+                  )}
                 </button>
               </form>
             </div>
@@ -915,6 +1066,175 @@ const GiftingSuite = () => {
               </button>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── POST-PAYMENT DISPATCH ANIMATION ── */}
+      <AnimatePresence>
+        {showDispatchAnimation && dispatchData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-md"
+            onClick={() => {}}
+          >
+            <div className="relative w-[340px] sm:w-[400px] h-[500px] flex flex-col items-center justify-center">
+
+              {/* Stage 1 & 2: Gift Card floating into envelope */}
+              <motion.div
+                initial={{ y: 80, scale: 0.7, opacity: 0 }}
+                animate={{ y: 0, scale: 1, opacity: 1 }}
+                transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1.0] }}
+                className="relative z-20"
+              >
+                {/* Mini Gift Card Replica */}
+                <motion.div
+                  animate={{
+                    y: [0, 0, 60, 60],
+                    scale: [1, 1, 0.55, 0.55],
+                    opacity: [1, 1, 1, 0],
+                  }}
+                  transition={{ duration: 3.5, times: [0, 0.3, 0.55, 0.7], ease: 'easeInOut' }}
+                  className="w-[280px] sm:w-[320px] aspect-[1.6/1] relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 30%, #1a1a1a 60%, #252525 100%)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <div className="absolute inset-3 border border-[#B59A6C]/12" />
+                  <div className="relative z-10 h-full flex flex-col justify-between p-5">
+                    <div className="flex justify-between items-start">
+                      <span className="font-heading text-sm font-bold tracking-[0.35em] text-[#B59A6C]">GLIMMR</span>
+                      <span className="font-mono text-[7px] text-[#B59A6C]/60 font-bold">E-GIFT CARD</span>
+                    </div>
+                    <div>
+                      <span className="text-[8px] font-mono text-gray-600 block">GIFT VALUE</span>
+                      <span className="font-heading text-2xl font-bold text-white">₹{dispatchData.amount.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-[8px] font-mono text-gray-600 pt-2 border-t border-[#B59A6C]/10">
+                      <span>FOR: {dispatchData.recipientName.toUpperCase()}</span>
+                      <span>{dispatchData.redeemCode}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              {/* Stage 2: Envelope slides up */}
+              <motion.div
+                initial={{ y: 200, opacity: 0 }}
+                animate={{ y: [200, 200, -20, -20], opacity: [0, 0, 1, 1] }}
+                transition={{ duration: 3.5, times: [0, 0.25, 0.5, 0.65], ease: 'easeOut' }}
+                className="absolute bottom-[60px] z-10"
+              >
+                {/* Envelope Body */}
+                <div className="w-[300px] sm:w-[340px] h-[180px] relative" style={{ background: 'linear-gradient(180deg, #F5EFE6 0%, #E8DCC4 100%)', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+                  {/* Envelope gold trim */}
+                  <div className="absolute inset-2 border border-[#B59A6C]/20" />
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+                    <span className="font-heading text-[10px] font-bold tracking-[0.3em] text-[#B59A6C]/40">GLIMMR ATELIER</span>
+                  </div>
+                </div>
+
+                {/* Envelope Flap (closes) */}
+                <motion.div
+                  initial={{ rotateX: -180 }}
+                  animate={{ rotateX: [-180, -180, -180, 0] }}
+                  transition={{ duration: 3.5, times: [0, 0.5, 0.65, 0.78], ease: 'easeInOut' }}
+                  className="absolute -top-[89px] left-0 w-full origin-bottom"
+                  style={{ transformStyle: 'preserve-3d', perspective: '600px' }}
+                >
+                  <div className="w-[300px] sm:w-[340px] h-[90px] relative" style={{
+                    background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)',
+                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
+                  }} />
+                </motion.div>
+
+                {/* Stage 3: Wax Seal stamps on */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: [0, 0, 0, 1.3, 1], rotate: [-180, -180, -180, 10, 0] }}
+                  transition={{ duration: 3.5, times: [0, 0.6, 0.78, 0.88, 0.92], ease: 'easeOut' }}
+                  className="absolute -top-[20px] left-1/2 -translate-x-1/2 z-30"
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg" style={{
+                    background: 'radial-gradient(circle at 35% 35%, #9B1B1Bdd, #8B1A1A)',
+                    boxShadow: '0 4px 15px rgba(139,26,26,0.4)',
+                  }}>
+                    <div className="absolute inset-1 rounded-full border border-white/15" />
+                    <span className="font-heading text-[9px] font-bold text-white tracking-wider">GLM</span>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              {/* Stage 4: Sealed envelope rockets away */}
+              <motion.div
+                initial={{ y: 0, scale: 1, rotate: 0, opacity: 0 }}
+                animate={{
+                  y: [0, 0, 0, 0, -600],
+                  scale: [1, 1, 1, 1, 0.3],
+                  rotate: [0, 0, 0, 0, -12],
+                  opacity: [0, 0, 0, 1, 0],
+                }}
+                transition={{ duration: 4.5, times: [0, 0.7, 0.82, 0.88, 1], ease: 'easeIn' }}
+                className="absolute bottom-[60px] z-40"
+              >
+                <div className="w-[300px] sm:w-[340px] h-[180px]" style={{ background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)' }}>
+                  <div className="absolute inset-2 border border-[#B59A6C]/20" />
+                  <div className="w-full h-[90px] absolute -top-[89px]" style={{
+                    background: 'linear-gradient(180deg, #E8DCC4 0%, #D4C5A9 100%)',
+                    clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
+                  }} />
+                  <div className="absolute -top-[20px] left-1/2 -translate-x-1/2 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'radial-gradient(circle at 35% 35%, #9B1B1Bdd, #8B1A1A)' }}>
+                    <span className="font-heading text-[9px] font-bold text-white tracking-wider">GLM</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Gold Particle Trail (follows envelope up) */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div
+                  key={`particle-${i}`}
+                  initial={{ opacity: 0, y: 0 }}
+                  animate={{
+                    opacity: [0, 0, 0, 0.6, 0],
+                    y: [0, 0, 0, -200 - i * 40, -400 - i * 50],
+                    x: (i % 2 === 0 ? 1 : -1) * (10 + i * 8),
+                  }}
+                  transition={{ duration: 4.5, times: [0, 0.8, 0.88, 0.94, 1], ease: 'easeOut' }}
+                  className="absolute bottom-[140px] z-30"
+                  style={{ left: `calc(50% + ${(i - 4) * 15}px)` }}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" style={{ filter: 'blur(0.5px)' }} />
+                </motion.div>
+              ))}
+
+              {/* Success Message */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: [0, 0, 0, 0, 1], y: [20, 20, 20, 20, 0] }}
+                transition={{ duration: 4.5, times: [0, 0.7, 0.85, 0.92, 1] }}
+                className="absolute bottom-0 text-center px-4"
+              >
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="w-8 h-[0.5px] bg-[#B59A6C]/40" />
+                  <span className="text-[#B59A6C] text-[8px]">◆</span>
+                  <div className="w-8 h-[0.5px] bg-[#B59A6C]/40" />
+                </div>
+                <h3 className="font-heading text-xl text-white mb-1">Gift Card Dispatched!</h3>
+                <p className="text-sm font-body text-gray-400">
+                  ₹{dispatchData.amount.toLocaleString('en-IN')} E-Gift Card sent to <span className="text-[#B59A6C] font-bold">{dispatchData.recipientEmail}</span>
+                </p>
+                <p className="text-[10px] font-mono text-gray-500 mt-1">Redeem Code: {dispatchData.redeemCode}</p>
+                <button
+                  onClick={() => { setShowDispatchAnimation(false); setDispatchData(null); }}
+                  className="mt-4 px-8 py-2.5 bg-white text-[#222222] font-body text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#B59A6C] hover:text-white transition-colors cursor-pointer"
+                >
+                  Done
+                </button>
+              </motion.div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

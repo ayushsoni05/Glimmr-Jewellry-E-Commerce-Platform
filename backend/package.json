@@ -23,6 +23,7 @@
     "nodemailer": "^6.9.16",
     "openai": "^4.77.3",
     "otp-generator": "^4.0.1",
+    "razorpay": "^2.9.8",
     "resend": "^4.0.0",
     "stripe": "^17.5.0"
   },
