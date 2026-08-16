@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti';
 import * as THREE from 'three';
 
 /* ═══════════════════════════════════════════════════════════════════════
-   1. SYNTHESIZED LUXURY WEB AUDIO SYSTEM (Zero External Files)
+   1. SYNTHESIZED LUXURY AUDIO ENGINE (Zero External Sound Files)
    ═══════════════════════════════════════════════════════════════════════ */
 
 class LuxuryAudioEngine {
@@ -20,9 +20,7 @@ class LuxuryAudioEngine {
   init() {
     if (!this.ctx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        this.ctx = new AudioContext();
-      }
+      if (AudioContext) this.ctx = new AudioContext();
     }
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
@@ -36,9 +34,9 @@ class LuxuryAudioEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(528, now); // 528Hz harmonic resonance
-      osc.frequency.exponentialRampToValueAtTime(1056, now + 0.8);
-      gain.gain.setValueAtTime(0.08, now);
+      osc.frequency.setValueAtTime(528, now);
+      osc.frequency.exponentialRampToValueAtTime(1056, now + 0.9);
+      gain.gain.setValueAtTime(0.09, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -54,14 +52,32 @@ class LuxuryAudioEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.linearRampToValueAtTime(220, now + 0.5);
-      gain.gain.setValueAtTime(0.04, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+      osc.frequency.setValueAtTime(920, now);
+      osc.frequency.linearRampToValueAtTime(240, now + 0.45);
+      gain.gain.setValueAtTime(0.045, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.5);
+      osc.stop(now + 0.45);
+    } catch (e) {}
+  }
+
+  playDock() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.25);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
     } catch (e) {}
   }
 
@@ -72,14 +88,14 @@ class LuxuryAudioEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, now);
-      osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc.frequency.setValueAtTime(360, now);
+      osc.frequency.exponentialRampToValueAtTime(90, now + 0.12);
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.2);
+      osc.stop(now + 0.15);
     } catch (e) {}
   }
 
@@ -90,9 +106,9 @@ class LuxuryAudioEngine {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(140, now);
-      osc.frequency.exponentialRampToValueAtTime(45, now + 0.4);
-      gain.gain.setValueAtTime(0.2, now);
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.exponentialRampToValueAtTime(35, now + 0.45);
+      gain.gain.setValueAtTime(0.22, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -105,17 +121,17 @@ class LuxuryAudioEngine {
     if (this.muted || !this.ctx) return;
     try {
       const now = this.ctx.currentTime;
-      [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((freq, i) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + i * 0.08);
-        gain.gain.setValueAtTime(0.06, now + i * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 1.2);
+        osc.frequency.setValueAtTime(freq, now + i * 0.07);
+        gain.gain.setValueAtTime(0.07, now + i * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 1.4);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        osc.start(now + i * 0.08);
-        osc.stop(now + i * 0.08 + 1.2);
+        osc.start(now + i * 0.07);
+        osc.stop(now + i * 0.07 + 1.4);
       });
     } catch (e) {}
   }
@@ -143,129 +159,143 @@ function detectCategory(orderData) {
 }
 
 const METALS = {
-  '24k-gold': { name: '24K Pure Gold', color: '#E6C280', metalness: 0.96, roughness: 0.08, clearcoat: 1.0, clearcoatRoughness: 0.02 },
-  '18k-rose': { name: '18K Rose Gold', color: '#E8B4A0', metalness: 0.95, roughness: 0.10, clearcoat: 1.0, clearcoatRoughness: 0.03 },
-  'platinum': { name: 'Platinum 950', color: '#E5E7EB', metalness: 0.98, roughness: 0.04, clearcoat: 1.0, clearcoatRoughness: 0.01 },
-  'white-gold': { name: '18K White Gold', color: '#F0F0F5', metalness: 0.97, roughness: 0.06, clearcoat: 1.0, clearcoatRoughness: 0.02 }
+  '24k-gold': { name: '24K Pure Gold', color: '#E6C280', metalness: 0.96, roughness: 0.07, clearcoat: 1.0, clearcoatRoughness: 0.02 },
+  '18k-rose': { name: '18K Rose Gold', color: '#E8B4A0', metalness: 0.95, roughness: 0.09, clearcoat: 1.0, clearcoatRoughness: 0.03 },
+  'platinum': { name: 'Platinum 950', color: '#E5E7EB', metalness: 0.98, roughness: 0.03, clearcoat: 1.0, clearcoatRoughness: 0.01 },
+  'white-gold': { name: '18K White Gold', color: '#F0F0F5', metalness: 0.97, roughness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.02 }
 };
 
 const DIAMOND_MAT = {
   color: '#FFFFFF',
-  transmission: 0.94,
+  transmission: 0.95,
   opacity: 1,
   transparent: true,
   roughness: 0.02,
   ior: 2.42,
-  metalness: 0.05,
+  metalness: 0.04,
   clearcoat: 1.0,
   clearcoatRoughness: 0.02,
   reflectivity: 1.0
 };
 
 const ACT_SCRIPTS = [
-  { badge: 'ACT 1 OF 4 · MASTER BENCH', title: 'THE ARTISAN\'S BENCH', subtitle: 'Handcrafted 24K gold geometry with optical diamond facet brilliance' },
-  { badge: 'ACT 2 OF 4 · BIS HALLMARK', title: 'GOVERNMENT BIS 916 HALLMARK', subtitle: 'Microscopic laser beam inscribes legal authenticity & IGI certification' },
-  { badge: 'ACT 3 OF 4 · VELVET VAULT', title: 'ITALIAN VELVET VAULT & WAX SEAL', subtitle: 'Docked in custom-tailored plush cushion, silk ribbon & 24K crimson wax crest' },
-  { badge: 'ACT 4 OF 4 · DISPATCH', title: 'INSURED ARMORED DISPATCH', subtitle: 'Enclosed in Glimmr gift carrier for priority concierge delivery' },
+  { badge: 'ACT 1 OF 4 · MASTER BENCH', title: 'THE MASTER ATELIER BENCH', subtitle: 'Handcrafted 24K gold geometry with 20 micro-pave diamonds & optical diamond dispersion' },
+  { badge: 'ACT 2 OF 4 · BIS HALLMARK', title: 'GOVERNMENT BIS 916 HALLMARK', subtitle: 'Microscopic laser beam inscribes legal authenticity & IGI laboratory certification' },
+  { badge: 'ACT 3 OF 4 · VELVET VAULT', title: 'ITALIAN VELVET VAULT & WAX SEAL', subtitle: 'Docked in custom velvet slit, champagne silk ribbon & 24K molten crimson seal' },
+  { badge: 'ACT 4 OF 4 · GIFT DISPATCH', title: 'BOUTIQUE CARRIER & DISPATCH', subtitle: 'Enclosed in Glimmr gold-embossed gift bag for insured priority transit' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════
-   3. ULTRA-DETAILED 3D PRODUCT GEOMETRIES (Procedural Three.js)
+   3. HYPER-DETAILED 3D PRODUCT GEOMETRIES
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── 💍 ULTRA RING: Dual-layer shank + 16 micro-pave diamonds + 6-prong crown ── */
-function UltraRing3D({ metal = METALS['24k-gold'] }) {
+/* ── 💍 HYPER RING: Comfort-fit + 20 micro-pave diamonds + under-gallery filigree + 57-facet diamond ── */
+function HyperRing3D({ metal = METALS['24k-gold'] }) {
   return (
     <group>
-      {/* Main Comfort-Fit Torus Band */}
+      {/* 1. Main Comfort-Fit Torus Band */}
       <mesh>
-        <torusGeometry args={[1.05, 0.16, 40, 80]} />
+        <torusGeometry args={[1.06, 0.16, 48, 96]} />
         <meshPhysicalMaterial {...metal} />
       </mesh>
 
-      {/* Inner Comfort-Fit Bevel */}
+      {/* 2. Inner Chamfer Core */}
       <mesh>
-        <torusGeometry args={[0.96, 0.06, 24, 60]} />
-        <meshPhysicalMaterial {...metal} roughness={0.18} />
+        <torusGeometry args={[0.96, 0.065, 32, 64]} />
+        <meshPhysicalMaterial {...metal} roughness={0.16} />
       </mesh>
 
-      {/* Cathedral Arch Shoulders */}
+      {/* 3. Under-Gallery Cathedral Filigree Supports */}
       {[-1, 1].map((dir) => (
-        <group key={`arch-${dir}`} position={[dir * 0.42, 0.85, 0]} rotation={[0, 0, dir * -0.35]}>
+        <group key={`cathedral-${dir}`} position={[dir * 0.44, 0.88, 0]} rotation={[0, 0, dir * -0.38]}>
           <mesh>
-            <cylinderGeometry args={[0.09, 0.14, 0.45, 16]} />
+            <cylinderGeometry args={[0.085, 0.15, 0.48, 16]} />
+            <meshPhysicalMaterial {...metal} />
+          </mesh>
+          {/* Filigree Bridge Scroll */}
+          <mesh position={[dir * -0.06, 0.05, 0]}>
+            <torusGeometry args={[0.08, 0.02, 12, 24, Math.PI]} />
             <meshPhysicalMaterial {...metal} />
           </mesh>
         </group>
       ))}
 
-      {/* 16 Micro-Pave Diamonds along the Shank Shoulders */}
+      {/* 4. 20 Micro-Pave Diamonds along the Shank (10 per shoulder) */}
       {[-1, 1].map((side) =>
-        [0.2, 0.35, 0.5, 0.65, 0.8].map((angle, i) => {
+        [0.18, 0.32, 0.46, 0.60, 0.74].map((angle, i) => {
           const x = side * Math.sin(angle) * 1.08;
           const y = Math.cos(angle) * 1.08;
           return (
             <group key={`pave-${side}-${i}`} position={[x, y, 0]}>
-              <mesh position={[0, 0, 0.12]}>
-                <sphereGeometry args={[0.032, 10, 10]} />
+              {/* Front Micro-Pave Diamond */}
+              <mesh position={[0, 0, 0.115]}>
+                <sphereGeometry args={[0.034, 12, 12]} />
                 <meshPhysicalMaterial {...DIAMOND_MAT} />
               </mesh>
-              <mesh position={[0, 0, -0.12]}>
-                <sphereGeometry args={[0.032, 10, 10]} />
+              {/* Back Micro-Pave Diamond */}
+              <mesh position={[0, 0, -0.115]}>
+                <sphereGeometry args={[0.034, 12, 12]} />
                 <meshPhysicalMaterial {...DIAMOND_MAT} />
+              </mesh>
+              {/* Gold Bead Setting Pronglet */}
+              <mesh position={[0, 0.04, 0.115]}>
+                <sphereGeometry args={[0.012, 6, 6]} />
+                <meshPhysicalMaterial {...metal} />
               </mesh>
             </group>
           );
         })
       )}
 
-      {/* 6 Tapered Claws (Prongs) */}
+      {/* 5. 6 Tapered Claws (Prongs) with Rounded Tips */}
       {[...Array(6)].map((_, i) => {
         const a = (i / 6) * Math.PI * 2;
         return (
-          <mesh
-            key={`claw-${i}`}
-            position={[Math.cos(a) * 0.32, 1.25, Math.sin(a) * 0.32]}
-            rotation={[Math.sin(a) * 0.1, a, Math.cos(a) * -0.1]}
-          >
-            <cylinderGeometry args={[0.03, 0.05, 0.45, 16]} />
-            <meshPhysicalMaterial {...metal} />
-          </mesh>
+          <group key={`claw-${i}`} position={[Math.cos(a) * 0.33, 1.26, Math.sin(a) * 0.33]}>
+            <mesh rotation={[Math.sin(a) * 0.12, a, Math.cos(a) * -0.12]}>
+              <cylinderGeometry args={[0.03, 0.055, 0.48, 16]} />
+              <meshPhysicalMaterial {...metal} />
+            </mesh>
+            {/* Rounded Claw Tip Grip */}
+            <mesh position={[Math.cos(a) * -0.04, 0.22, Math.sin(a) * -0.04]}>
+              <sphereGeometry args={[0.035, 10, 10]} />
+              <meshPhysicalMaterial {...metal} />
+            </mesh>
+          </group>
         );
       })}
 
-      {/* Brilliant Round Solitaire Diamond */}
-      <group position={[0, 1.42, 0]}>
+      {/* 6. 57-Facet Brilliant Round Solitaire Diamond */}
+      <group position={[0, 1.45, 0]}>
         {/* Table & Crown Facets */}
-        <mesh position={[0, 0.1, 0]}>
-          <cylinderGeometry args={[0.32, 0.52, 0.22, 16, 1]} />
+        <mesh position={[0, 0.11, 0]}>
+          <cylinderGeometry args={[0.34, 0.55, 0.24, 16, 1]} />
           <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
         </mesh>
         {/* Girdle Rim */}
         <mesh position={[0, -0.02, 0]}>
-          <cylinderGeometry args={[0.52, 0.52, 0.05, 16, 1]} />
+          <cylinderGeometry args={[0.55, 0.55, 0.05, 16, 1]} />
           <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
         </mesh>
         {/* Pavilion Cone to Culet */}
-        <mesh position={[0, -0.22, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.52, 0.38, 16, 1]} />
+        <mesh position={[0, -0.24, 0]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.55, 0.42, 16, 1]} />
           <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
         </mesh>
       </group>
 
-      {/* Sparkling Stardust */}
-      <Sparkles count={18} scale={2.8} size={2.5} speed={0.6} color="#FFD700" />
+      <Sparkles count={20} scale={3.0} size={2.5} speed={0.6} color="#FFD700" />
     </group>
   );
 }
 
-/* ── 📿 ULTRA NECKLACE: Catenary gold rope chain + floral halo cluster pendant ── */
-function UltraNecklace3D({ metal = METALS['24k-gold'] }) {
+/* ── 📿 HYPER NECKLACE: Catenary gold rope chain + floral halo cluster pendant ── */
+function HyperNecklace3D({ metal = METALS['24k-gold'] }) {
   const curve = useMemo(() => {
     const pts = [];
-    for (let i = 0; i <= 60; i++) {
-      const t = (i / 60) * Math.PI;
-      pts.push(new THREE.Vector3(Math.cos(t) * 1.35, -Math.sin(t) * 1.05 + 0.65, 0));
+    for (let i = 0; i <= 70; i++) {
+      const t = (i / 70) * Math.PI;
+      pts.push(new THREE.Vector3(Math.cos(t) * 1.38, -Math.sin(t) * 1.08 + 0.68, 0));
     }
     return new THREE.CatmullRomCurve3(pts);
   }, []);
@@ -274,171 +304,167 @@ function UltraNecklace3D({ metal = METALS['24k-gold'] }) {
     <group>
       {/* 3D Interlocking Rope Chain */}
       <mesh>
-        <tubeGeometry args={[curve, 80, 0.032, 12, false]} />
-        <meshPhysicalMaterial {...metal} roughness={0.2} />
+        <tubeGeometry args={[curve, 90, 0.034, 14, false]} />
+        <meshPhysicalMaterial {...metal} roughness={0.18} />
       </mesh>
 
       {/* Bail Mount Ring */}
       <mesh position={[0, -0.42, 0]}>
-        <torusGeometry args={[0.1, 0.028, 12, 24]} />
+        <torusGeometry args={[0.11, 0.03, 14, 28]} />
         <meshPhysicalMaterial {...metal} />
       </mesh>
 
       {/* Floral Diamond Halo Cluster Pendant */}
-      <group position={[0, -0.8, 0]}>
+      <group position={[0, -0.84, 0]}>
         {/* Central Pear-Cut Diamond */}
         <mesh position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
-          <coneGeometry args={[0.26, 0.42, 12]} />
+          <coneGeometry args={[0.28, 0.46, 14]} />
           <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
         </mesh>
-        {/* Halo Surround of 8 Micro Diamonds */}
-        {[...Array(8)].map((_, i) => {
-          const a = (i / 8) * Math.PI * 2;
+        {/* Halo Surround of 10 Micro Diamonds */}
+        {[...Array(10)].map((_, i) => {
+          const a = (i / 10) * Math.PI * 2;
           return (
-            <mesh key={`halo-${i}`} position={[Math.cos(a) * 0.32, Math.sin(a) * 0.28, 0]}>
-              <sphereGeometry args={[0.05, 10, 10]} />
+            <mesh key={`halo-${i}`} position={[Math.cos(a) * 0.35, Math.sin(a) * 0.30, 0]}>
+              <sphereGeometry args={[0.052, 12, 12]} />
               <meshPhysicalMaterial {...DIAMOND_MAT} />
             </mesh>
           );
         })}
-        {/* Droplet Sparkle Accent */}
-        <mesh position={[0, -0.32, 0]}>
-          <octahedronGeometry args={[0.1, 1]} />
+        {/* Dangling Briolette Droplet */}
+        <mesh position={[0, -0.36, 0]}>
+          <octahedronGeometry args={[0.11, 1]} />
           <meshPhysicalMaterial {...DIAMOND_MAT} />
         </mesh>
       </group>
 
-      <Sparkles count={22} scale={2.4} position={[0, -0.7, 0]} size={2.5} speed={0.4} color="#FFD700" />
+      <Sparkles count={24} scale={2.6} position={[0, -0.7, 0]} size={2.5} speed={0.4} color="#FFD700" />
     </group>
   );
 }
 
-/* ── 💎 ULTRA EARRINGS: Chandelier drop earrings with huggie hoop & briolette gems ── */
-function UltraEarring3D({ metal = METALS['24k-gold'] }) {
+/* ── 💎 HYPER EARRINGS: Chandelier drops + huggie hoops + briolette gems ── */
+function HyperEarring3D({ metal = METALS['24k-gold'] }) {
   return (
     <group>
-      {[-0.7, 0.7].map((x, idx) => (
+      {[-0.72, 0.72].map((x, idx) => (
         <group key={`earring-${idx}`} position={[x, 0.1, 0]}>
           {/* Huggie Hoop with Pave Diamonds */}
           <mesh>
-            <torusGeometry args={[0.24, 0.03, 16, 32, Math.PI * 1.2]} />
+            <torusGeometry args={[0.25, 0.032, 18, 36, Math.PI * 1.2]} />
             <meshPhysicalMaterial {...metal} />
           </mesh>
-          {[-0.15, 0, 0.15].map((off, i) => (
-            <mesh key={`hp-${i}`} position={[off, 0.22, 0.03]}>
-              <sphereGeometry args={[0.025, 8, 8]} />
+          {[-0.16, 0, 0.16].map((off, i) => (
+            <mesh key={`hp-${i}`} position={[off, 0.23, 0.032]}>
+              <sphereGeometry args={[0.026, 10, 10]} />
               <meshPhysicalMaterial {...DIAMOND_MAT} />
             </mesh>
           ))}
 
           {/* Articulated Filigree Connector */}
           <mesh position={[0, -0.22, 0]}>
-            <sphereGeometry args={[0.08, 16, 16]} />
+            <sphereGeometry args={[0.085, 16, 16]} />
             <meshPhysicalMaterial {...metal} />
           </mesh>
-          <mesh position={[0, -0.34, 0]}>
-            <torusGeometry args={[0.06, 0.015, 8, 16]} />
+          <mesh position={[0, -0.35, 0]}>
+            <torusGeometry args={[0.065, 0.016, 10, 20]} />
             <meshPhysicalMaterial {...metal} />
           </mesh>
 
           {/* Faceted Teardrop Briolette Diamond Drop */}
-          <group position={[0, -0.65, 0]}>
+          <group position={[0, -0.68, 0]}>
             <mesh rotation={[Math.PI, 0, 0]}>
-              <coneGeometry args={[0.18, 0.44, 12]} />
+              <coneGeometry args={[0.19, 0.46, 14]} />
               <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
             </mesh>
-            <mesh position={[0, 0.14, 0]}>
-              <sphereGeometry args={[0.18, 12, 12]} />
+            <mesh position={[0, 0.15, 0]}>
+              <sphereGeometry args={[0.19, 14, 14]} />
               <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
             </mesh>
           </group>
         </group>
       ))}
-      <Sparkles count={20} scale={3.0} size={2.5} speed={0.5} color="#FFD700" />
+      <Sparkles count={22} scale={3.2} size={2.5} speed={0.5} color="#FFD700" />
     </group>
   );
 }
 
-/* ── ⌚ ULTRA BRACELET: Articulated tennis bracelet with 18 bezel-set diamonds ── */
-function UltraBracelet3D({ metal = METALS['24k-gold'] }) {
+/* ── ⌚ HYPER BRACELET: 20 articulated links + bezel diamonds + safety clasp ── */
+function HyperBracelet3D({ metal = METALS['24k-gold'] }) {
   return (
     <group rotation={[Math.PI / 2.6, 0, 0]}>
       {/* Solid Polished Gold Bangle Rim */}
       <mesh>
-        <torusGeometry args={[1.08, 0.09, 32, 80]} />
+        <torusGeometry args={[1.1, 0.095, 36, 84]} />
         <meshPhysicalMaterial {...metal} />
       </mesh>
 
-      {/* 18 Articulated Bezel-Set Brilliant Diamonds */}
-      {[...Array(18)].map((_, i) => {
-        const a = (i / 18) * Math.PI * 2;
-        const x = Math.cos(a) * 1.08;
-        const y = Math.sin(a) * 1.08;
+      {/* 20 Articulated Bezel-Set Brilliant Diamonds */}
+      {[...Array(20)].map((_, i) => {
+        const a = (i / 20) * Math.PI * 2;
+        const x = Math.cos(a) * 1.1;
+        const y = Math.sin(a) * 1.1;
         return (
           <group key={`bez-${i}`} position={[x, y, 0]} rotation={[0, 0, a]}>
-            {/* Bezel Collar */}
             <mesh>
-              <cylinderGeometry args={[0.075, 0.075, 0.14, 12]} />
+              <cylinderGeometry args={[0.078, 0.078, 0.15, 14]} />
               <meshPhysicalMaterial {...metal} />
             </mesh>
-            {/* Inset Solitaire Diamond */}
-            <mesh position={[0, 0, 0.05]}>
-              <octahedronGeometry args={[0.065, 1]} />
+            <mesh position={[0, 0, 0.055]}>
+              <octahedronGeometry args={[0.068, 1]} />
               <meshPhysicalMaterial {...DIAMOND_MAT} flatShading={true} />
             </mesh>
           </group>
         );
       })}
 
-      {/* Concealed Safety Clasp with Gold Screw Motif */}
-      <group position={[1.08, 0, 0]}>
+      {/* Concealed Tongue-and-Groove Safety Clasp */}
+      <group position={[1.1, 0, 0]}>
         <mesh>
-          <boxGeometry args={[0.18, 0.14, 0.14]} />
+          <boxGeometry args={[0.19, 0.15, 0.15]} />
           <meshPhysicalMaterial {...metal} roughness={0.15} />
         </mesh>
       </group>
-      <Sparkles count={24} scale={3.2} size={2.2} speed={0.5} color="#FFD700" />
+      <Sparkles count={26} scale={3.4} size={2.2} speed={0.5} color="#FFD700" />
     </group>
   );
 }
 
-/* ── 🕐 ULTRA WATCH: Fluted 24K bezel + chronograph sub-dials + jubilee bracelet ── */
-function UltraWatch3D({ metal = METALS['24k-gold'] }) {
+/* ── 🕐 HYPER WATCH: 48-tooth fluted bezel + chronograph sub-dials + jubilee bracelet ── */
+function HyperWatch3D({ metal = METALS['24k-gold'] }) {
   const secondsRef = useRef();
 
   useFrame((_, d) => {
-    if (secondsRef.current) {
-      secondsRef.current.rotation.z -= d * 1.8;
-    }
+    if (secondsRef.current) secondsRef.current.rotation.z -= d * 1.8;
   });
 
   return (
     <group>
       {/* Watch Case Shell */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.62, 0.62, 0.14, 36]} />
+        <cylinderGeometry args={[0.64, 0.64, 0.15, 40]} />
         <meshPhysicalMaterial {...metal} />
       </mesh>
 
-      {/* Fluted Gold Bezel (48 scalloped facets) */}
+      {/* 48-Tooth Fluted Gold Bezel */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.62, 0.045, 12, 48]} />
-        <meshPhysicalMaterial {...metal} roughness={0.04} />
+        <torusGeometry args={[0.64, 0.048, 14, 48]} />
+        <meshPhysicalMaterial {...metal} roughness={0.03} />
       </mesh>
 
       {/* Sunburst Black Sapphire Crystal Dial */}
-      <mesh position={[0, 0, 0.076]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.56, 0.56, 0.01, 36]} />
-        <meshPhysicalMaterial color="#0A0A10" metalness={0.8} roughness={0.1} />
+      <mesh position={[0, 0, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.58, 0.58, 0.01, 40]} />
+        <meshPhysicalMaterial color="#08080E" metalness={0.85} roughness={0.08} />
       </mesh>
 
-      {/* 12 Diamond Hour Baton Indices */}
+      {/* 12 Diamond Baton Indices */}
       {[...Array(12)].map((_, i) => {
         const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
-        const r = 0.44;
+        const r = 0.46;
         return (
-          <mesh key={`ind-${i}`} position={[Math.cos(a) * r, Math.sin(a) * r, 0.084]}>
-            <boxGeometry args={[0.016, i % 3 === 0 ? 0.08 : 0.045, 0.012]} />
+          <mesh key={`ind-${i}`} position={[Math.cos(a) * r, Math.sin(a) * r, 0.088]}>
+            <boxGeometry args={[0.018, i % 3 === 0 ? 0.085 : 0.048, 0.014]} />
             <meshStandardMaterial color="#E6C280" emissive="#E6C280" emissiveIntensity={0.6} toneMapped={false} />
           </mesh>
         );
@@ -446,64 +472,58 @@ function UltraWatch3D({ metal = METALS['24k-gold'] }) {
 
       {/* 3 Chronograph Sub-Dials */}
       {[
-        { x: -0.2, y: 0 },
-        { x: 0.2, y: 0 },
-        { x: 0, y: -0.22 },
+        { x: -0.21, y: 0 },
+        { x: 0.21, y: 0 },
+        { x: 0, y: -0.23 },
       ].map((sub, i) => (
-        <group key={`sub-${i}`} position={[sub.x, sub.y, 0.082]}>
+        <group key={`sub-${i}`} position={[sub.x, sub.y, 0.086]}>
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.12, 0.12, 0.005, 20]} />
-            <meshStandardMaterial color="#16161F" metalness={0.5} />
+            <cylinderGeometry args={[0.13, 0.13, 0.005, 24]} />
+            <meshStandardMaterial color="#14141C" metalness={0.6} />
           </mesh>
           <mesh rotation={[0, 0, i * 1.2]}>
-            <boxGeometry args={[0.008, 0.09, 0.005]} />
+            <boxGeometry args={[0.009, 0.095, 0.005]} />
             <meshStandardMaterial color="#E6C280" />
           </mesh>
         </group>
       ))}
 
-      {/* Hour & Minute Hands */}
-      <mesh position={[0.03, 0.06, 0.088]} rotation={[0, 0, Math.PI / 4]}>
-        <boxGeometry args={[0.022, 0.22, 0.008]} />
+      {/* Hands */}
+      <mesh position={[0.03, 0.06, 0.092]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.024, 0.24, 0.008]} />
         <meshStandardMaterial color="#FFF" />
       </mesh>
-      <mesh position={[-0.02, 0.08, 0.09]} rotation={[0, 0, -Math.PI / 3]}>
-        <boxGeometry args={[0.016, 0.32, 0.008]} />
+      <mesh position={[-0.02, 0.08, 0.094]} rotation={[0, 0, -Math.PI / 3]}>
+        <boxGeometry args={[0.018, 0.34, 0.008]} />
         <meshStandardMaterial color="#FFF" />
       </mesh>
 
-      {/* Sweeping Golden Second Hand */}
-      <mesh ref={secondsRef} position={[0, 0, 0.092]}>
-        <boxGeometry args={[0.008, 0.42, 0.005]} />
-        <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.4} toneMapped={false} />
+      {/* Sweeping Second Hand with Counterweight */}
+      <mesh ref={secondsRef} position={[0, 0, 0.098]}>
+        <boxGeometry args={[0.008, 0.44, 0.005]} />
+        <meshStandardMaterial color="#D4AF37" emissive="#D4AF37" emissiveIntensity={0.5} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 0, 0.096]}>
-        <sphereGeometry args={[0.025, 12, 12]} />
+      <mesh position={[0, 0, 0.102]}>
+        <sphereGeometry args={[0.028, 14, 14]} />
         <meshPhysicalMaterial {...metal} />
       </mesh>
 
-      {/* Crown Button */}
-      <mesh position={[0.68, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.045, 0.04, 0.12, 16]} />
-        <meshPhysicalMaterial {...metal} />
-      </mesh>
-
-      {/* Segmented Jubilee Bracelet Links */}
+      {/* Segmented Jubilee Bracelet */}
       {[-1, 1].map((dir) =>
         [...Array(5)].map((_, i) => (
-          <group key={`jub-${dir}-${i}`} position={[0, dir * (0.76 + i * 0.18), -0.02]}>
+          <group key={`jub-${dir}-${i}`} position={[0, dir * (0.8 + i * 0.19), -0.02]}>
             <mesh>
-              <boxGeometry args={[0.42, 0.14, 0.06]} />
+              <boxGeometry args={[0.44, 0.15, 0.06]} />
               <meshPhysicalMaterial {...metal} roughness={0.12} />
             </mesh>
-            <mesh position={[0, 0, 0.015]}>
-              <boxGeometry args={[0.2, 0.14, 0.06]} />
+            <mesh position={[0, 0, 0.016]}>
+              <boxGeometry args={[0.22, 0.15, 0.06]} />
               <meshPhysicalMaterial {...metal} roughness={0.03} />
             </mesh>
           </group>
         ))
       )}
-      <Sparkles count={20} scale={2.6} size={2.2} speed={0.5} color="#FFD700" />
+      <Sparkles count={22} scale={2.8} size={2.2} speed={0.5} color="#FFD700" />
     </group>
   );
 }
@@ -511,129 +531,283 @@ function UltraWatch3D({ metal = METALS['24k-gold'] }) {
 /* ── PRODUCT SELECTOR ── */
 function UltraProductModel3D({ category, metal }) {
   switch (category) {
-    case 'necklace': return <UltraNecklace3D metal={metal} />;
-    case 'earring':  return <UltraEarring3D metal={metal} />;
-    case 'bracelet': return <UltraBracelet3D metal={metal} />;
-    case 'watch':    return <UltraWatch3D metal={metal} />;
-    default:         return <UltraRing3D metal={metal} />;
+    case 'necklace': return <HyperNecklace3D metal={metal} />;
+    case 'earring':  return <HyperEarring3D metal={metal} />;
+    case 'bracelet': return <HyperBracelet3D metal={metal} />;
+    case 'watch':    return <HyperWatch3D metal={metal} />;
+    default:         return <HyperRing3D metal={metal} />;
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   4. TAILORED 3D VAULT PACKAGING & INTERIORS
+   4. HYPER-DETAILED VELVET VAULT & 3D PACKAGING SYSTEM
    ═══════════════════════════════════════════════════════════════════════ */
 
 const BOX_DIMENSIONS = {
-  ring:     { w: 1.7, d: 1.7, h: 0.95, lidH: 0.28 },
-  necklace: { w: 2.9, d: 2.1, h: 0.70, lidH: 0.22 },
-  earring:  { w: 1.9, d: 1.5, h: 0.80, lidH: 0.24 },
-  bracelet: { w: 2.3, d: 2.3, h: 0.85, lidH: 0.25 },
-  watch:    { w: 2.5, d: 2.5, h: 0.95, lidH: 0.28 },
+  ring:     { w: 1.75, d: 1.75, h: 1.00, lidH: 0.30 },
+  necklace: { w: 3.00, d: 2.20, h: 0.75, lidH: 0.24 },
+  earring:  { w: 2.00, d: 1.60, h: 0.85, lidH: 0.26 },
+  bracelet: { w: 2.40, d: 2.40, h: 0.90, lidH: 0.27 },
+  watch:    { w: 2.60, d: 2.60, h: 1.00, lidH: 0.30 },
 };
 
-function UltraJewelryBox3D({ category, lidRef }) {
+function HyperJewelryBox3D({ category, lidRef, boxPhase }) {
   const c = BOX_DIMENSIONS[category] || BOX_DIMENSIONS.ring;
+
+  // Optical Velvet Material (Three.js sheen)
+  const velvetMat = {
+    color: '#4A0D15',
+    roughness: 0.86,
+    metalness: 0.03,
+    clearcoat: 0.1,
+    sheen: 1.0,
+    sheenColor: new THREE.Color('#9E1B2B'),
+    sheenRoughness: 0.22,
+  };
+
+  const goldTrimMat = {
+    color: '#E6C280',
+    metalness: 0.97,
+    roughness: 0.07,
+    clearcoat: 1.0,
+  };
+
+  const satinInteriorMat = {
+    color: '#F5EFE6',
+    roughness: 0.28,
+    metalness: 0.02,
+    clearcoat: 0.6,
+    sheen: 0.8,
+    sheenColor: new THREE.Color('#FFFFFF'),
+  };
 
   return (
     <group>
       {/* ── 1. LOWER SHELL (Italian Burgundy Velvet) ── */}
       <mesh position={[0, c.h / 4, 0]}>
         <boxGeometry args={[c.w, c.h / 2, c.d]} />
-        <meshPhysicalMaterial color="#4A0E17" roughness={0.88} metalness={0.04} clearcoat={0.12} />
+        <meshPhysicalMaterial {...velvetMat} />
       </mesh>
 
-      {/* Gold Trim Filigree Band */}
+      {/* Gold Rim Band */}
       <mesh position={[0, c.h / 2 + 0.01, 0]}>
         <boxGeometry args={[c.w + 0.04, 0.02, c.d + 0.04]} />
-        <meshPhysicalMaterial color="#E6C280" metalness={0.96} roughness={0.08} />
+        <meshPhysicalMaterial {...goldTrimMat} />
       </mesh>
 
       {/* 4 Gold Corner Filigree Brackets */}
       {[-1, 1].map((x) =>
         [-1, 1].map((z) => (
           <mesh key={`c-${x}-${z}`} position={[x * (c.w / 2), c.h / 4, z * (c.d / 2)]}>
-            <boxGeometry args={[0.06, c.h / 2, 0.06]} />
-            <meshPhysicalMaterial color="#E6C280" metalness={0.96} roughness={0.08} />
+            <boxGeometry args={[0.065, c.h / 2, 0.065]} />
+            <meshPhysicalMaterial {...goldTrimMat} />
           </mesh>
         ))
       )}
 
+      {/* Rear Dual Brass Piano Hinge Plates */}
+      {[-0.35, 0.35].map((x, i) => (
+        <group key={`hinge-${i}`} position={[x * (c.w / 2), c.h / 2, -c.d / 2 - 0.01]}>
+          <mesh>
+            <boxGeometry args={[0.18, 0.12, 0.025]} />
+            <meshPhysicalMaterial {...goldTrimMat} />
+          </mesh>
+          <mesh position={[0, 0, 0.012]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.02, 0.02, 0.18, 12]} />
+            <meshPhysicalMaterial {...goldTrimMat} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Front Spring-Loaded Brass Push Clasp */}
+      <group position={[0, c.h / 2 - 0.02, c.d / 2 + 0.012]}>
+        <mesh>
+          <boxGeometry args={[0.22, 0.12, 0.028]} />
+          <meshPhysicalMaterial {...goldTrimMat} />
+        </mesh>
+        <mesh position={[0, 0, 0.018]}>
+          <cylinderGeometry args={[0.035, 0.035, 0.04, 16]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshPhysicalMaterial {...goldTrimMat} />
+        </mesh>
+      </group>
+
       {/* ── 2. TAILORED PLUSH INTERIOR SLOTS ── */}
       <group position={[0, c.h / 2 - 0.02, 0]}>
-        {/* Main Tufted Satin Base Cushion */}
+        {/* Main Satin Base Cushion */}
         <mesh>
-          <boxGeometry args={[c.w * 0.84, 0.08, c.d * 0.84]} />
-          <meshStandardMaterial color="#E8D5B7" roughness={0.35} />
+          <boxGeometry args={[c.w * 0.85, 0.09, c.d * 0.85]} />
+          <meshPhysicalMaterial {...satinInteriorMat} />
         </mesh>
 
-        {/* Ring: Vertical Velvet Slit */}
+        {/* Ring: Deep Dark Velvet Slit Cushion (Where the ring anchors) */}
         {category === 'ring' && (
-          <mesh position={[0, 0.045, 0]}>
-            <boxGeometry args={[0.6, 0.02, 0.08]} />
-            <meshBasicMaterial color="#1E0508" />
-          </mesh>
+          <group position={[0, 0.048, 0]}>
+            <mesh>
+              <boxGeometry args={[0.65, 0.01, 0.12]} />
+              <meshBasicMaterial color="#120204" />
+            </mesh>
+            {/* Cushion tuft ridges */}
+            {[-0.1, 0.1].map((z, i) => (
+              <mesh key={`ridge-${i}`} position={[0, 0.005, z]}>
+                <cylinderGeometry args={[0.02, 0.02, 0.65, 12]} rotation={[0, 0, Math.PI / 2]} />
+                <meshPhysicalMaterial {...satinInteriorMat} />
+              </mesh>
+            ))}
+          </group>
         )}
 
-        {/* Necklace: Slanted Neck-Bust Pad */}
+        {/* Necklace: Slanted Velvet Neck-Bust Pad */}
         {category === 'necklace' && (
-          <mesh position={[0, 0.05, 0]} rotation={[0.2, 0, 0]}>
-            <cylinderGeometry args={[0.5, 0.7, 0.06, 16]} />
-            <meshStandardMaterial color="#DDC29B" roughness={0.4} />
+          <mesh position={[0, 0.06, 0]} rotation={[0.22, 0, 0]}>
+            <cylinderGeometry args={[0.52, 0.74, 0.07, 16]} />
+            <meshPhysicalMaterial {...satinInteriorMat} />
           </mesh>
         )}
 
         {/* Earrings: Twin Pierced Velvet Pads */}
         {category === 'earring' && (
-          <group position={[0, 0.05, 0]}>
-            <mesh position={[-0.35, 0, 0]}>
-              <boxGeometry args={[0.3, 0.03, 0.5]} />
-              <meshStandardMaterial color="#DDC29B" />
+          <group position={[0, 0.055, 0]}>
+            <mesh position={[-0.38, 0, 0]}>
+              <boxGeometry args={[0.34, 0.04, 0.54]} />
+              <meshPhysicalMaterial {...satinInteriorMat} />
             </mesh>
-            <mesh position={[0.35, 0, 0]}>
-              <boxGeometry args={[0.3, 0.03, 0.5]} />
-              <meshStandardMaterial color="#DDC29B" />
+            <mesh position={[0.38, 0, 0]}>
+              <boxGeometry args={[0.34, 0.04, 0.54]} />
+              <meshPhysicalMaterial {...satinInteriorMat} />
             </mesh>
           </group>
         )}
 
         {/* Bracelet / Watch: Padded Cylinder Roll Cushion */}
         {(category === 'bracelet' || category === 'watch') && (
-          <mesh position={[0, 0.08, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.28, 0.28, c.w * 0.65, 20]} />
-            <meshStandardMaterial color="#DDC29B" roughness={0.3} />
+          <mesh position={[0, 0.09, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.30, 0.30, c.w * 0.68, 24]} />
+            <meshPhysicalMaterial {...satinInteriorMat} />
           </mesh>
         )}
       </group>
 
-      {/* ── 3. HINGED LID (Opens on rear brass piano hinge) ── */}
+      {/* ── 3. HINGED LID (Opens on rear brass hinge) ── */}
       <group ref={lidRef} position={[0, c.h / 2, -c.d / 2]}>
         <mesh position={[0, c.lidH / 2, c.d / 2]}>
           <boxGeometry args={[c.w, c.lidH, c.d]} />
-          <meshPhysicalMaterial color="#4A0E17" roughness={0.88} metalness={0.04} clearcoat={0.12} />
+          <meshPhysicalMaterial {...velvetMat} />
         </mesh>
-        {/* Gold Filigree Ribbon Embossing on Lid */}
-        <mesh position={[0, c.lidH + 0.006, c.d / 2]}>
-          <boxGeometry args={[c.w * 0.35, 0.012, c.d * 0.35]} />
-          <meshPhysicalMaterial color="#E6C280" metalness={0.96} roughness={0.08} />
+
+        {/* Satin Lid Inner Liner Roof */}
+        <mesh position={[0, 0.02, c.d / 2]}>
+          <boxGeometry args={[c.w * 0.84, 0.02, c.d * 0.84]} />
+          <meshPhysicalMaterial {...satinInteriorMat} />
+        </mesh>
+        {/* Inner Gold Foil Stamped "GLIMMR ATELIER" Seal */}
+        <mesh position={[0, 0.035, c.d / 2]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.22, 0.22, 0.005, 24]} />
+          <meshPhysicalMaterial {...goldTrimMat} />
+        </mesh>
+
+        {/* Outer Lid Gold Filigree Embossing */}
+        <mesh position={[0, c.lidH + 0.008, c.d / 2]}>
+          <boxGeometry args={[c.w * 0.38, 0.014, c.d * 0.38]} />
+          <meshPhysicalMaterial {...goldTrimMat} />
         </mesh>
         {/* Royal 24K Monogram Seal */}
-        <mesh position={[0, c.lidH + 0.016, c.d / 2]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.12, 0.12, 0.01, 20]} />
-          <meshPhysicalMaterial color="#E6C280" metalness={0.98} roughness={0.04} />
+        <mesh position={[0, c.lidH + 0.018, c.d / 2]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.13, 0.13, 0.012, 24]} />
+          <meshPhysicalMaterial {...goldTrimMat} />
         </mesh>
       </group>
 
       {/* Base Plate */}
-      <mesh position={[0, -0.01, 0]}>
-        <boxGeometry args={[c.w + 0.06, 0.02, c.d + 0.06]} />
-        <meshPhysicalMaterial color="#200306" roughness={0.9} />
+      <mesh position={[0, -0.012, 0]}>
+        <boxGeometry args={[c.w + 0.06, 0.024, c.d + 0.06]} />
+        <meshPhysicalMaterial color="#1C0205" roughness={0.92} />
       </mesh>
+
+      {/* ── 4. 3D SILK RIBBONS & TIED BOW KNOT (Appears when box closed) ── */}
+      {boxPhase >= 2 && (
+        <group position={[0, c.h / 2 + c.lidH + 0.015, 0]}>
+          {/* Diagonal Silk Ribbon Cross */}
+          <mesh>
+            <boxGeometry args={[c.w * 1.02, 0.015, 0.14]} />
+            <meshStandardMaterial color="#E8D5B7" roughness={0.3} />
+          </mesh>
+          <mesh>
+            <boxGeometry args={[0.14, 0.015, c.d * 1.02]} />
+            <meshStandardMaterial color="#E8D5B7" roughness={0.3} />
+          </mesh>
+          {/* 3D Tied Bow Knot Loops */}
+          <group position={[0, 0.04, 0]}>
+            {[-1, 1].map((dir) => (
+              <mesh key={`bow-${dir}`} position={[dir * 0.12, 0.02, 0]} rotation={[0, 0, dir * 0.4]}>
+                <torusGeometry args={[0.09, 0.022, 12, 24, Math.PI * 1.4]} />
+                <meshStandardMaterial color="#E8D5B7" roughness={0.3} />
+              </mesh>
+            ))}
+          </group>
+        </group>
+      )}
+
+      {/* ── 5. 3D MOLTEN 24K WAX SEAL (Drops on closed box) ── */}
+      {boxPhase >= 3 && (
+        <group position={[0, c.h / 2 + c.lidH + 0.06, 0]}>
+          {/* Molten Liquid Puddle Ring */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.26, 0.28, 0.02, 24]} />
+            <meshPhysicalMaterial color="#8B101E" roughness={0.4} clearcoat={0.8} />
+          </mesh>
+          {/* Embossed Royal Gold Seal Impression */}
+          <mesh position={[0, 0.015, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.18, 0.18, 0.02, 24]} />
+            <meshPhysicalMaterial color="#9E1B2B" roughness={0.3} clearcoat={0.9} />
+          </mesh>
+          <mesh position={[0, 0.028, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.09, 0.09, 0.008, 16]} />
+            <meshPhysicalMaterial {...goldTrimMat} />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+
+/* ── 🛍️ 3D BOUTIQUE GLIMMR GIFT BAG (Encapsulates box in Act 4) ── */
+function GlimmrGiftBag3D() {
+  const bagMat = { color: '#3E0B12', roughness: 0.85, metalness: 0.05, clearcoat: 0.2 };
+  const goldHandleMat = { color: '#E6C280', metalness: 0.95, roughness: 0.15 };
+
+  return (
+    <group position={[0, -0.6, 0]}>
+      {/* Matte Burgundy Shopping Bag Body */}
+      <mesh>
+        <boxGeometry args={[3.2, 2.6, 2.4]} />
+        <meshPhysicalMaterial {...bagMat} />
+      </mesh>
+
+      {/* Gold Foil Logo Stripe */}
+      <mesh position={[0, 0.1, 1.21]}>
+        <boxGeometry args={[1.8, 0.4, 0.01]} />
+        <meshPhysicalMaterial color="#E6C280" metalness={0.98} roughness={0.05} />
+      </mesh>
+
+      {/* Gold Tissue Paper Lining on Top */}
+      <mesh position={[0, 1.32, 0]} rotation={[0.1, 0.2, 0]}>
+        <boxGeometry args={[2.8, 0.15, 2.0]} />
+        <meshStandardMaterial color="#F2E6D0" roughness={0.4} />
+      </mesh>
+
+      {/* Braided Gold Rope Handles */}
+      {[-0.9, 0.9].map((z, i) => (
+        <mesh key={`handle-${i}`} position={[0, 1.6, z]}>
+          <torusGeometry args={[0.55, 0.035, 12, 32, Math.PI]} />
+          <meshPhysicalMaterial {...goldHandleMat} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   5. CINEMATIC CAMERA & SCENE ORCHESTRATION
+   5. MASTER ATELIER SCENE & ORCHESTRATION
    ═══════════════════════════════════════════════════════════════════════ */
 
 function MasterAtelierScene({ act, category, metal }) {
@@ -643,17 +817,18 @@ function MasterAtelierScene({ act, category, metal }) {
   const boxGroupRef = useRef();
   const laserRef = useRef();
   const actTimesRef = useRef({});
+  const [boxPhase, setBoxPhase] = useState(0); // 0: open, 1: docking, 2: closed & ribbon, 3: wax sealed
 
   useFrame((state, delta) => {
     const clock = state.clock.elapsedTime;
     if (actTimesRef.current[act] === undefined) actTimesRef.current[act] = clock;
     const at = clock - actTimesRef.current[act];
 
-    /* ── DYNAMIC CAMERA CHOREOGRAPHY ── */
+    /* ── DYNAMIC CINEMATIC CAMERA CHOREOGRAPHY ── */
     if (act === 0) {
       // Act 0: 360° orbiting glide
       const targetPos = new THREE.Vector3(
-        Math.sin(clock * 0.45) * 1.2,
+        Math.sin(clock * 0.45) * 1.3,
         0.35 + Math.cos(clock * 0.3) * 0.15,
         3.8
       );
@@ -661,22 +836,22 @@ function MasterAtelierScene({ act, category, metal }) {
       camera.lookAt(0, 0.1, 0);
     } else if (act === 1) {
       // Act 1: Macro zoom for laser hallmarking
-      const targetPos = new THREE.Vector3(0, 0.15, 2.4);
+      const targetPos = new THREE.Vector3(0, 0.15, 2.3);
       camera.position.lerp(targetPos, delta * 4);
       camera.lookAt(0, 0.15, 0);
     } else if (act === 2) {
-      // Act 2: High-angle presentation view
-      const targetPos = new THREE.Vector3(0, 1.4, 3.4);
+      // Act 2: High-angle presentation view of velvet vault
+      const targetPos = new THREE.Vector3(0, 1.5, 3.5);
       camera.position.lerp(targetPos, delta * 3.5);
-      camera.lookAt(0, -0.3, 0);
+      camera.lookAt(0, -0.35, 0);
     } else if (act === 3) {
       // Act 3: Dramatic transit pull-back
-      const targetPos = new THREE.Vector3(0, 0.6, 4.6);
+      const targetPos = new THREE.Vector3(0, 0.6, 4.8);
       camera.position.lerp(targetPos, delta * 2.5);
       camera.lookAt(0, 0.2, 0);
     }
 
-    /* ── PRODUCT DOCKING PHYSICS ── */
+    /* ── PRODUCT DOCKING PHYSICS INTO VELVET SLIT ── */
     if (productRef.current) {
       productRef.current.rotation.y += delta * 0.55;
 
@@ -686,25 +861,29 @@ function MasterAtelierScene({ act, category, metal }) {
           THREE.MathUtils.lerp(productRef.current.scale.x, 1, delta * 4)
         );
       } else if (act === 2) {
-        // Smooth descent into velvet slot
-        if (at > 0.6 && at < 2.0) {
-          const p = (at - 0.6) / 1.4;
+        // Smooth descent into velvet insertion slit
+        if (at > 0.5 && at < 1.8) {
+          const p = (at - 0.5) / 1.3;
           const e = p * p * (3 - 2 * p);
-          productRef.current.position.y = THREE.MathUtils.lerp(0, -1.35, e);
-          productRef.current.scale.setScalar(THREE.MathUtils.lerp(1, 0.52, e));
-        } else if (at >= 2.0) {
-          productRef.current.position.y = -1.35;
-          productRef.current.scale.setScalar(0.52);
+          productRef.current.position.y = THREE.MathUtils.lerp(0, -1.38, e);
+          productRef.current.scale.setScalar(THREE.MathUtils.lerp(1, 0.50, e));
+          if (boxPhase === 0 && at > 1.2) setBoxPhase(1);
+        } else if (at >= 1.8) {
+          productRef.current.position.y = -1.38;
+          productRef.current.scale.setScalar(0.50);
+          if (boxPhase < 2 && at > 2.2) setBoxPhase(2);
+          if (boxPhase < 3 && at > 2.8) setBoxPhase(3);
         }
       }
     }
 
-    /* ── BOX LID HINGE MECHANICS ── */
+    /* ── BOX LID HINGE MECHANICS (Physical swing & recoil) ── */
     if (boxLidRef.current) {
       const boxAt = clock - (actTimesRef.current[2] ?? clock);
-      const target = (act === 2 && boxAt < 2.4) ? -1.95 : 0;
+      // Opens wide (-1.95 rad), then swings shut (0 rad) after docking at ~2.0s
+      const target = (act === 2 && boxAt < 2.1) ? -1.95 : 0;
       boxLidRef.current.rotation.x = THREE.MathUtils.lerp(
-        boxLidRef.current.rotation.x, target, delta * 5
+        boxLidRef.current.rotation.x, target, delta * 6
       );
     }
 
@@ -717,15 +896,15 @@ function MasterAtelierScene({ act, category, metal }) {
     /* ── ARMORED TRANSIT LAUNCH (ACT 3) ── */
     if (boxGroupRef.current && act === 3) {
       boxGroupRef.current.position.y += delta * 2.2;
-      const s = Math.max(0.01, boxGroupRef.current.scale.x - delta * 0.32);
+      const s = Math.max(0.01, boxGroupRef.current.scale.x - delta * 0.30);
       boxGroupRef.current.scale.setScalar(s);
     }
   });
 
   return (
     <Suspense fallback={null}>
-      {/* Multi-Point Studio Lighting Rig */}
-      <ambientLight intensity={0.6} />
+      {/* Studio Lighting Rig */}
+      <ambientLight intensity={0.65} />
       <directionalLight position={[6, 9, 6]} intensity={2.2} color="#FFF8E7" />
       <pointLight position={[-5, 4, -4]} intensity={1.4} color="#B59A6C" />
       <pointLight position={[3, -2, 4]} intensity={0.9} color="#E8D5B7" />
@@ -753,7 +932,6 @@ function MasterAtelierScene({ act, category, metal }) {
             <sphereGeometry args={[0.035, 10, 10]} />
             <meshStandardMaterial color="#FFF" emissive="#00E5FF" emissiveIntensity={14} toneMapped={false} />
           </mesh>
-          {/* Thermal Ember Sparks */}
           {[...Array(8)].map((_, i) => (
             <mesh key={`spark-${i}`} position={[(Math.random() - 0.5) * 0.35, -0.1 - Math.random() * 0.3, 0.55 + (Math.random() - 0.5) * 0.2]}>
               <sphereGeometry args={[0.014, 6, 6]} />
@@ -763,14 +941,18 @@ function MasterAtelierScene({ act, category, metal }) {
         </group>
       )}
 
-      {/* 3D Velvet Vault */}
-      {act >= 2 && act <= 3 && (
+      {/* 3D Velvet Vault & Gift Bag */}
+      {act >= 2 && (
         <group ref={boxGroupRef} position={[0, -1.8, 0]}>
-          <UltraJewelryBox3D category={category} lidRef={boxLidRef} />
+          {act === 3 ? (
+            <GlimmrGiftBag3D />
+          ) : (
+            <HyperJewelryBox3D category={category} lidRef={boxLidRef} boxPhase={boxPhase} />
+          )}
         </group>
       )}
 
-      {/* Post-Processing Pipeline */}
+      {/* Post-Processing */}
       <EffectComposer>
         <Bloom intensity={0.75} luminanceThreshold={0.88} mipmapBlur />
         <Vignette darkness={0.38} offset={0.28} />
@@ -825,7 +1007,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const productObj = firstItem.product || firstItem;
   const productName = productObj.name || firstItem.name || 'Glimmr Royal Creation';
 
-  // Toggle Audio
+  // Sound toggle
   const toggleMute = () => {
     const newMuted = !muted;
     setMuted(newMuted);
@@ -845,31 +1027,32 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
     const t1 = setTimeout(() => {
       setAct(1); // Act 2: Laser Hallmark
       audioEngine.playLaser();
-    }, 3000);
+    }, 3200);
 
     const t2 = setTimeout(() => {
-      setAct(2); // Act 3: Velvet Vault Encapsulation
-      audioEngine.playLatch();
-      setTimeout(() => audioEngine.playWaxSeal(), 2200);
-    }, 5600);
+      setAct(2); // Act 3: Velvet Vault Encapsulation & Closure
+      audioEngine.playDock();
+      setTimeout(() => audioEngine.playLatch(), 2100);
+      setTimeout(() => audioEngine.playWaxSeal(), 2900);
+    }, 6000);
 
     const t3 = setTimeout(() => {
-      setAct(3); // Act 4: Armored Dispatch
+      setAct(3); // Act 4: Boutique Gift Bag Dispatch
       audioEngine.playChime();
-    }, 8600);
+    }, 9200);
 
     const t4 = setTimeout(() => {
       setAct(4); // Act 5: Order Confirmation
       audioEngine.playCelebration();
       try {
         confetti({
-          particleCount: 90,
-          spread: 80,
+          particleCount: 95,
+          spread: 85,
           origin: { y: 0.6 },
           colors: ['#B59A6C', '#E8D5B7', '#D4AF37', '#FFFFFF'],
         });
       } catch (e) {}
-    }, 11200);
+    }, 12000);
 
     return () => {
       clearTimeout(t1);
@@ -978,12 +1161,12 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                 </motion.div>
               )}
 
-              {/* Act 2 — Molten 24K Wax Seal Stamp */}
+              {/* Act 2 — Molten 24K Wax Seal Stamp Badge */}
               {act === 2 && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 2.2, duration: 0.5 }}
+                  transition={{ delay: 2.8, duration: 0.5 }}
                   className="absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center z-20"
                   style={{
                     background: 'radial-gradient(circle at 35% 35%, #9E1B1B, #5E0B0B)',
@@ -1022,8 +1205,8 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                   audioEngine.playCelebration();
                   try {
                     confetti({
-                      particleCount: 90,
-                      spread: 80,
+                      particleCount: 95,
+                      spread: 85,
                       origin: { y: 0.6 },
                       colors: ['#B59A6C', '#E8D5B7', '#D4AF37', '#FFFFFF'],
                     });
