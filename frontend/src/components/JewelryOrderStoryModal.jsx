@@ -1,72 +1,96 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getProductImage } from '../utils/productImages';
 
-/**
- * 3D White-Glove Concierge Doorstep Delivery Story Modal
- * 
- * Scene 1: Concierge in Tuxedo & White Gloves arrives carrying the glowing Velvet Jewel Box
- * Scene 2: Concierge presses the brass doorbell — acoustic chime pulse & porch light bloom
- * Scene 3: 3D Arched Villa Door swings open, elegant lady steps forward and receives the box
- * Scene 4: Concierge politely bows and departs; the lady unveils the customer's ordered creation
- * Scene 5: Perfectly centered Luxury Order Confirmation Card with Live Order ID & Tracker
- */
+/*──────────────────────────────────────────────────────────────────────
+ *  3-D  WHITE-GLOVE  DOORSTEP  DELIVERY  —  CINEMATIC  STORY  MODAL
+ *──────────────────────────────────────────────────────────────────────
+ *
+ *  Scene 0  ·  Establishing Shot  — moonlit villa façade, porch lights bloom
+ *  Scene 1  ·  Courier Walks Up   — tuxedo concierge strides in carrying the
+ *                                    glowing velvet jewel-box
+ *  Scene 2  ·  Doorbell Ring      — courier extends hand, presses brass bell;
+ *                                    golden acoustic chime ripples outward
+ *  Scene 3  ·  Door Opens         — grand arched door swings open (rotateY);
+ *                                    warm interior light floods the porch
+ *  Scene 4  ·  Lady Receives      — elegant lady steps forward;
+ *                                    box transfers from courier → lady
+ *  Scene 5  ·  Courier Departs    — courier bows, walks away;
+ *                                    lady steps back inside with box
+ *  Scene 6  ·  Unveil & Confirm   — product spotlight → order confirmation
+ *──────────────────────────────────────────────────────────────────────*/
+
 const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const [currentScene, setCurrentScene] = useState(0);
+  const [scene, setScene] = useState(-1);
 
-  // Extract order details & ordered product
-  const orderId = orderData?._id || orderData?.orderId || orderData?.id || `GLM-ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-  const displayTotal = orderData?.totalAmount || orderData?.totalPrice || orderData?.total || 0;
-  
+  // ── Extract order data ──
+  const orderId =
+    orderData?._id ||
+    orderData?.orderId ||
+    orderData?.id ||
+    `GLM-${Math.floor(100000 + Math.random() * 900000)}`;
+
   const firstItem = orderData?.items?.[0] || orderData?.orderItems?.[0] || {};
   const productObj = firstItem.product || firstItem;
-  const productImage = firstItem.image || productObj.image || (productObj.category ? getProductImage(productObj) : 'https://images.pexels.com/photos/2552014/pexels-photo-2552014.jpeg');
-  const productName = productObj.name || firstItem.name || 'Glimmr Bespoke Creation';
+  const productImage =
+    firstItem.image ||
+    productObj.image ||
+    (productObj.category
+      ? getProductImage(productObj)
+      : 'https://images.pexels.com/photos/2552014/pexels-photo-2552014.jpeg');
+  const productName =
+    productObj.name || firstItem.name || 'Glimmr Bespoke Creation';
 
-  // Story Narration Script matching timing
-  const SCENE_SCRIPTS = [
-    {
-      badge: '01 / 04 · CONCIERGE ARRIVAL',
-      title: 'WHITE-GLOVE COURIER ARRIVAL',
-      subtitle: 'Luxury courier arrives at your doorstep with your handcrafted Glimmr creation',
-    },
-    {
-      badge: '02 / 04 · DOORBELL CHIME',
-      title: 'DOORBELL CHIME & PORCH ILLUMINATION',
-      subtitle: 'Courier rings the chime, announcing the arrival of your sealed jewelry vault',
-    },
-    {
-      badge: '03 / 04 · PRIVATE HANDOVER',
-      title: 'VILLA DOOR OPENS & HANDOVER',
-      subtitle: 'Door opens gracefully as the velvet vault box is presented with white gloves',
-    },
-    {
-      badge: '04 / 04 · COURIER DEPARTS & UNVEIL',
-      title: 'COURIER DEPARTS & CREATION UNVEILED',
-      subtitle: 'Courier bows and departs while your hallmarked masterpiece is unveiled',
-    },
-  ];
+  // ── Scene timeline ──
+  const SCRIPTS = useMemo(
+    () => [
+      {
+        badge: 'SCENE 1 OF 5',
+        title: 'Concierge Arrival',
+        line: 'Your white-glove courier approaches the residence with a sealed Glimmr vault',
+      },
+      {
+        badge: 'SCENE 2 OF 5',
+        title: 'Doorbell Chime',
+        line: 'The courier announces the delivery with a signature brass doorbell press',
+      },
+      {
+        badge: 'SCENE 3 OF 5',
+        title: 'The Grand Door Opens',
+        line: 'Warm interior light floods through as the villa door swings open',
+      },
+      {
+        badge: 'SCENE 4 OF 5',
+        title: 'Private Handover',
+        line: 'The velvet vault is presented and received with ceremony',
+      },
+      {
+        badge: 'SCENE 5 OF 5',
+        title: 'Courier Departs',
+        line: 'With a bow, the courier steps into the night — your creation awaits',
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
     if (!isOpen) {
-      setCurrentScene(0);
+      setScene(-1);
       return;
     }
-
-    const t1 = setTimeout(() => setCurrentScene(1), 1600);
-    const t2 = setTimeout(() => setCurrentScene(2), 3200);
-    const t3 = setTimeout(() => setCurrentScene(3), 4800);
-    const t4 = setTimeout(() => setCurrentScene(4), 6400);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-    };
+    /* stagger: fade-in → scene flow */
+    const timers = [
+      setTimeout(() => setScene(0), 400),   // courier walks in
+      setTimeout(() => setScene(1), 2400),  // doorbell
+      setTimeout(() => setScene(2), 4200),  // door opens
+      setTimeout(() => setScene(3), 6000),  // handover
+      setTimeout(() => setScene(4), 7800),  // courier departs
+      setTimeout(() => setScene(5), 9600),  // unveil + confirmation
+    ];
+    return () => timers.forEach(clearTimeout);
   }, [isOpen]);
 
   if (!isOpen || !orderData) return null;
@@ -77,10 +101,18 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleGoToOrder = () => {
-    onClose?.();
-    navigate('/thank-you', { state: { orderData } });
-  };
+  /* ── Helper: is the story still playing? ── */
+  const storyPlaying = scene >= 0 && scene <= 4;
+  const showConfirmation = scene >= 5;
+
+  /* ── Derived animation states ── */
+  const doorOpen = scene >= 2;
+  const courierArrived = scene >= 0;
+  const bellPress = scene === 1;
+  const ladyVisible = scene >= 2;
+  const handover = scene >= 3;
+  const courierLeaving = scene >= 4;
+  const ladyHasBox = scene >= 3;
 
   return (
     <AnimatePresence>
@@ -88,312 +120,745 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-[#070709]/95 backdrop-blur-2xl p-4 sm:p-6 overflow-y-auto select-none"
+        transition={{ duration: 0.5 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-[#060608]/96 backdrop-blur-2xl p-3 sm:p-5 overflow-y-auto select-none"
       >
-        {/* Atmospheric Warm Architectural & Gold Lighting */}
+        {/* ═══════════  ATMOSPHERIC LIGHTING  ═══════════ */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-gradient-to-b from-[#B59A6C]/20 via-[#B59A6C]/5 to-transparent rounded-full blur-[100px]" />
-          <div className="absolute bottom-10 left-1/4 w-[400px] h-[300px] bg-[#8B1A1A]/10 rounded-full blur-[120px]" />
-          <div
-            className="absolute inset-0 opacity-[0.025]"
-            style={{ backgroundImage: 'radial-gradient(#B59A6C 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+          {/* Warm top-down porch flood */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[420px] bg-gradient-to-b from-[#B59A6C]/18 via-[#B59A6C]/6 to-transparent rounded-full blur-[110px]" />
+          {/* Cool moonlight from upper-left */}
+          <div className="absolute -top-20 -left-20 w-[400px] h-[400px] bg-[#C5D3E8]/8 rounded-full blur-[100px]" />
+          {/* Warm glow behind door area */}
+          <motion.div
+            animate={{ opacity: doorOpen ? 0.25 : 0.05 }}
+            transition={{ duration: 1.2 }}
+            className="absolute top-1/4 right-1/3 w-[350px] h-[350px] bg-[#FFE4B5]/20 rounded-full blur-[90px]"
           />
         </div>
 
-        {/* ── MAIN MODAL CONTAINER (Centered & Balanced) ── */}
-        <div className="relative w-full max-w-xl my-auto flex flex-col items-center justify-center z-10">
-
-          {/* ── TOP LIVE SCRIPT HUD (Visible during story) ── */}
-          {currentScene < 4 && (
-            <div className="w-full text-center mb-6">
+        {/* ═══════════  MAIN CONTAINER  ═══════════ */}
+        <div className="relative w-full max-w-2xl my-auto flex flex-col items-center z-10">
+          {/* ── NARRATION HUD ── */}
+          {storyPlaying && (
+            <div className="w-full text-center mb-5">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={currentScene}
-                  initial={{ opacity: 0, y: -10 }}
+                  key={scene}
+                  initial={{ opacity: 0, y: -12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
+                  exit={{ opacity: 0, y: 12 }}
                   transition={{ duration: 0.35 }}
                   className="inline-flex flex-col items-center"
                 >
-                  <div className="flex items-center gap-2 px-3.5 py-1 bg-[#18181b]/90 border border-[#B59A6C]/35 rounded-full shadow-xl mb-2">
-                    <span className="w-2 h-2 rounded-full bg-[#B59A6C] animate-ping" />
-                    <span className="text-[9px] font-mono tracking-[0.25em] text-[#E8D5B7] uppercase font-bold">
-                      {SCENE_SCRIPTS[currentScene]?.badge}
+                  <div className="flex items-center gap-2.5 px-4 py-1.5 bg-[#15151a]/90 border border-[#B59A6C]/30 rounded-full shadow-xl mb-2 backdrop-blur-lg">
+                    <motion.span
+                      animate={{ opacity: [1, 0.3, 1] }}
+                      transition={{ duration: 1.8, repeat: Infinity }}
+                      className="w-2 h-2 rounded-full bg-[#D4AF37]"
+                    />
+                    <span className="text-[9px] font-mono tracking-[0.22em] text-[#E8D5B7] uppercase font-bold">
+                      {SCRIPTS[scene]?.badge}
                     </span>
                   </div>
-                  <h4 className="text-sm font-heading font-bold text-white tracking-wide uppercase">
-                    {SCENE_SCRIPTS[currentScene]?.title}
+                  <h4 className="text-base sm:text-lg font-heading font-bold text-white tracking-wider uppercase">
+                    {SCRIPTS[scene]?.title}
                   </h4>
-                  <p className="text-xs font-body text-gray-400 max-w-md text-center mt-0.5 italic">
-                    "{SCENE_SCRIPTS[currentScene]?.subtitle}"
+                  <p className="text-[11px] sm:text-xs font-body text-gray-400 max-w-sm text-center mt-0.5 italic">
+                    "{SCRIPTS[scene]?.line}"
                   </p>
                 </motion.div>
               </AnimatePresence>
             </div>
           )}
 
-          {/* ── 3D ISOMETRIC VILLA DOORSTEP STAGE (Scenes 0 - 3) ── */}
-          {currentScene < 4 && (
+          {/* ═══════════  3-D  VILLA  DOORSTEP  STAGE  ═══════════ */}
+          {storyPlaying && (
             <div
-              className="relative w-full max-w-lg h-[340px] sm:h-[380px] bg-gradient-to-b from-[#141417] to-[#0c0c0e] border border-[#B59A6C]/30 rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center p-6"
-              style={{ perspective: '1200px' }}
+              className="relative w-full max-w-xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+              style={{ perspective: '1400px', aspectRatio: '16/10' }}
             >
-              {/* Architectural Porch Sconce Light */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#FFE5B4]/15 rounded-full blur-[60px] pointer-events-none" />
-
-              {/* Porch Stone Floor & Base Shadow */}
+              {/* ── BACKGROUND: Night sky + villa wall ── */}
               <div
-                className="absolute bottom-4 inset-x-6 h-12 bg-gradient-to-t from-black/60 to-transparent border-t border-white/5 rounded-b-xl"
-              />
-
-              {/* ── 3D ARCHED VILLA DOORWAY ── */}
-              <div
-                className="absolute right-8 sm:right-14 top-10 bottom-6 w-[140px] sm:w-[160px] rounded-t-[80px] border-2 border-[#B59A6C]/40 bg-[#120D08] overflow-hidden shadow-2xl"
-                style={{ transformStyle: 'preserve-3d' }}
-              >
-                {/* Warm Chandelier Glow from inside house */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFE4B5]/40 via-[#B59A6C]/20 to-transparent" />
-
-                {/* 3D Moving Door Panel (Swings Open in Scene 2 & 3) */}
-                <motion.div
-                  initial={{ rotateY: 0 }}
-                  animate={{
-                    rotateY: currentScene >= 2 ? -75 : 0,
-                  }}
-                  transition={{ duration: 1.2, ease: [0.25, 1, 0.5, 1] }}
-                  className="absolute inset-0 rounded-t-[80px] origin-left border-r border-[#B59A6C]/60"
-                  style={{
-                    background: 'linear-gradient(135deg, #2D1810 0%, #1A0D08 50%, #24140D 100%)',
-                    transformStyle: 'preserve-3d',
-                    boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)',
-                  }}
-                >
-                  {/* Mahogany Wood Paneling Lines */}
-                  <div className="absolute inset-3 border border-[#B59A6C]/20 rounded-t-[70px]" />
-                  <div className="absolute inset-x-3 top-1/2 h-[1px] bg-[#B59A6C]/20" />
-                  
-                  {/* Polished Brass Door Handle */}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-7 rounded-full bg-gradient-to-b from-[#E8D5B7] via-[#B59A6C] to-[#8C734B] shadow-lg border border-white/40" />
-                </motion.div>
-
-                {/* The Elegant Lady (Revealed when door opens in Scene 2 & 3) */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                  animate={{
-                    opacity: currentScene >= 2 ? 1 : 0,
-                    scale: currentScene >= 2 ? 1 : 0.9,
-                    x: currentScene >= 2 ? 0 : 20,
-                  }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-                >
-                  {/* Stylized Silhouette & Gown */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FAF0E6] to-[#E6D2B5] border-2 border-[#B59A6C] shadow-lg relative flex items-center justify-center">
-                    <span className="text-xl">👩‍💼</span>
-                  </div>
-                  <div className="w-16 h-24 mt-1 bg-gradient-to-b from-[#3A1E28] to-[#1F0E15] rounded-t-2xl border border-[#B59A6C]/30 shadow-md" />
-                </motion.div>
-              </div>
-
-              {/* ── BRASS DOORBELL FIXTURE (Wall Left of Door) ── */}
-              <div className="absolute right-[160px] sm:right-[190px] top-1/2 -translate-y-1/2 flex flex-col items-center">
-                <div
-                  className={`w-7 h-12 rounded-md bg-gradient-to-b from-[#E8D5B7] via-[#B59A6C] to-[#8C734B] p-1 border border-white/40 shadow-lg flex flex-col items-center justify-center ${
-                    currentScene === 1 ? 'ring-4 ring-[#B59A6C]/50' : ''
-                  }`}
-                >
-                  {/* Doorbell Button */}
-                  <motion.div
-                    animate={currentScene === 1 ? { scale: [1, 0.7, 1] } : {}}
-                    transition={{ duration: 0.6, repeat: 2 }}
-                    className="w-3.5 h-3.5 rounded-full bg-white shadow-inner flex items-center justify-center"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" />
-                  </motion.div>
-                </div>
-
-                {/* Doorbell Acoustic Chime Waves (Scene 1) */}
-                {currentScene === 1 && (
-                  <>
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 1 }}
-                      animate={{ scale: 3, opacity: 0 }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      className="absolute w-10 h-10 rounded-full border-2 border-[#FFE5B4] pointer-events-none"
-                    />
-                    <span className="text-[10px] font-mono font-bold text-[#E8D5B7] mt-2 animate-bounce">
-                      🔔 CHIME...
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* ── 3D WHITE-GLOVE COURIER CHARACTER ── */}
-              <motion.div
-                initial={{ x: -160, opacity: 0 }}
-                animate={{
-                  x: currentScene === 0 ? 0 : currentScene >= 3 ? -140 : 15,
-                  opacity: currentScene >= 3 ? 0 : 1,
-                  scale: currentScene >= 3 ? 0.85 : 1,
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'linear-gradient(180deg, #0B0E1A 0%, #141828 35%, #1F1A14 60%, #18150F 100%)',
                 }}
-                transition={{ duration: 1.1, ease: [0.25, 1, 0.5, 1] }}
-                className="absolute left-10 sm:left-16 bottom-10 flex flex-col items-center"
               >
-                {/* Courier Head & Tuxedo */}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8D5B7] to-[#D4C3A3] border-2 border-[#B59A6C] shadow-lg flex items-center justify-center relative">
-                  <span className="text-xl">🤵‍♂️</span>
+                {/* Stars */}
+                {[...Array(24)].map((_, i) => (
+                  <motion.div
+                    key={`star-${i}`}
+                    animate={{ opacity: [0.15, 0.7, 0.15] }}
+                    transition={{
+                      duration: 2 + Math.random() * 3,
+                      repeat: Infinity,
+                      delay: Math.random() * 2,
+                    }}
+                    className="absolute rounded-full bg-white"
+                    style={{
+                      width: Math.random() > 0.7 ? 2.5 : 1.5,
+                      height: Math.random() > 0.7 ? 2.5 : 1.5,
+                      top: `${5 + Math.random() * 28}%`,
+                      left: `${5 + Math.random() * 90}%`,
+                    }}
+                  />
+                ))}
+                {/* Moon */}
+                <div
+                  className="absolute top-6 right-10 w-10 h-10 rounded-full bg-gradient-to-br from-[#FAFAD2] to-[#EEE8AA] shadow-[0_0_30px_12px_rgba(250,250,210,0.25)]"
+                />
+              </div>
+
+              {/* ── VILLA STONE WALL ── */}
+              <div
+                className="absolute left-0 right-0 bottom-0"
+                style={{ height: '60%' }}
+              >
+                {/* Stone texture overlay */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      'linear-gradient(165deg, #2A2520 0%, #1E1B17 40%, #171410 100%)',
+                  }}
+                />
+                {/* Subtle mortar lines */}
+                <div
+                  className="absolute inset-0 opacity-[0.06]"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(181,154,108,0.5) 28px, rgba(181,154,108,0.5) 29px), repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(181,154,108,0.3) 60px, rgba(181,154,108,0.3) 61px)',
+                  }}
+                />
+
+                {/* ── PORCH SCONCE LIGHTS (flanking door) ── */}
+                {[-1, 1].map((side) => (
+                  <div
+                    key={side}
+                    className="absolute top-8"
+                    style={{
+                      [side === -1 ? 'right' : 'right']: side === -1 ? '56%' : '16%',
+                      left: side === -1 ? 'auto' : 'auto',
+                      right: side === -1 ? '55%' : '14%',
+                    }}
+                  >
+                    {/* Sconce bracket */}
+                    <div className="w-4 h-6 bg-gradient-to-b from-[#B59A6C] to-[#8C734B] rounded-sm shadow-md mx-auto" />
+                    {/* Flame / bulb glow */}
+                    <motion.div
+                      animate={{
+                        opacity: [0.6, 1, 0.6],
+                        scale: [0.95, 1.08, 0.95],
+                      }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-3 h-4 bg-gradient-to-t from-[#FFB347] to-[#FFF8DC] rounded-full mx-auto -mt-1"
+                    />
+                    {/* Light pool on wall */}
+                    <div className="w-14 h-20 bg-[#FFE5B4]/10 rounded-full blur-[14px] mx-auto -mt-3 pointer-events-none" />
+                  </div>
+                ))}
+              </div>
+
+              {/* ── MARBLE PORCH FLOOR ── */}
+              <div
+                className="absolute bottom-0 inset-x-0 h-[22%]"
+                style={{
+                  background:
+                    'linear-gradient(0deg, #0D0B09 0%, #1C1915 60%, #242018 100%)',
+                  borderTop: '2px solid rgba(181,154,108,0.25)',
+                }}
+              >
+                {/* Floor perspective lines */}
+                <div
+                  className="absolute inset-0 opacity-[0.07]"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(181,154,108,0.6) 48px, rgba(181,154,108,0.6) 49px)',
+                  }}
+                />
+              </div>
+
+              {/* ══════════  GRAND ARCHED DOORWAY  ══════════ */}
+              <div
+                className="absolute bottom-[22%] right-[22%] sm:right-[26%]"
+                style={{
+                  width: '30%',
+                  height: '55%',
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                {/* Arch frame (stone) */}
+                <div
+                  className="absolute -inset-2 rounded-t-[50%] border-2 border-[#B59A6C]/50"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, #3D362C 0%, #2A241C 100%)',
+                    boxShadow:
+                      'inset 0 0 15px rgba(0,0,0,0.6), 0 4px 20px rgba(0,0,0,0.5)',
+                  }}
+                />
+
+                {/* Interior warm glow (visible when door opens) */}
+                <motion.div
+                  animate={{ opacity: doorOpen ? 1 : 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute inset-0 rounded-t-[50%] overflow-hidden"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse at 50% 80%, #FFE4B5 0%, #D4A762 30%, #8B6914 60%, #3D2B00 100%)',
+                  }}
+                >
+                  {/* Interior details: chandelier silhouette */}
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-8 h-6 flex flex-col items-center">
+                    <div className="w-[1px] h-2 bg-[#B59A6C]" />
+                    <div className="w-6 h-3 border-b-2 border-[#B59A6C]/60 rounded-b-full" />
+                  </div>
+                </motion.div>
+
+                {/* ── THE 3D DOOR (swings on left hinge) ── */}
+                <motion.div
+                  animate={{ rotateY: doorOpen ? -68 : 0 }}
+                  transition={{
+                    duration: 1.4,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="absolute inset-0 rounded-t-[50%] origin-left"
+                  style={{
+                    transformStyle: 'preserve-3d',
+                    backfaceVisibility: 'hidden',
+                  }}
+                >
+                  {/* Door front face */}
+                  <div
+                    className="absolute inset-0 rounded-t-[50%]"
+                    style={{
+                      background:
+                        'linear-gradient(170deg, #3D2B1A 0%, #261A0F 40%, #1A110A 80%, #0F0A06 100%)',
+                      boxShadow:
+                        'inset 2px 0 8px rgba(181,154,108,0.15), inset -2px 0 8px rgba(0,0,0,0.5), 4px 0 20px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {/* Upper panel */}
+                    <div
+                      className="absolute top-[20%] inset-x-[15%] bottom-[55%] border border-[#B59A6C]/25 rounded-t-lg"
+                      style={{
+                        background:
+                          'linear-gradient(180deg, rgba(61,43,26,0.6) 0%, rgba(26,17,10,0.8) 100%)',
+                      }}
+                    />
+                    {/* Lower panel */}
+                    <div
+                      className="absolute top-[52%] inset-x-[15%] bottom-[8%] border border-[#B59A6C]/25 rounded-sm"
+                      style={{
+                        background:
+                          'linear-gradient(180deg, rgba(61,43,26,0.6) 0%, rgba(26,17,10,0.8) 100%)',
+                      }}
+                    />
+
+                    {/* Brass door knob */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 right-[14%] w-3 h-3 rounded-full shadow-lg"
+                      style={{
+                        background:
+                          'radial-gradient(circle at 35% 35%, #F0DEB4, #B59A6C, #7B6B3F)',
+                        boxShadow:
+                          '0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.4)',
+                      }}
+                    />
+                    {/* Keyhole plate */}
+                    <div className="absolute top-[54%] right-[15%] w-2 h-4 rounded-sm bg-gradient-to-b from-[#B59A6C] to-[#8C734B] border border-white/20 shadow-sm" />
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* ── DOORBELL on wall ── */}
+              <div
+                className="absolute bottom-[42%] sm:bottom-[44%]"
+                style={{ right: '52%' }}
+              >
+                <div className="relative">
+                  {/* Bell housing */}
+                  <div
+                    className="w-5 h-8 rounded-md shadow-lg border border-white/25 flex flex-col items-center justify-center"
+                    style={{
+                      background:
+                        'linear-gradient(160deg, #E8D5B7, #B59A6C, #8C734B)',
+                    }}
+                  >
+                    {/* Bell button */}
+                    <motion.div
+                      animate={
+                        bellPress
+                          ? { scale: [1, 0.6, 1], backgroundColor: ['#fff', '#FFD700', '#fff'] }
+                          : {}
+                      }
+                      transition={{ duration: 0.4, repeat: bellPress ? 3 : 0 }}
+                      className="w-2.5 h-2.5 rounded-full bg-white shadow-inner border border-gray-300"
+                    />
+                  </div>
+
+                  {/* Chime ripple waves */}
+                  {bellPress && (
+                    <>
+                      {[0, 0.3, 0.6].map((delay) => (
+                        <motion.div
+                          key={delay}
+                          initial={{ scale: 0.5, opacity: 0.8 }}
+                          animate={{ scale: 4, opacity: 0 }}
+                          transition={{ duration: 1.2, repeat: Infinity, delay }}
+                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full border border-[#FFE5B4]/70 pointer-events-none"
+                        />
+                      ))}
+                      {/* Ding text */}
+                      <motion.span
+                        initial={{ opacity: 0, y: 0 }}
+                        animate={{ opacity: [0, 1, 1, 0], y: -18 }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-heading font-bold text-[#FFE5B4] whitespace-nowrap"
+                      >
+                        ✦ ding ✦
+                      </motion.span>
+                    </>
+                  )}
                 </div>
-                {/* Bespoke Tuxedo & Bowtie */}
-                <div className="w-16 h-20 bg-gradient-to-b from-[#18181B] to-[#09090B] rounded-t-xl border border-gray-700 shadow-xl relative flex flex-col items-center pt-1">
-                  <div className="w-4 h-2 bg-[#B59A6C] rounded-sm mb-1" />
-                  <div className="w-3 h-10 bg-white" />
+              </div>
+
+              {/* ══════════  3D COURIER CHARACTER  ══════════ */}
+              <motion.div
+                initial={{ x: '-120%' }}
+                animate={{
+                  x: courierLeaving
+                    ? '-120%'
+                    : courierArrived
+                    ? '0%'
+                    : '-120%',
+                }}
+                transition={{
+                  duration: courierLeaving ? 1.6 : 1.8,
+                  ease: [0.25, 1, 0.5, 1],
+                }}
+                className="absolute bottom-[22%] left-[8%] sm:left-[12%] flex flex-col items-center"
+                style={{ transformStyle: 'preserve-3d', width: '14%' }}
+              >
+                {/* Shadow on ground */}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[120%] h-2 bg-black/50 rounded-[100%] blur-[3px]" />
+
+                {/* HEAD — 3D sphere with lighting */}
+                <div
+                  className="relative rounded-full border border-[#C4A882]/50 flex items-center justify-center"
+                  style={{
+                    width: '55%',
+                    aspectRatio: '1',
+                    background:
+                      'radial-gradient(circle at 38% 35%, #F5E1C8, #D4B896 50%, #B8956E 80%, #96755A 100%)',
+                    boxShadow:
+                      '0 4px 12px rgba(0,0,0,0.4), inset 0 -3px 8px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.3)',
+                  }}
+                >
+                  {/* Hair */}
+                  <div
+                    className="absolute -top-[8%] inset-x-[8%] rounded-t-full"
+                    style={{
+                      height: '55%',
+                      background:
+                        'linear-gradient(180deg, #1A1209 0%, #2D1F10 100%)',
+                    }}
+                  />
+                  {/* Face features */}
+                  <div className="absolute top-[42%] left-[28%] w-[10%] h-[6%] rounded-full bg-[#2C1A0E]" />
+                  <div className="absolute top-[42%] right-[28%] w-[10%] h-[6%] rounded-full bg-[#2C1A0E]" />
+                  <div className="absolute top-[58%] left-1/2 -translate-x-1/2 w-[18%] h-[5%] rounded-full bg-[#C4846C]" />
                 </div>
 
-                {/* White-Glove Hands Carrying the 3D Velvet Jewel Box */}
+                {/* BODY — Tuxedo with 3D form */}
+                <div
+                  className="relative -mt-[6%] flex flex-col items-center"
+                  style={{ width: '80%' }}
+                >
+                  {/* Neck */}
+                  <div
+                    className="w-[30%] bg-[#D4B896]"
+                    style={{ height: '8%', aspectRatio: 'auto' }}
+                  />
+
+                  {/* Jacket */}
+                  <div
+                    className="w-full rounded-t-lg relative overflow-hidden"
+                    style={{
+                      aspectRatio: '1/1.3',
+                      background:
+                        'linear-gradient(170deg, #222222 0%, #141414 40%, #0A0A0A 100%)',
+                      boxShadow:
+                        'inset 2px 0 6px rgba(255,255,255,0.06), inset -2px 0 6px rgba(0,0,0,0.4), 0 6px 16px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {/* Lapels */}
+                    <div
+                      className="absolute top-0 left-0 w-[45%] h-[45%]"
+                      style={{
+                        background:
+                          'linear-gradient(135deg, transparent 48%, #1A1A1A 49%, #2A2A2A 100%)',
+                      }}
+                    />
+                    <div
+                      className="absolute top-0 right-0 w-[45%] h-[45%]"
+                      style={{
+                        background:
+                          'linear-gradient(-135deg, transparent 48%, #1A1A1A 49%, #2A2A2A 100%)',
+                      }}
+                    />
+                    {/* White shirt front */}
+                    <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[25%] h-[85%] bg-gradient-to-b from-[#F5F5F0] to-[#E0DDD5]" />
+                    {/* Bow-tie */}
+                    <div className="absolute top-[12%] left-1/2 -translate-x-1/2 flex items-center">
+                      <div
+                        className="w-0 h-0"
+                        style={{
+                          borderTop: '3px solid transparent',
+                          borderBottom: '3px solid transparent',
+                          borderRight: '5px solid #B59A6C',
+                        }}
+                      />
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" />
+                      <div
+                        className="w-0 h-0"
+                        style={{
+                          borderTop: '3px solid transparent',
+                          borderBottom: '3px solid transparent',
+                          borderLeft: '5px solid #B59A6C',
+                        }}
+                      />
+                    </div>
+                    {/* Buttons */}
+                    <div className="absolute top-[40%] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#B59A6C]" />
+                    <div className="absolute top-[55%] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#B59A6C]" />
+                  </div>
+                </div>
+
+                {/* ARMS + HANDS holding the box */}
                 <motion.div
                   animate={{
-                    x: currentScene === 2 ? 65 : 0,
-                    y: currentScene === 2 ? -15 : 0,
-                    scale: currentScene === 2 ? 1.08 : 1,
+                    x: handover ? '90%' : '0%',
+                    opacity: handover && !courierLeaving ? 1 : courierLeaving ? 0 : 1,
                   }}
-                  transition={{ duration: 0.9, ease: 'easeInOut' }}
-                  className="absolute top-14 -right-10 flex items-center"
+                  transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
+                  className="absolute flex items-center"
+                  style={{
+                    top: '55%',
+                    right: '-40%',
+                  }}
                 >
-                  {/* Left White Glove */}
-                  <div className="w-3 h-3 rounded-full bg-white border border-gray-300 shadow-md" />
+                  {/* White gloves */}
+                  <div
+                    className="rounded-full bg-white border border-gray-200 shadow-md"
+                    style={{ width: 8, height: 8 }}
+                  />
 
-                  {/* ── 3D ROYAL VELVET JEWEL BOX (In Hand) ── */}
+                  {/* ── THE VELVET JEWELRY BOX ── */}
                   <motion.div
                     animate={{
                       boxShadow: [
-                        '0 10px 25px rgba(181,154,108,0.4)',
-                        '0 14px 35px rgba(181,154,108,0.8)',
-                        '0 10px 25px rgba(181,154,108,0.4)',
+                        '0 6px 18px rgba(181,154,108,0.4), 0 0 12px rgba(181,154,108,0.2)',
+                        '0 10px 28px rgba(181,154,108,0.7), 0 0 22px rgba(181,154,108,0.4)',
+                        '0 6px 18px rgba(181,154,108,0.4), 0 0 12px rgba(181,154,108,0.2)',
                       ],
                     }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-16 h-12 rounded-lg relative overflow-hidden flex items-center justify-center mx-1"
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                    className="relative rounded-md overflow-hidden mx-0.5"
                     style={{
-                      background: 'radial-gradient(circle at 50% 30%, #5E111E, #3D0A13)',
-                      border: '1.5px solid #E8D5B7',
+                      width: 42,
+                      height: 30,
+                      background:
+                        'radial-gradient(ellipse at 50% 25%, #6E1A28 0%, #4A0E18 50%, #2D060E 100%)',
+                      border: '1.5px solid #D4AF37',
                     }}
                   >
-                    {/* Gold Ribbon Cross */}
-                    <div className="absolute inset-x-0 h-2 bg-gradient-to-r from-[#9E8357] via-[#E8D5B7] to-[#9E8357]" />
-                    <div className="absolute inset-y-0 w-2 bg-gradient-to-b from-[#9E8357] via-[#E8D5B7] to-[#9E8357]" />
-                    <span className="relative z-10 text-xs text-white">💍</span>
+                    {/* Gold ribbon cross */}
+                    <div
+                      className="absolute inset-y-0 left-1/2 -translate-x-1/2 bg-gradient-to-b from-[#D4AF37] via-[#F0DEB4] to-[#D4AF37]"
+                      style={{ width: 4 }}
+                    />
+                    <div
+                      className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#D4AF37] via-[#F0DEB4] to-[#D4AF37]"
+                      style={{ height: 4 }}
+                    />
+                    {/* Center rosette */}
+                    <div
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border border-white/40 shadow-sm"
+                      style={{
+                        background:
+                          'radial-gradient(circle at 40% 40%, #F0DEB4, #D4AF37, #8B7320)',
+                      }}
+                    />
+                    {/* Specular glare sweep */}
+                    <motion.div
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                        ease: 'easeInOut',
+                      }}
+                      className="absolute inset-0 pointer-events-none opacity-30"
+                      style={{
+                        background:
+                          'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.8) 48%, transparent 70%)',
+                      }}
+                    />
                   </motion.div>
 
-                  {/* Right White Glove */}
-                  <div className="w-3 h-3 rounded-full bg-white border border-gray-300 shadow-md" />
+                  <div
+                    className="rounded-full bg-white border border-gray-200 shadow-md"
+                    style={{ width: 8, height: 8 }}
+                  />
                 </motion.div>
               </motion.div>
 
-              {/* ── UNVEILED PRODUCT SPOTLIGHT (Scene 3) ── */}
-              {currentScene === 3 && (
-                <motion.div
-                  initial={{ scale: 0.5, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, type: 'spring' }}
-                  className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center"
+              {/* ══════════  LADY CHARACTER  ══════════ */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: ladyVisible ? 1 : 0,
+                  x: ladyVisible ? 0 : 20,
+                  y: courierLeaving ? 8 : 0,
+                }}
+                transition={{
+                  duration: 1,
+                  ease: [0.25, 1, 0.5, 1],
+                  delay: ladyVisible ? 0.4 : 0,
+                }}
+                className="absolute bottom-[22%]"
+                style={{
+                  right: '28%',
+                  width: '12%',
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                {/* Shadow */}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[110%] h-2 bg-black/40 rounded-[100%] blur-[3px]" />
+
+                {/* HEAD */}
+                <div
+                  className="relative rounded-full border border-[#C4A882]/40 mx-auto flex items-center justify-center"
+                  style={{
+                    width: '52%',
+                    aspectRatio: '1',
+                    background:
+                      'radial-gradient(circle at 38% 35%, #FAF0E6, #E6D2B5 50%, #D4B896 80%, #BFA07A 100%)',
+                    boxShadow:
+                      '0 3px 10px rgba(0,0,0,0.35), inset 0 -2px 6px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.35)',
+                  }}
                 >
-                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#1F0E15] to-[#3D0A13] border-2 border-[#B59A6C] p-2.5 shadow-2xl mb-3 relative">
-                    <img
-                      src={productImage}
-                      alt={productName}
-                      className="w-full h-full object-contain filter drop-shadow-[0_10px_15px_rgba(181,154,108,0.6)]"
-                    />
-                    <motion.div
-                      animate={{ opacity: [0, 1, 0], scale: [0.8, 1.3, 0.8] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute -top-2 -right-2 text-sm text-[#B59A6C] font-bold"
+                  {/* Hair */}
+                  <div
+                    className="absolute -top-[15%] -left-[8%] -right-[8%] rounded-t-full"
+                    style={{
+                      height: '65%',
+                      background:
+                        'linear-gradient(180deg, #1A0D08 0%, #2D1810 80%)',
+                    }}
+                  />
+                  {/* Face */}
+                  <div className="absolute top-[44%] left-[28%] w-[8%] h-[6%] rounded-full bg-[#2C1A0E]" />
+                  <div className="absolute top-[44%] right-[28%] w-[8%] h-[6%] rounded-full bg-[#2C1A0E]" />
+                  <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[15%] h-[4%] rounded-full bg-[#D4A0A0]" />
+                </div>
+
+                {/* BODY — Elegant gown */}
+                <div
+                  className="w-[85%] mx-auto -mt-[5%] rounded-t-lg relative overflow-hidden"
+                  style={{
+                    aspectRatio: '1/1.6',
+                    background:
+                      'linear-gradient(170deg, #3A1E28 0%, #2D1420 40%, #1F0E15 80%, #140A0E 100%)',
+                    boxShadow:
+                      'inset 2px 0 6px rgba(181,154,108,0.1), inset -2px 0 6px rgba(0,0,0,0.4), 0 6px 16px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  {/* Neckline detail */}
+                  <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-[70%] h-[20%] rounded-b-full"
+                    style={{
+                      background:
+                        'linear-gradient(180deg, #D4B896 0%, #3A1E28 100%)',
+                    }}
+                  />
+                  {/* Gold necklace */}
+                  <div
+                    className="absolute top-[18%] left-1/2 -translate-x-1/2 w-[40%] h-[8%] rounded-b-full border-b-2 border-[#D4AF37]"
+                  />
+                  {/* Subtle fabric shimmer */}
+                  <motion.div
+                    animate={{ opacity: [0.02, 0.08, 0.02] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, transparent 30%, rgba(181,154,108,0.15) 50%, transparent 70%)',
+                    }}
+                  />
+                </div>
+
+                {/* Lady's hands receiving box (scene 3+) */}
+                {ladyHasBox && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                    className="absolute flex items-center"
+                    style={{ top: '52%', left: '-50%' }}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-[#E6D2B5] border border-[#C4A882] shadow-sm" />
+                    {/* Received box (smaller, held delicately) */}
+                    <div
+                      className="rounded-sm mx-0.5 relative overflow-hidden"
+                      style={{
+                        width: 32,
+                        height: 22,
+                        background:
+                          'radial-gradient(ellipse at 50% 25%, #6E1A28 0%, #4A0E18 50%, #2D060E 100%)',
+                        border: '1px solid #D4AF37',
+                      }}
                     >
-                      ✦
-                    </motion.div>
-                  </div>
-                  <span className="text-[9px] font-mono tracking-[0.3em] text-[#E8D5B7] uppercase font-bold block">
-                    DELIVERY COMPLETE & VERIFIED
-                  </span>
-                  <h4 className="text-sm font-heading font-bold text-white mt-1">
-                    {productName}
-                  </h4>
-                </motion.div>
-              )}
+                      <div
+                        className="absolute inset-y-0 left-1/2 -translate-x-1/2 bg-gradient-to-b from-[#D4AF37] via-[#F0DEB4] to-[#D4AF37]"
+                        style={{ width: 3 }}
+                      />
+                      <div
+                        className="absolute inset-x-0 top-1/2 -translate-y-1/2 bg-gradient-to-r from-[#D4AF37] via-[#F0DEB4] to-[#D4AF37]"
+                        style={{ height: 3 }}
+                      />
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-[#E6D2B5] border border-[#C4A882] shadow-sm" />
+                  </motion.div>
+                )}
+              </motion.div>
+
+              {/* ── Warm porch light bloom (intensifies on bell ring) ── */}
+              <motion.div
+                animate={{
+                  opacity: bellPress ? 0.35 : doorOpen ? 0.15 : 0.06,
+                }}
+                transition={{ duration: 0.8 }}
+                className="absolute bottom-[20%] right-[20%] w-[40%] h-[50%] bg-[#FFE5B4]/30 rounded-full blur-[50px] pointer-events-none"
+              />
             </div>
           )}
 
-          {/* ── SCENE 5: GRAND ORDER CONFIRMATION & LIVE TRACKER (Scene 4+) ── */}
-          {currentScene >= 4 && (
+          {/* ═══════════  ORDER CONFIRMATION  ═══════════ */}
+          {showConfirmation && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="w-full bg-[#141417]/95 border border-[#B59A6C]/40 p-6 sm:p-8 rounded-2xl shadow-2xl text-center backdrop-blur-xl relative"
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1] }}
+              className="w-full bg-[#121215]/95 border border-[#B59A6C]/35 p-6 sm:p-8 rounded-2xl shadow-2xl backdrop-blur-xl relative overflow-hidden"
             >
-              {/* Crown Seal Icon */}
-              <div className="w-14 h-14 rounded-full bg-[#B59A6C]/15 border border-[#B59A6C]/50 mx-auto flex items-center justify-center mb-3.5 shadow-xl">
-                <span className="text-[#B59A6C] text-2xl font-bold">💎</span>
+              {/* Decorative top shimmer */}
+              <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#B59A6C]/60 to-transparent" />
+
+              {/* Product Image Spotlight */}
+              <div className="flex flex-col items-center mb-5">
+                <div
+                  className="w-20 h-20 rounded-2xl p-2 mb-3 relative"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse at 50% 30%, #2D1420 0%, #1A0D08 100%)',
+                    border: '1.5px solid #B59A6C',
+                    boxShadow:
+                      '0 8px 24px rgba(181,154,108,0.3), 0 0 40px rgba(181,154,108,0.1)',
+                  }}
+                >
+                  <img
+                    src={productImage}
+                    alt={productName}
+                    className="w-full h-full object-contain"
+                    style={{
+                      filter:
+                        'drop-shadow(0 4px 8px rgba(181,154,108,0.5))',
+                    }}
+                  />
+                  {/* Sparkle */}
+                  <motion.div
+                    animate={{
+                      opacity: [0, 1, 0],
+                      scale: [0.5, 1.2, 0.5],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute -top-1.5 -right-1.5 text-sm text-[#D4AF37]"
+                  >
+                    ✦
+                  </motion.div>
+                </div>
+
+                <span className="text-[9px] font-mono font-bold tracking-[0.3em] text-[#B59A6C] uppercase block mb-0.5">
+                  DELIVERY CONFIRMED
+                </span>
+                <h3 className="font-heading text-xl sm:text-2xl text-white mb-1 text-center">
+                  Your Creation is Reserved
+                </h3>
+                <p className="text-xs font-body text-gray-400 text-center max-w-sm">
+                  Master goldsmiths have initiated crafting and hallmark
+                  validation for{' '}
+                  <strong className="text-white">{productName}</strong>
+                </p>
               </div>
 
-              <span className="text-[9px] font-mono font-bold tracking-[0.3em] text-[#B59A6C] uppercase block mb-1">
-                ROYAL ATELIER ORDER CONFIRMED
-              </span>
-              <h3 className="font-heading text-2xl sm:text-3xl text-white mb-2">
-                Your Creation is Reserved
-              </h3>
-              <p className="text-xs font-body text-gray-300 mb-5 leading-relaxed max-w-md mx-auto">
-                Our master goldsmiths have initiated creation and hallmark validation for{' '}
-                <strong className="text-white">{productName}</strong>.
-              </p>
-
-              {/* Order Reference Box */}
-              <div className="bg-black/75 border border-[#B59A6C]/35 rounded-xl p-3.5 mb-5 shadow-inner max-w-sm mx-auto">
-                <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest block mb-1">
-                  ORDER REFERENCE NUMBER
+              {/* Order ID */}
+              <div className="bg-black/60 border border-[#B59A6C]/30 rounded-xl p-3 mb-5 max-w-sm mx-auto">
+                <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest block mb-1 text-center">
+                  ORDER REFERENCE
                 </span>
-                <div className="flex items-center justify-center gap-2.5">
-                  <span className="font-mono text-base sm:text-lg font-bold text-[#E8D5B7] tracking-widest">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-mono text-sm sm:text-base font-bold text-[#E8D5B7] tracking-wider">
                     {orderId}
                   </span>
                   <button
                     onClick={handleCopy}
-                    className="px-2.5 py-1 bg-[#B59A6C]/25 hover:bg-[#B59A6C]/45 text-[#E8D5B7] text-[10px] font-mono rounded cursor-pointer transition-colors"
+                    className="px-2 py-0.5 bg-[#B59A6C]/25 hover:bg-[#B59A6C]/45 text-[#E8D5B7] text-[10px] font-mono rounded cursor-pointer transition-colors"
                   >
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
               </div>
 
-              {/* 4-Stage Artisan Timeline */}
+              {/* Timeline */}
               <div className="grid grid-cols-4 gap-2 mb-6 max-w-md mx-auto text-center">
                 {[
-                  { title: 'Confirmed', icon: '✓', active: true },
-                  { title: 'Artisan Craft', icon: '⚒', active: true },
-                  { title: 'Hallmarking', icon: '🏛', active: false },
-                  { title: 'Armored Delivery', icon: '✈', active: false },
-                ].map((step, idx) => (
-                  <div key={idx} className="flex flex-col items-center">
+                  { t: 'Confirmed', icon: '✓', on: true },
+                  { t: 'Crafting', icon: '⚒', on: true },
+                  { t: 'Hallmark', icon: '🏛', on: false },
+                  { t: 'Delivery', icon: '✈', on: false },
+                ].map((s, i) => (
+                  <div key={i} className="flex flex-col items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs mb-1.5 font-bold ${
-                        step.active
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] mb-1 font-bold ${
+                        s.on
                           ? 'bg-[#B59A6C] text-white shadow-lg'
-                          : 'bg-white/10 text-gray-400 border border-white/10'
+                          : 'bg-white/8 text-gray-500 border border-white/10'
                       }`}
                     >
-                      {step.icon}
+                      {s.icon}
                     </div>
-                    <span className={`text-[8px] sm:text-[9px] font-mono leading-tight ${step.active ? 'text-[#E8D5B7] font-bold' : 'text-gray-500'}`}>
-                      {step.title}
+                    <span
+                      className={`text-[8px] font-mono ${
+                        s.on
+                          ? 'text-[#E8D5B7] font-bold'
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      {s.t}
                     </span>
                   </div>
                 ))}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2.5 max-w-md mx-auto">
                 <button
                   onClick={handleGoToOrder}
-                  className="flex-1 py-3.5 bg-[#B59A6C] hover:bg-[#A3885C] text-white font-body text-xs font-bold uppercase tracking-[0.2em] rounded-lg transition-colors cursor-pointer shadow-xl"
+                  className="flex-1 py-3 bg-[#B59A6C] hover:bg-[#A3885C] text-white font-body text-xs font-bold uppercase tracking-[0.2em] rounded-lg transition-all cursor-pointer shadow-lg hover:shadow-xl"
                 >
                   View Order Details
                 </button>
@@ -402,14 +867,13 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                     onClose?.();
                     navigate('/');
                   }}
-                  className="py-3.5 px-6 bg-white/10 hover:bg-white/20 text-gray-200 font-body text-xs font-bold uppercase tracking-[0.15em] rounded-lg transition-colors cursor-pointer"
+                  className="py-3 px-5 bg-white/8 hover:bg-white/15 text-gray-300 font-body text-xs font-bold uppercase tracking-[0.15em] rounded-lg transition-all cursor-pointer"
                 >
-                  Explore More
+                  Continue Shopping
                 </button>
               </div>
             </motion.div>
           )}
-
         </div>
       </motion.div>
     </AnimatePresence>
