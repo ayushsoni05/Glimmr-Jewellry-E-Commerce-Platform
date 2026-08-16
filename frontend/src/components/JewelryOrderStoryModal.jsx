@@ -4,32 +4,32 @@ import { useNavigate } from 'react-router-dom';
 import { getProductImage } from '../utils/productImages';
 
 /*──────────────────────────────────────────────────────────────────────
- *  3D PIXAR CARTOON CHARACTER DELIVERY VIDEO MODAL
- *  — Pure Cartoon Animation Video with Live Synchronized Subtitles —
+ *  HIGH-RESOLUTION 1080p 60FPS CINEMATIC DELIVERY FILM MODAL
+ *  — Ultra-Realistic Luxury Film with Live Synchronized Narration HUD —
  *──────────────────────────────────────────────────────────────────────*/
 
-const CARTOON_VIDEO_SRC = '/assets/animation/cartoon_delivery.mp4';
+const FILM_VIDEO_SRC = '/assets/animation/delivery_story.mp4';
 
 const SCENE_SCRIPTS = [
   {
-    badge: 'ACT 1 OF 4 · THE STRIDE',
-    title: 'LEO THE COURIER ARRIVES',
-    subtitle: 'Our cheerful white-glove courier bobs up the villa steps with your bespoke vault',
+    badge: 'SCENE 1 OF 4 · ARRIVAL',
+    title: 'CONCIERGE ARRIVAL AT VILLA',
+    subtitle: 'Luxury courier strides up the grand marble steps carrying the illuminated Glimmr vault',
   },
   {
-    badge: 'ACT 2 OF 4 · THE CHIME',
-    title: 'RINGING THE VILLA DOORBELL',
-    subtitle: 'Leo presses the brass bell — musical chime notes and soundwaves ring out',
+    badge: 'SCENE 2 OF 4 · DOORBELL CHIME',
+    title: 'BRASS DOORBELL CHIME',
+    subtitle: 'Courier presses the glowing brass doorbell, sending acoustic soundwave ripples outward',
   },
   {
-    badge: 'ACT 3 OF 4 · GRAND ENTRANCE',
-    title: 'MAYA OPENS THE VILLA DOORS',
-    subtitle: 'The double doors swing open with chandelier glow as Maya greets with a smile',
+    badge: 'SCENE 3 OF 4 · GRAND ENTRANCE',
+    title: 'VILLA DOUBLE DOORS OPEN',
+    subtitle: 'Arched mahogany doors swing open as the elegant lady appears in warm chandelier glow',
   },
   {
-    badge: 'ACT 4 OF 4 · THE MAGIC UNVEIL',
-    title: 'JOYFUL HANDOVER & SPARKLE BURST',
-    subtitle: 'Maya receives the velvet box — sparkling diamond brilliance beams outward',
+    badge: 'SCENE 4 OF 4 · PRIVATE HANDOVER',
+    title: 'PRIVATE VAULT HANDOVER',
+    subtitle: 'The bespoke velvet jewelry box is presented and received with ceremonial elegance',
   },
 ];
 
@@ -58,13 +58,13 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const productName =
     productObj.name || firstItem.name || 'Glimmr Bespoke Creation';
 
-  // Synchronize subtitles with cartoon video playback
+  // Synchronize subtitles with 1080p 60FPS video playback
   const handleTimeUpdate = () => {
     if (!videoRef.current) return;
     const time = videoRef.current.currentTime;
     if (time < 2.5) setCurrentSceneIdx(0);
-    else if (time < 4.5) setCurrentSceneIdx(1);
-    else if (time < 6.5) setCurrentSceneIdx(2);
+    else if (time < 5.0) setCurrentSceneIdx(1);
+    else if (time < 7.5) setCurrentSceneIdx(2);
     else setCurrentSceneIdx(3);
   };
 
@@ -102,7 +102,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
         transition={{ duration: 0.5 }}
         className="fixed inset-0 z-[100] flex items-center justify-center bg-[#060608]/96 backdrop-blur-2xl p-4 sm:p-6 overflow-y-auto select-none"
       >
-        {/* Background Ambient Glow */}
+        {/* Background Ambient Luxury Lighting */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-b from-[#B59A6C]/15 via-[#B59A6C]/5 to-transparent rounded-full blur-[120px]" />
           <div className="absolute bottom-10 left-1/4 w-[400px] h-[300px] bg-[#8B1A1A]/10 rounded-full blur-[110px]" />
@@ -115,7 +115,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
         {/* ── MAIN MODAL CONTAINER ── */}
         <div className="relative w-full max-w-2xl my-auto flex flex-col items-center z-10">
 
-          {/* ═══════ CARTOON VIDEO STAGE (Active while playing) ═══════ */}
+          {/* ═══════ 1080P CINEMATIC VIDEO FILM STAGE (Active while playing) ═══════ */}
           {!videoEnded && (
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
@@ -151,11 +151,11 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                 </AnimatePresence>
               </div>
 
-              {/* 16:9 Cartoon Video Player Container */}
+              {/* 16:9 High-Resolution Video Player Container */}
               <div className="relative w-full rounded-2xl overflow-hidden border border-[#B59A6C]/35 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-black aspect-video">
                 <video
                   ref={videoRef}
-                  src={CARTOON_VIDEO_SRC}
+                  src={FILM_VIDEO_SRC}
                   autoPlay
                   muted
                   playsInline
@@ -171,7 +171,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                 <div className="absolute top-3 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md border border-[#B59A6C]/30 px-3 py-1 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" />
                   <span className="text-[8px] font-mono tracking-[0.25em] text-[#E8D5B7] uppercase font-bold">
-                    GLIMMR PIXAR CARTOON CINEMA
+                    GLIMMR CONCIERGE CINEMA
                   </span>
                 </div>
 
@@ -186,7 +186,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
             </motion.div>
           )}
 
-          {/* ═══════ FINAL ORDER CONFIRMATION CARD (Revealed on End) ═══════ */}
+          {/* ═══════ FINAL HIGH-GRAPHIC ORDER CONFIRMATION CARD ═══════ */}
           {videoEnded && (
             <motion.div
               initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -197,7 +197,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
               {/* Top Shimmer Line */}
               <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#B59A6C]/70 to-transparent" />
 
-              {/* Product Spotlight with Real Photography */}
+              {/* Product Spotlight with Real Photography & Sparkle Flare */}
               <div className="flex flex-col items-center mb-5">
                 <div
                   className="w-20 h-20 rounded-2xl p-2 mb-3 relative"
@@ -234,7 +234,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                 </p>
               </div>
 
-              {/* Order Reference Box */}
+              {/* Order Reference Box with 1-Click Copy */}
               <div className="bg-black/65 border border-[#B59A6C]/35 rounded-xl p-3 mb-5 max-w-sm mx-auto shadow-inner">
                 <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest block mb-1 text-center">
                   ORDER REFERENCE NUMBER
@@ -252,7 +252,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                 </div>
               </div>
 
-              {/* 4-Stage Artisan Timeline */}
+              {/* 4-Stage Artisan Status Timeline */}
               <div className="grid grid-cols-4 gap-2 mb-6 max-w-md mx-auto text-center">
                 {[
                   { t: 'Confirmed', icon: '✓', on: true },
