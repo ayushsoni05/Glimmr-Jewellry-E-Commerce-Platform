@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Volume2, VolumeX, FastForward, CheckCircle2, Copy, Sparkles, ArrowRight } from 'lucide-react';
+import { FastForward, CheckCircle2, Copy, Sparkles, ArrowRight } from 'lucide-react';
 
 const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
 
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
 
@@ -30,16 +29,14 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
       setIsVideoPlaying(true);
       setProgress(0);
 
-      // Attempt auto-play with sound, fallback to muted if browser blocks audio
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         const playPromise = videoRef.current.play();
         if (playPromise !== undefined) {
           playPromise.catch(() => {
-            // Autoplay with sound was blocked; mute and retry
+            // Autoplay fallback if blocked by browser policy
             if (videoRef.current) {
               videoRef.current.muted = true;
-              setIsMuted(true);
               videoRef.current.play().catch(() => {});
             }
           });
@@ -70,14 +67,6 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
         colors: ['#B59A6C', '#E8D5B7', '#D4AF37', '#FFFFFF'],
       });
     } catch (e) {}
-  };
-
-  const handleToggleSound = () => {
-    if (videoRef.current) {
-      const nextMuted = !isMuted;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-    }
   };
 
   const handleCopy = () => {
@@ -149,16 +138,8 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                   />
                 </div>
 
-                {/* Top Control Bar (Sound & Skip) */}
-                <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-auto">
-                  <button
-                    onClick={handleToggleSound}
-                    className="bg-black/65 hover:bg-black/85 border border-white/20 text-gray-200 hover:text-white px-2.5 py-1 rounded-full text-[10px] font-mono flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-all shadow-md"
-                  >
-                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-green-400" />}
-                    <span>{isMuted ? 'Unmute' : 'Mute'}</span>
-                  </button>
-
+                {/* Top Control Bar (Skip Only - Mute Button Removed) */}
+                <div className="absolute top-3 right-3 flex items-center pointer-events-auto">
                   <button
                     onClick={triggerConfirmation}
                     className="bg-black/65 hover:bg-black/85 border border-white/20 text-gray-200 hover:text-white px-3 py-1 rounded-full text-[10px] font-mono flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-all shadow-md"
