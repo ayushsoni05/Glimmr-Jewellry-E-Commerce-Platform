@@ -59,11 +59,11 @@ async function sendEmail({ to, subject, html, text }) {
         subject,
         html,
       });
-      console.log('[EMAIL] ✅ Sent via Resend successfully!');
+      console.log('[EMAIL] Sent via Resend successfully!');
       console.log('[EMAIL] Resend ID:', result?.id);
       return result;
     } catch (error) {
-      console.error('[EMAIL] ❌ Resend failed:', error.message);
+      console.error('[EMAIL] Resend failed:', error.message);
       console.error('[EMAIL] Full error:', JSON.stringify(error, null, 2));
       throw error;
     }
@@ -124,7 +124,7 @@ async function sendSignupNotificationToAdmin(user, signupDetails = {}) {
         <body>
           <div class="container">
             <div class="header">
-              <h2>🎉 New User Registration</h2>
+              <h2>New User Registration</h2>
             </div>
             <div class="content">
               <div class="detail-row">
@@ -157,7 +157,7 @@ async function sendSignupNotificationToAdmin(user, signupDetails = {}) {
               ` : ''}
               <div class="detail-row">
                 <span class="detail-label">Email Verified:</span>
-                <span class="detail-value">${user.emailVerified ? '<span class="badge">✓ Yes</span>' : 'Pending'}</span>
+                <span class="detail-value">${user.emailVerified ? '<span class="badge">Yes</span>' : 'Pending'}</span>
               </div>
             </div>
             <div class="footer">
@@ -185,7 +185,7 @@ This is an automated notification from Glimmr Admin Panel.
 
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `🎉 New User Registration: ${user.name || user.email}`,
+      subject: `New User Registration: ${user.name || user.email}`,
       html: htmlContent
     });
 
@@ -225,7 +225,7 @@ async function sendSuspiciousActivityAlert(alertDetails) {
         <body>
           <div class="container">
             <div class="header">
-              <h2>⚠️ Suspicious Activity Alert</h2>
+              <h2>Suspicious Activity Alert</h2>
             </div>
             <div class="content">
               <div class="detail-row">
@@ -248,7 +248,7 @@ async function sendSuspiciousActivityAlert(alertDetails) {
 
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `⚠️ Suspicious Activity: ${alertDetails.type || 'Alert'}`,
+      subject: `Suspicious Activity: ${alertDetails.type || 'Alert'}`,
       html: htmlContent
     });
 
@@ -260,12 +260,7 @@ async function sendSuspiciousActivityAlert(alertDetails) {
   }
 }
 
-module.exports = {
-  sendSignupNotificationToAdmin,
-  sendSuspiciousActivityAlert,
-  sendLoginNotificationToAdmin,
-  sendOrderNotificationToAdmin,
-};
+
 
 /**
  * Send admin notification email when a user logs in
@@ -303,7 +298,7 @@ async function sendLoginNotificationToAdmin(user, loginDetails = {}) {
         <body>
           <div class="container">
             <div class="header">
-              <h2>🔐 User Login Activity</h2>
+              <h2>User Login Activity</h2>
             </div>
             <div class="content">
               <div class="detail-row">
@@ -341,7 +336,7 @@ async function sendLoginNotificationToAdmin(user, loginDetails = {}) {
 
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `🔐 User Login: ${user.name || user.email}`,
+      subject: `User Login: ${user.name || user.email}`,
       html: htmlContent
     });
 
@@ -480,7 +475,7 @@ async function sendOrderNotificationToAdmin(order, user) {
         <body>
           <div class="container">
             <div class="header">
-              <h2 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.3px;">🛒 New Order Placed</h2>
+              <h2 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.3px;">New Order Placed</h2>
               <p style="margin: 8px 0 0; color: #cbd5e1;">Fresh order alert from Glimmr storefront</p>
             </div>
             <div class="content">
@@ -510,7 +505,7 @@ async function sendOrderNotificationToAdmin(order, user) {
                   ${order.shippingAddress?.name || 'N/A'}<br/>
                   ${order.shippingAddress?.line1 || ''}${order.shippingAddress?.line2 ? `<br/>${order.shippingAddress.line2}` : ''}<br/>
                   ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.pincode || ''}<br/>
-                  ${order.shippingAddress?.country || ''} • 📞 ${order.shippingAddress?.phone || user?.phone || 'N/A'}
+                  ${order.shippingAddress?.country || ''} • Phone: ${order.shippingAddress?.phone || user?.phone || 'N/A'}
                 </span>
               </div>
               <div class="detail-row">
@@ -558,15 +553,22 @@ async function sendOrderNotificationToAdmin(order, user) {
     
     await sendEmail({
       to: ADMIN_EMAIL,
-      subject: `🛒 New Order #${order._id.toString().slice(-6)} - ₹${order.totalAmount.toLocaleString('en-IN')}`,
+      subject: `New Order #${order._id.toString().slice(-6)} - ₹${order.totalAmount.toLocaleString('en-IN')}`,
       html: htmlContent
     });
 
-    console.log('[ADMIN_NOTIF] ✅ Email sent successfully');
+    console.log('[ADMIN_NOTIF] Email sent successfully');
     return true;
   } catch (error) {
-    console.error('[ADMIN_NOTIF] ❌ Error sending admin order notification:', error.message || error);
+    console.error('[ADMIN_NOTIF] Error sending admin order notification:', error.message || error);
     console.error('[ADMIN_NOTIF] Full error:', error);
     return false;
   }
 }
+
+module.exports = {
+  sendSignupNotificationToAdmin,
+  sendLoginNotificationToAdmin,
+  sendSuspiciousActivityAlert,
+  sendOrderNotificationToAdmin,
+};

@@ -5,6 +5,7 @@ const User = require('../models/User');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 const axios = require('axios');
 const { notifyOrderStatusChange } = require('../utils/orderNotification');
+const { sendOrderNotificationToAdmin } = require('../utils/adminNotification');
 const authMiddleware = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
 
