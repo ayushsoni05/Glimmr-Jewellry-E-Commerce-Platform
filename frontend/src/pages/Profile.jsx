@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../contexts/ToastContext';
@@ -40,6 +40,7 @@ import OrderTrackingModal from '../components/OrderTrackingModal';
 const Profile = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('basic');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -128,15 +129,24 @@ const Profile = () => {
   };
 
   const computeOrderLiveTotal = (order) => {
-    const items = order?.items || [];
-    const subtotal = items.reduce((sum, item) => {
-      const prod = item.product || item;
-      const unit = computeLivePrice(prod) || Number(item.price) || 0;
-      const qty = Number(item.quantity) || 0;
-      return sum + unit * qty;
-    }, 0);
-    const tax = subtotal * 0.03;
-    return { subtotal, tax, total: subtotal + tax };
+    if (!order) return { subtotal: 0, tax: 0, total: 0 };
+    const items = order.items || [];
+    let subtotal = 0;
+    if (items.length > 0) {
+      subtotal = items.reduce((sum, item) => {
+        const prod = item.product || item;
+        const unit = computeLivePrice(prod) || Number(item.price) || 0;
+        const qty = Number(item.quantity) || 1;
+        return sum + unit * qty;
+      }, 0);
+    }
+    const totalFallback = Number(order.totalAmount) || Number(order.total) || 0;
+    if (subtotal === 0 && totalFallback > 0) {
+      subtotal = Math.round(totalFallback / 1.03);
+    }
+    const tax = Math.round(subtotal * 0.03);
+    const total = totalFallback > 0 ? totalFallback : subtotal + tax;
+    return { subtotal, tax, total };
   };
 
   const loadProfile = async () => {
@@ -196,6 +206,13 @@ const Profile = () => {
     if (!user || !token) return;
     loadProfile();
   }, [user]);
+
+  useEffect(() => {
+    const queryTab = new URLSearchParams(location.search).get('tab');
+    if (queryTab) {
+      setActiveTab(queryTab);
+    }
+  }, [location.search]);
 
   const updateBasicInfo = async () => {
     // Basic validation
@@ -379,7 +396,7 @@ const Profile = () => {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white/90 backdrop-blur-md rounded-[24px] p-8 border border-[#B59A6C]/30 shadow-[0_20px_50px_rgba(181,154,108,0.08)] relative overflow-hidden text-center"
             >
@@ -462,7 +479,7 @@ const Profile = () => {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white border border-[#E5E2D9] rounded-[20px] p-3 shadow-[0_15px_35px_rgba(0,0,0,0.03)] space-y-1"
             >
@@ -533,7 +550,7 @@ const Profile = () => {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.2 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white border border-[#E5E2D9] rounded-[20px] p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden"
             >
@@ -558,9 +575,9 @@ const Profile = () => {
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, amount: 0.15 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white border border-[#E5E2D9] rounded-[24px] p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] relative overflow-hidden"
+              className="bg-white border border-[#E5E2D9] rounded-[24px] p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] relative"
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -1144,14 +1161,9 @@ const Profile = () => {
 
                           <div className="flex gap-2 flex-wrap pt-2">
                             <button
-                              onClick={async () => {
-                                try {
-                                  const { data } = await api.get(`/user/orders/${order._id}`);
-                                  setOrderDetail(data.order);
-                                  setOrderDetailOpen(true);
-                                } catch (e) {
-                                  toastError('Failed to load order details');
-                                }
+                              onClick={() => {
+                                setSelectedInvoiceOrder(order);
+                                setInvoiceModalOpen(true);
                               }}
                               className="px-4 py-2 bg-[#FAF9F7] text-[#222222] border border-gray-200 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
                             >
