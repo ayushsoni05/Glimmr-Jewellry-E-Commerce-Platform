@@ -9,6 +9,7 @@ import { HeartIcon } from '../components/Icons';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage, getProductImages } from '../utils/productImages';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Flame, Sparkles } from 'lucide-react';
 
 const Accordion = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -172,27 +173,43 @@ const ProductDetail = () => {
           {/* Left Column: Compact Main Image & Thumbnails (~40% width -> col-span-5) */}
           <div className="md:col-span-5 lg:col-span-5 max-w-[380px] sm:max-w-[420px] w-full space-y-3 ml-0 mr-auto">
             {/* Main Image Box with Interactive Lighting Filter */}
-            <div className={`relative w-full aspect-square rounded-none p-5 sm:p-6 flex items-center justify-center overflow-hidden group transition-colors duration-500 ${
-              lightFilter === 'candlelight' ? 'bg-[#2A1E17]' : lightFilter === 'spotlight' ? 'bg-[#111111]' : 'bg-[#FAF9F7]'
+            <div className={`relative w-full aspect-square rounded-2xl p-5 sm:p-6 flex items-center justify-center overflow-hidden group transition-all duration-700 border border-[#E5E2D9] ${
+              lightFilter === 'candlelight' 
+                ? 'bg-gradient-to-b from-[#2A1E17] via-[#20150F] to-[#170E0A] shadow-[inset_0_0_40px_rgba(212,175,55,0.15)]' 
+                : lightFilter === 'spotlight' 
+                ? 'bg-gradient-to-b from-[#0F0F12] via-[#08080A] to-[#040405] shadow-[inset_0_0_50px_rgba(255,255,255,0.05)]' 
+                : 'bg-[#FAF9F7]'
             }`}>
+              {/* Subtle Atmospheric Spotlight Halo */}
+              {lightFilter === 'spotlight' && (
+                <div className="absolute inset-0 bg-radial from-white/10 via-transparent to-transparent pointer-events-none" />
+              )}
+              {lightFilter === 'candlelight' && (
+                <div className="absolute inset-0 bg-radial from-amber-500/10 via-orange-950/20 to-transparent pointer-events-none" />
+              )}
+
               <img
                 src={images[activeIndex] || getProductImage(product)}
                 alt={product.name}
-                className={`w-full h-full object-contain max-h-[200px] sm:max-h-[230px] transition-all duration-700 group-hover:scale-105 ${
-                  lightFilter === 'spotlight' ? 'brightness-125 contrast-125 drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]' : lightFilter === 'candlelight' ? 'sepia-[0.3] brightness-110' : ''
+                className={`relative z-10 w-full h-full object-contain max-h-[200px] sm:max-h-[230px] transition-all duration-700 group-hover:scale-105 ${
+                  lightFilter === 'spotlight' 
+                    ? 'brightness-125 contrast-125 drop-shadow-[0_0_25px_rgba(255,255,255,0.75)]' 
+                    : lightFilter === 'candlelight' 
+                    ? 'sepia-[0.35] brightness-110 contrast-105 drop-shadow-[0_0_20px_rgba(217,119,6,0.3)]' 
+                    : 'drop-shadow-sm'
                 }`}
               />
               {images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base z-20 cursor-pointer"
                   >
                     ‹
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base z-20 cursor-pointer"
                   >
                     ›
                   </button>
@@ -201,26 +218,50 @@ const ProductDetail = () => {
             </div>
 
             {/* Interactive Environmental Lighting Inspector Toolbar */}
-            <div className="p-3 bg-[#FAF9F7] border border-[#E5E2D9] rounded-xl flex items-center justify-between">
-              <span className="text-[10px] font-mono text-[#B59A6C] font-bold uppercase tracking-widest">
-                LIGHTING INSPECTOR:
-              </span>
-              <div className="flex gap-1.5">
+            <div className="p-2 sm:p-2.5 bg-[#FAF9F7] border border-[#E5E2D9] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xs">
+              <div className="flex items-center gap-2 pl-2">
+                <span className="w-2 h-2 rounded-full bg-[#B59A6C] animate-pulse" />
+                <span className="text-[10px] font-mono text-[#111111] font-bold uppercase tracking-[0.2em]">
+                  LIGHTING INSPECTOR
+                </span>
+              </div>
+              <div className="relative flex items-center bg-white border border-[#E5E2D9] rounded-xl p-1 shadow-2xs gap-1">
                 {[
-                  { id: 'daylight', label: 'Daylight ☀️' },
-                  { id: 'candlelight', label: 'Candlelight 🕯️' },
-                  { id: 'spotlight', label: 'Spotlight 💡' }
-                ].map(l => (
-                  <button
-                    key={l.id}
-                    onClick={() => setLightFilter(l.id)}
-                    className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition-all ${
-                      lightFilter === l.id ? 'bg-[#111111] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200'
-                    }`}
-                  >
-                    {l.label}
-                  </button>
-                ))}
+                  { id: 'daylight', name: 'Daylight', icon: Sun },
+                  { id: 'candlelight', name: 'Candlelight', icon: Flame },
+                  { id: 'spotlight', name: 'Spotlight', icon: Sparkles }
+                ].map((l) => {
+                  const Icon = l.icon;
+                  const isActive = lightFilter === l.id;
+                  return (
+                    <motion.button
+                      key={l.id}
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setLightFilter(l.id)}
+                      className={`relative px-3 py-1.5 rounded-lg text-[11px] font-body font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                        isActive ? 'text-white' : 'text-gray-600 hover:text-[#111111]'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeLightingPill"
+                          transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                          className="absolute inset-0 bg-[#111111] rounded-lg shadow-sm"
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Icon className={`w-3.5 h-3.5 transition-colors ${
+                          isActive
+                            ? l.id === 'daylight' ? 'text-amber-400' : l.id === 'candlelight' ? 'text-orange-400' : 'text-[#B59A6C]'
+                            : 'text-gray-400'
+                        }`} />
+                        <span>{l.name}</span>
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
 
