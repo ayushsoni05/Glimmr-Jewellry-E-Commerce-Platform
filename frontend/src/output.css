@@ -4342,10 +4342,6 @@ img {
   padding-left: 3rem;
 }
 
-.pl-2{
-  padding-left: 0.5rem;
-}
-
 .pl-24{
   padding-left: 6rem;
 }
@@ -6564,8 +6560,8 @@ img {
     padding: 3.5rem;
   }
 
-  .sm\:p-2\.5{
-    padding: 0.625rem;
+  .sm\:p-3{
+    padding: 0.75rem;
   }
 
   .sm\:p-6{
@@ -6643,6 +6639,10 @@ img {
   .sm\:text-6xl{
     font-size: 3.75rem;
     line-height: 1;
+  }
+
+  .sm\:text-\[11px\]{
+    font-size: 11px;
   }
 
   .sm\:text-\[12rem\]{

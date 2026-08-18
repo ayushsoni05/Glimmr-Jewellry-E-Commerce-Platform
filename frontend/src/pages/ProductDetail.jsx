@@ -218,14 +218,22 @@ const ProductDetail = () => {
             </div>
 
             {/* Interactive Environmental Lighting Inspector Toolbar */}
-            <div className="p-2 sm:p-2.5 bg-[#FAF9F7] border border-[#E5E2D9] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2 shadow-xs">
-              <div className="flex items-center gap-2 pl-2">
-                <span className="w-2 h-2 rounded-full bg-[#B59A6C] animate-pulse" />
-                <span className="text-[10px] font-mono text-[#111111] font-bold uppercase tracking-[0.2em]">
-                  LIGHTING INSPECTOR
+            <div className="w-full p-2.5 sm:p-3 bg-[#FAF9F7] border border-[#E5E2D9] rounded-2xl shadow-xs space-y-2">
+              {/* Header */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C] animate-pulse" />
+                  <span className="text-[10px] font-mono text-[#111111] font-bold uppercase tracking-[0.2em]">
+                    LIGHTING INSPECTOR
+                  </span>
+                </div>
+                <span className="text-[9px] font-mono text-[#B59A6C] font-semibold uppercase tracking-widest">
+                  {lightFilter === 'daylight' ? 'Natural Light' : lightFilter === 'candlelight' ? 'Warm Ambiance' : 'Studio Sparkle'}
                 </span>
               </div>
-              <div className="relative flex items-center bg-white border border-[#E5E2D9] rounded-xl p-1 shadow-2xs gap-1">
+
+              {/* Segmented Control Buttons (Equal 3-Column Grid) */}
+              <div className="w-full grid grid-cols-3 bg-white border border-[#E5E2D9] rounded-xl p-1 shadow-2xs gap-1">
                 {[
                   { id: 'daylight', name: 'Daylight', icon: Sun },
                   { id: 'candlelight', name: 'Candlelight', icon: Flame },
@@ -240,7 +248,7 @@ const ProductDetail = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setLightFilter(l.id)}
-                      className={`relative px-3 py-1.5 rounded-lg text-[11px] font-body font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer ${
+                      className={`relative flex items-center justify-center py-2 px-1 rounded-lg text-[10px] sm:text-[11px] font-body font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer overflow-hidden ${
                         isActive ? 'text-white' : 'text-gray-600 hover:text-[#111111]'
                       }`}
                     >
@@ -251,13 +259,13 @@ const ProductDetail = () => {
                           className="absolute inset-0 bg-[#111111] rounded-lg shadow-sm"
                         />
                       )}
-                      <span className="relative z-10 flex items-center gap-1.5">
-                        <Icon className={`w-3.5 h-3.5 transition-colors ${
+                      <span className="relative z-10 flex items-center gap-1.5 truncate">
+                        <Icon className={`w-3.5 h-3.5 shrink-0 transition-colors ${
                           isActive
                             ? l.id === 'daylight' ? 'text-amber-400' : l.id === 'candlelight' ? 'text-orange-400' : 'text-[#B59A6C]'
                             : 'text-gray-400'
                         }`} />
-                        <span>{l.name}</span>
+                        <span className="truncate">{l.name}</span>
                       </span>
                     </motion.button>
                   );
