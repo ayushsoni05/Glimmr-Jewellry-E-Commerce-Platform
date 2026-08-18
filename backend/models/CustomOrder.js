@@ -61,9 +61,52 @@ const customOrderSchema = new mongoose.Schema(
       artEmblemName: { type: String, default: 'None' },
       ringSize: { type: String, default: '7' },
     },
+    bandProfile: {
+      id: String,
+      name: String,
+    },
+    bandWidthMm: {
+      type: Number,
+      default: 4,
+    },
+    bandPattern: {
+      id: String,
+      name: String,
+      price: { type: Number, default: 0 },
+    },
+    bandFinish: {
+      id: String,
+      name: String,
+    },
+    twoToneMetal: {
+      id: String,
+      name: String,
+      color: String,
+      pricePerGram: Number,
+    },
+    diamondGrading: {
+      color: String,
+      clarity: String,
+      cutGrade: String,
+    },
+    settingStyle: {
+      id: String,
+      name: String,
+      price: { type: Number, default: 0 },
+    },
+    sideStones: {
+      id: String,
+      name: String,
+      price: { type: Number, default: 0 },
+    },
+    referenceImages: [String],
     pricing: {
       metalCost: Number,
       gemCost: Number,
+      twoToneSurcharge: Number,
+      patternCost: Number,
+      settingCost: Number,
+      sideStoneCost: Number,
       makingCharges: Number,
       gst: Number,
       total: Number,

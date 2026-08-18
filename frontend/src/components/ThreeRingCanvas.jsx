@@ -100,7 +100,7 @@ function FacetedGemstone({ cutId, scale, gemProps }) {
 }
 
 // Seamless Unified 3D Ring Assembly
-function RingMesh({ metal, gemstone, cut, caratWeight, bandWeight, artEmblem, autoRotate }) {
+function RingMesh({ metal, gemstone, cut, caratWeight, bandWeight, artEmblem, autoRotate, bandProfile, bandPattern, bandFinish, bandWidthMm, settingStyle, sideStones, twoToneMetal }) {
   const groupRef = useRef();
 
   useFrame((state, delta) => {
@@ -115,9 +115,10 @@ function RingMesh({ metal, gemstone, cut, caratWeight, bandWeight, artEmblem, au
 
   // Band thickness calculation
   const tubeRadius = useMemo(() => {
+    if (bandWidthMm) return bandWidthMm * 0.025;
     const w = bandWeight || 8;
     return 0.11 + ((w - 3) / 22) * 0.09; // 0.11 to 0.20
-  }, [bandWeight]);
+  }, [bandWidthMm, bandWeight]);
 
   // Main torus band radius
   const bandRadius = 1.1;
@@ -131,34 +132,143 @@ function RingMesh({ metal, gemstone, cut, caratWeight, bandWeight, artEmblem, au
     return Math.pow(ct / 1.0, 0.38) * 0.52;
   }, [caratWeight]);
 
+  // Apply finishes
+  let adjustedRoughness = metalProps.roughness;
+  if (bandFinish === 'matte') adjustedRoughness = 0.45;
+  else if (bandFinish === 'satin') adjustedRoughness = 0.2;
+  else if (bandFinish === 'sandblast') adjustedRoughness = 0.55;
+
+  // Apply patterns
+  let bumpScale = 0;
+  if (bandPattern === 'hammered') {
+    adjustedRoughness = Math.max(adjustedRoughness, 0.25);
+    bumpScale = 0.05;
+  } else if (bandPattern === 'rope-twist') {
+    adjustedRoughness = Math.max(adjustedRoughness, 0.15);
+  } else if (bandPattern === 'brushed') {
+    adjustedRoughness = Math.max(adjustedRoughness, 0.3);
+  }
+
+  // Profile handling
+  let tubularSegments = 48;
+  if (bandProfile === 'flat') tubularSegments = 4;
+  else if (bandProfile === 'knife-edge') tubularSegments = 3;
+
+  const bandMaterial = (color) => (
+    <meshPhysicalMaterial
+      color={color || metalProps.color}
+      metalness={metalProps.metalness}
+      roughness={adjustedRoughness}
+      clearcoat={bandFinish === 'high-polish' ? metalProps.clearcoat : 0}
+      clearcoatRoughness={metalProps.clearcoatRoughness}
+      reflectivity={1.0}
+      bumpScale={bumpScale}
+    />
+  );
+
   return (
     <group ref={groupRef} position={[0, -0.2, 0]} rotation={[0.35, 0.4, 0]}>
       
       {/* ── 1. MAIN METALLIC RING BAND (Upright in XY Plane) ── */}
-      <mesh rotation={[0, 0, 0]}>
-        <torusGeometry args={[bandRadius, tubeRadius, 48, 128]} />
-        <meshPhysicalMaterial
-          color={metalProps.color}
-          metalness={metalProps.metalness}
-          roughness={metalProps.roughness}
-          clearcoat={metalProps.clearcoat}
-          clearcoatRoughness={metalProps.clearcoatRoughness}
-          reflectivity={1.0}
-        />
-      </mesh>
+      {bandFinish === 'two-tone' || twoToneMetal ? (
+        <>
+          <mesh rotation={[0, 0, 0]}>
+            <torusGeometry args={[bandRadius, tubeRadius, tubularSegments, 64, Math.PI]} />
+            {bandMaterial()}
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI]}>
+            <torusGeometry args={[bandRadius, tubeRadius, tubularSegments, 64, Math.PI]} />
+            {bandMaterial(twoToneMetal?.color || '#FFD700')}
+          </mesh>
+        </>
+      ) : (
+        <mesh rotation={[0, 0, 0]}>
+          <torusGeometry args={[bandRadius, tubeRadius, tubularSegments, 128]} />
+          {bandMaterial()}
+        </mesh>
+      )}
+
+      {/* Band Pattern Extras */}
+      {bandPattern === 'milgrain' && (
+        <group>
+          {[...Array(60)].map((_, i) => {
+            const angle = (i / 60) * Math.PI * 2;
+            return (
+              <mesh key={`milgrain-1-${i}`} position={[Math.cos(angle) * (bandRadius + tubeRadius * 0.8), Math.sin(angle) * (bandRadius + tubeRadius * 0.8), tubeRadius * 0.8]}>
+                <sphereGeometry args={[tubeRadius * 0.15, 8, 8]} />
+                {bandMaterial()}
+              </mesh>
+            )
+          })}
+          {[...Array(60)].map((_, i) => {
+            const angle = (i / 60) * Math.PI * 2;
+            return (
+              <mesh key={`milgrain-2-${i}`} position={[Math.cos(angle) * (bandRadius + tubeRadius * 0.8), Math.sin(angle) * (bandRadius + tubeRadius * 0.8), -tubeRadius * 0.8]}>
+                <sphereGeometry args={[tubeRadius * 0.15, 8, 8]} />
+                {bandMaterial()}
+              </mesh>
+            )
+          })}
+        </group>
+      )}
+
+      {/* ── SIDE STONES ── */}
+      {sideStones !== 'none' && (
+        <group>
+          {[-1, 1].map((side) => {
+            if (sideStones === 'pave-band') {
+               return [...Array(6)].map((_, i) => {
+                 const angle = (Math.PI / 2) + side * ((i + 1) * 0.2);
+                 return (
+                   <mesh key={`pave-${side}-${i}`} position={[Math.cos(angle) * bandRadius, Math.sin(angle) * bandRadius + tubeRadius * 0.6, 0]} rotation={[0, 0, angle - Math.PI / 2]}>
+                     <sphereGeometry args={[tubeRadius * 0.4, 8, 8]} />
+                     <meshPhysicalMaterial color="#FFFFFF" metalness={0.1} roughness={0.1} transmission={0.9} ior={2.4} />
+                   </mesh>
+                 );
+               });
+            } else if (sideStones === 'channel-baguette') {
+               return [...Array(4)].map((_, i) => {
+                 const angle = (Math.PI / 2) + side * ((i + 1) * 0.25);
+                 return (
+                   <mesh key={`baguette-${side}-${i}`} position={[Math.cos(angle) * bandRadius, Math.sin(angle) * bandRadius + tubeRadius * 0.5, 0]} rotation={[0, 0, angle - Math.PI / 2]}>
+                     <boxGeometry args={[tubeRadius * 0.8, tubeRadius * 0.4, tubeRadius * 0.8]} />
+                     <meshPhysicalMaterial color="#FFFFFF" metalness={0.1} roughness={0.1} transmission={0.9} ior={2.4} />
+                   </mesh>
+                 );
+               });
+            } else if (sideStones === 'three-stone' && side === 1) {
+                return [-1, 1].map((s) => (
+                   <group key={`three-stone-${s}`} position={[s * 0.45, bandRadius + tubeRadius, 0]}>
+                     <mesh position={[0, 0, 0]}>
+                       <cylinderGeometry args={[gemScale * 0.3, gemScale * 0.2, 0.1, 16]} />
+                       {bandMaterial()}
+                     </mesh>
+                     <mesh position={[0, 0.1, 0]}>
+                        <FacetedGemstone cutId="round" scale={gemScale * 0.6} gemProps={GEM_MATERIALS['vvs-diamond']} />
+                     </mesh>
+                   </group>
+                ));
+            } else if (sideStones === 'side-rounds' && side === 1) {
+                return [-1, 1].map((s) => (
+                   <group key={`side-rounds-${s}`} position={[s * 0.35, bandRadius + tubeRadius * 0.8, 0]}>
+                     <mesh position={[0, 0.05, 0]}>
+                        <sphereGeometry args={[gemScale * 0.25, 16, 16]} />
+                        <meshPhysicalMaterial color="#FFFFFF" metalness={0.1} roughness={0.1} transmission={0.9} ior={2.4} />
+                     </mesh>
+                   </group>
+                ));
+            }
+            return null;
+          })}
+        </group>
+      )}
 
       {/* ── 2. CATHEDRAL SHOULDER BRIDGES (Connecting band to crown) ── */}
-      {[-1, 1].map((dir) => (
+      {settingStyle === 'cathedral' && [-1, 1].map((dir) => (
         <group key={`shoulder-${dir}`} position={[dir * 0.45, bandRadius * 0.85, 0]} rotation={[0, 0, dir * -0.45]}>
           <mesh>
             <cylinderGeometry args={[tubeRadius * 0.8, tubeRadius * 1.1, 0.5, 16]} />
-            <meshPhysicalMaterial
-              color={metalProps.color}
-              metalness={metalProps.metalness}
-              roughness={metalProps.roughness}
-              clearcoat={metalProps.clearcoat}
-              reflectivity={1.0}
-            />
+            {bandMaterial()}
           </mesh>
         </group>
       ))}
@@ -201,40 +311,54 @@ function RingMesh({ metal, gemstone, cut, caratWeight, bandWeight, artEmblem, au
       {hasGem && (
         <group position={[0, bandTopY + 0.02, 0]}>
           
-          {/* Solid Metallic Basket Collar (Mounting Base) */}
-          <mesh position={[0, 0.06, 0]}>
-            <cylinderGeometry args={[gemScale * 0.58, gemScale * 0.42, 0.14, 16]} />
-            <meshPhysicalMaterial
-              color={metalProps.color}
-              metalness={metalProps.metalness}
-              roughness={metalProps.roughness}
-              clearcoat={metalProps.clearcoat}
-              reflectivity={1.0}
-            />
-          </mesh>
-
-          {/* 4 Tapered Metallic Prongs Gripping Girdle */}
-          {[-1, 1].map((x) =>
-            [-1, 1].map((z) => (
-              <mesh
-                key={`prong-${x}-${z}`}
-                position={[x * gemScale * 0.4, 0.22, z * gemScale * 0.4]}
-                rotation={[z * -0.12, 0, x * 0.12]}
-              >
-                <cylinderGeometry args={[0.035, 0.025, gemScale * 0.55, 12]} />
-                <meshPhysicalMaterial
-                  color={metalProps.color}
-                  metalness={metalProps.metalness}
-                  roughness={metalProps.roughness}
-                  clearcoat={metalProps.clearcoat}
-                  reflectivity={1.0}
-                />
+          {settingStyle === 'bezel' ? (
+             <mesh position={[0, 0.15, 0]}>
+               <torusGeometry args={[gemScale * 0.6, 0.05, 16, 64]} />
+               <cylinderGeometry args={[gemScale * 0.6, gemScale * 0.42, 0.14, 16]} />
+               {bandMaterial()}
+             </mesh>
+          ) : settingStyle === 'halo' ? (
+             <group position={[0, 0.15, 0]}>
+               <mesh position={[0, -0.05, 0]}>
+                 <cylinderGeometry args={[gemScale * 0.7, gemScale * 0.42, 0.14, 16]} />
+                 {bandMaterial()}
+               </mesh>
+               {[...Array(16)].map((_, i) => {
+                 const angle = (i / 16) * Math.PI * 2;
+                 return (
+                   <mesh key={`halo-${i}`} position={[Math.cos(angle) * gemScale * 0.65, 0.05, Math.sin(angle) * gemScale * 0.65]}>
+                     <sphereGeometry args={[0.06, 8, 8]} />
+                     <meshPhysicalMaterial color="#FFFFFF" metalness={0.1} roughness={0.1} transmission={0.9} ior={2.4} />
+                   </mesh>
+                 );
+               })}
+             </group>
+          ) : settingStyle !== 'tension' && settingStyle !== 'flush' ? (
+            <>
+              {/* Solid Metallic Basket Collar (Mounting Base) */}
+              <mesh position={[0, 0.06, 0]}>
+                <cylinderGeometry args={[gemScale * 0.58, gemScale * 0.42, 0.14, 16]} />
+                {bandMaterial()}
               </mesh>
-            ))
-          )}
+
+              {/* 4 Tapered Metallic Prongs Gripping Girdle */}
+              {[-1, 1].map((x) =>
+                [-1, 1].map((z) => (
+                  <mesh
+                    key={`prong-${x}-${z}`}
+                    position={[x * gemScale * 0.4, 0.22, z * gemScale * 0.4]}
+                    rotation={[z * -0.12, 0, x * 0.12]}
+                  >
+                    <cylinderGeometry args={[0.035, 0.025, gemScale * 0.55, 12]} />
+                    {bandMaterial()}
+                  </mesh>
+                ))
+              )}
+            </>
+          ) : null}
 
           {/* Faceted 3D Gemstone */}
-          <group position={[0, 0.24, 0]}>
+          <group position={[0, settingStyle === 'flush' ? -0.1 : 0.24, 0]}>
             <FacetedGemstone cutId={cut?.id} scale={gemScale} gemProps={gemProps} />
           </group>
 
@@ -253,6 +377,13 @@ export default function ThreeRingCanvas({
   bandWeight = 8,
   artEmblem = 'none',
   autoRotate = false,
+  bandProfile = 'comfort-fit',
+  bandPattern = 'plain',
+  bandFinish = 'high-polish',
+  bandWidthMm = 4,
+  settingStyle = 'prong',
+  sideStones = 'none',
+  twoToneMetal = null,
 }) {
   return (
     <div className="w-full h-full relative select-none">
@@ -276,6 +407,13 @@ export default function ThreeRingCanvas({
               bandWeight={bandWeight}
               artEmblem={artEmblem}
               autoRotate={autoRotate}
+              bandProfile={bandProfile}
+              bandPattern={bandPattern}
+              bandFinish={bandFinish}
+              bandWidthMm={bandWidthMm}
+              settingStyle={settingStyle}
+              sideStones={sideStones}
+              twoToneMetal={twoToneMetal}
             />
           </Float>
           <ContactShadows position={[0, -1.3, 0]} opacity={0.6} scale={4.5} blur={1.5} far={1.8} />

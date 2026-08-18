@@ -163,18 +163,54 @@ const AdminBespokeOrders = () => {
                 </div>
               </div>
 
-              {/* Middle Column: 3D Ring Specifications */}
+              {/* Middle Column: Full Ring Specifications */}
               <div className="space-y-2 lg:w-1/3 text-xs font-body text-[#808080]">
                 <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block">
-                  3D RING SPECIFICATIONS
+                  FULL RING SPECIFICATIONS
                 </span>
                 <div className="flex justify-between py-1 border-b border-gray-100">
                   <span>Precious Metal</span>
                   <strong className="text-[#222222]">{order.metal?.name} ({order.metal?.weightGrams}g)</strong>
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Band Profile</span>
+                  <strong className="text-[#222222]">{order.bandProfile?.name || 'Comfort Fit'}</strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Band Width</span>
+                  <strong className="text-[#222222]">{order.bandWidthMm || 4}mm</strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Band Pattern</span>
+                  <strong className="text-[#222222]">{order.bandPattern?.name || 'Plain Polished'}</strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Surface Finish</span>
+                  <strong className="text-[#222222]">{order.bandFinish?.name || 'High Polish'}</strong>
+                </div>
+                {order.twoToneMetal && (
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span>Two-Tone Inner</span>
+                    <strong className="text-[#222222]">{order.twoToneMetal.name}</strong>
+                  </div>
+                )}
+                <div className="flex justify-between py-1 border-b border-gray-100">
                   <span>Gemstone & Cut</span>
                   <strong className="text-[#222222]">{order.gemstone?.name} ({order.caratWeight}ct {order.cut?.name})</strong>
+                </div>
+                {order.diamondGrading?.color && (
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span>Diamond 4C Grade</span>
+                    <strong className="text-[#222222]">{order.diamondGrading.color} / {order.diamondGrading.clarity} / {order.diamondGrading.cutGrade}</strong>
+                  </div>
+                )}
+                <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Setting Style</span>
+                  <strong className="text-[#222222]">{order.settingStyle?.name || 'Classic Prong'}</strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-gray-100">
+                  <span>Side Stones</span>
+                  <strong className="text-[#222222]">{order.sideStones?.name || 'None'}</strong>
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-100">
                   <span>3D Art Motif</span>
@@ -188,6 +224,20 @@ const AdminBespokeOrders = () => {
                   <span>Ring Size</span>
                   <strong className="text-[#222222]">US {order.personalization?.ringSize}</strong>
                 </div>
+
+                {/* Reference Images */}
+                {order.referenceImages && order.referenceImages.length > 0 && (
+                  <div className="mt-3">
+                    <span className="text-[10px] font-mono font-bold text-[#B59A6C] block mb-2">REFERENCE IMAGES:</span>
+                    <div className="flex gap-2">
+                      {order.referenceImages.map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="block w-16 h-16 rounded-[8px] overflow-hidden border border-gray-200 hover:border-[#B59A6C] transition-colors">
+                          <img src={url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {order.estimatedCompletionDate && (
                   <div className="mt-3 p-3 bg-amber-50 rounded-[12px] border border-amber-200/60 text-amber-900">

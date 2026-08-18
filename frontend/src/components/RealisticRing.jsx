@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /* ──────────────────────────────────────────────────────────
    METAL GRADIENT PALETTES
-   Each metal gets a multi-stop linear gradient that mimics
-   real metallic luster with highlights and shadow bands.
    ────────────────────────────────────────────────────────── */
 const METAL_GRADIENTS = {
   '24k-gold': {
@@ -46,8 +44,6 @@ const METAL_GRADIENTS = {
 
 /* ──────────────────────────────────────────────────────────
    GEMSTONE VISUAL CONFIGS
-   Each gem gets facet colors, fire dispersion hues, and
-   brilliance patterns for the CSS-rendered top-down view.
    ────────────────────────────────────────────────────────── */
 const GEM_VISUALS = {
   'vvs-diamond': {
@@ -82,12 +78,9 @@ const GEM_VISUALS = {
 
 /* ──────────────────────────────────────────────────────────
    CUT-SPECIFIC SHAPES
-   Each cut produces a different SVG polygon for the
-   top-down "table" view of the gemstone.
    ────────────────────────────────────────────────────────── */
 const CUT_POLYGONS = {
   'round': (s) => {
-    // Brilliant round — circle approximated as 16-gon
     const pts = [];
     for (let i = 0; i < 16; i++) {
       const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
@@ -96,16 +89,13 @@ const CUT_POLYGONS = {
     return pts.join(' ');
   },
   'emerald-cut': (s) => {
-    // Emerald — elongated octagon
     const w = s * 1.15, h = s * 0.85, c = s * 0.25;
     return `${50 - w + c},${50 - h} ${50 + w - c},${50 - h} ${50 + w},${50 - h + c} ${50 + w},${50 + h - c} ${50 + w - c},${50 + h} ${50 - w + c},${50 + h} ${50 - w},${50 + h - c} ${50 - w},${50 - h + c}`;
   },
   'princess': (s) => {
-    // Princess — square rotated 0°
     return `${50},${50 - s} ${50 + s},${50} ${50},${50 + s} ${50 - s},${50}`;
   },
   'oval': (s) => {
-    // Oval — elongated ellipse as polygon
     const pts = [];
     for (let i = 0; i < 16; i++) {
       const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
@@ -114,12 +104,10 @@ const CUT_POLYGONS = {
     return pts.join(' ');
   },
   'cushion': (s) => {
-    // Cushion — rounded square (approximated)
     const r = s * 0.3;
     return `${50 - s + r},${50 - s} ${50 + s - r},${50 - s} ${50 + s},${50 - s + r} ${50 + s},${50 + s - r} ${50 + s - r},${50 + s} ${50 - s + r},${50 + s} ${50 - s},${50 + s - r} ${50 - s},${50 - s + r}`;
   },
   'pear': (s) => {
-    // Pear — teardrop shape
     const pts = [];
     for (let i = 0; i < 20; i++) {
       const t = (i / 20) * Math.PI * 2;
@@ -140,17 +128,25 @@ const RealisticRing = ({
   caratWeight = 1.0,
   bandWeight = 8,
   engravingText = '',
+  bandProfile = 'comfort-fit',
+  bandPattern = 'plain',
+  bandFinish = 'high-polish',
+  bandWidthMm = 4,
+  settingStyle = 'prong',
+  sideStones = 'none',
+  twoToneMetal = null,
 }) => {
   const palette = METAL_GRADIENTS[metal.id] || METAL_GRADIENTS['24k-gold'];
   const gemVis = GEM_VISUALS[gemstone.id] || null;
   const hasGem = gemstone.id !== 'no-stone' && gemVis;
 
-  // Band thickness scales with weight (3g=thin → 25g=thick)
+  // Band thickness scales with bandWidthMm if provided, else bandWeight
   const bandThickness = useMemo(() => {
+    if (bandWidthMm) return bandWidthMm * 3.5;
     return 12 + ((bandWeight - 3) / 22) * 18; // 12px to 30px
-  }, [bandWeight]);
+  }, [bandWidthMm, bandWeight]);
 
-  // Gem size scales with carat (0.25ct → 5ct)
+  // Gem size scales with carat
   const gemSize = useMemo(() => {
     return 14 + (caratWeight / 5) * 22; // 14 to 36 in SVG units
   }, [caratWeight]);
@@ -161,6 +157,8 @@ const RealisticRing = ({
   const shadowFilterId = `bandShadow`;
   const gemGradientId = `gemGrad-${gemstone.id}`;
   const gemFireId = `gemFire-${gemstone.id}`;
+
+  const isMatte = bandFinish === 'matte' || bandFinish === 'sandblast' || bandFinish === 'satin';
 
   return (
     <div className="relative w-full aspect-square flex items-center justify-center select-none" style={{ perspective: '900px' }}>
@@ -178,14 +176,14 @@ const RealisticRing = ({
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Metallic band gradient — horizontal sweep for luster */}
+            {/* Metallic band gradient */}
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               {palette.band.map((color, i) => (
-                <stop key={i} offset={`${(i / (palette.band.length - 1)) * 100}%`} stopColor={color} />
+                <stop key={i} offset={`${(i / (palette.band.length - 1)) * 100}%`} stopColor={color} stopOpacity={isMatte ? 0.8 : 1} />
               ))}
             </linearGradient>
 
-            {/* Inner ring gradient — darker interior */}
+            {/* Inner ring gradient */}
             <linearGradient id={innerGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               {palette.inner.map((color, i) => (
                 <stop key={i} offset={`${(i / (palette.inner.length - 1)) * 100}%`} stopColor={color} />
@@ -194,8 +192,8 @@ const RealisticRing = ({
 
             {/* Specular highlight */}
             <radialGradient id={highlightId} cx="35%" cy="30%" r="40%">
-              <stop offset="0%" stopColor={palette.highlight} stopOpacity="0.9" />
-              <stop offset="60%" stopColor={palette.highlight} stopOpacity="0.15" />
+              <stop offset="0%" stopColor={palette.highlight} stopOpacity={isMatte ? "0.3" : "0.9"} />
+              <stop offset="60%" stopColor={palette.highlight} stopOpacity={isMatte ? "0.05" : "0.15"} />
               <stop offset="100%" stopColor={palette.highlight} stopOpacity="0" />
             </radialGradient>
 
@@ -218,6 +216,14 @@ const RealisticRing = ({
               </feMerge>
             </filter>
 
+            {/* Hammered Pattern Filter */}
+            <filter id="hammeredFilter">
+              <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise" />
+              <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.15 0" in="noise" result="coloredNoise" />
+              <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="composite" />
+              <feBlend mode="multiply" in="composite" in2="SourceGraphic" />
+            </filter>
+
             {/* Gemstone gradient */}
             {hasGem && (
               <>
@@ -234,7 +240,7 @@ const RealisticRing = ({
               </>
             )}
 
-            {/* Engraving text path — inner ellipse */}
+            {/* Engraving text path */}
             <path
               id="engravePath"
               d={`M 30,52 A 20,8 0 1,1 70,52`}
@@ -242,42 +248,67 @@ const RealisticRing = ({
             />
           </defs>
 
-          {/* ── RING BAND (3/4 perspective view) ── */}
+          {/* ── RING BAND ── */}
           <g filter={`url(#${shadowFilterId})`}>
-            {/* Back half of ring — slightly behind, creates 3D depth */}
+            {/* Back half of ring */}
             <ellipse
               cx="50" cy="55"
               rx="32" ry="12"
               fill="none"
               stroke={`url(#${innerGradientId})`}
               strokeWidth={bandThickness * 0.85}
-              strokeLinecap="round"
+              strokeLinecap={bandProfile === 'flat' ? 'square' : 'round'}
               opacity="0.55"
             />
 
-            {/* Main ring band — front arc (the visible part) */}
+            {/* Main ring band */}
             <ellipse
               cx="50" cy="55"
               rx="32" ry="12"
               fill="none"
               stroke={`url(#${gradientId})`}
               strokeWidth={bandThickness}
-              strokeLinecap="round"
-              filter="url(#innerShadow)"
+              strokeLinecap={bandProfile === 'flat' ? 'square' : 'round'}
+              filter={bandPattern === 'hammered' ? "url(#hammeredFilter)" : "url(#innerShadow)"}
             />
 
-            {/* Specular highlight sweep across the top-front face */}
+            {/* Pattern overlays */}
+            {bandPattern === 'milgrain' && (
+               <ellipse
+                 cx="50" cy="55"
+                 rx="32" ry="12"
+                 fill="none"
+                 stroke={palette.highlight}
+                 strokeWidth="1"
+                 strokeDasharray="2, 2"
+                 opacity="0.6"
+               />
+            )}
+            
+            {bandPattern === 'rope-twist' && (
+               <ellipse
+                 cx="50" cy="55"
+                 rx="32" ry="12"
+                 fill="none"
+                 stroke={palette.inner[0]}
+                 strokeWidth="2"
+                 strokeDasharray="4, 4"
+                 opacity="0.4"
+               />
+            )}
+
+            {/* Specular highlight sweep */}
             <ellipse
               cx="50" cy="55"
               rx="32" ry="12"
               fill="none"
               stroke={`url(#${highlightId})`}
               strokeWidth={bandThickness * 0.6}
-              strokeLinecap="round"
+              strokeLinecap={bandProfile === 'flat' ? 'square' : 'round'}
               opacity="0.7"
             />
 
-            {/* Thin bright edge highlight — top rim */}
+            {/* Thin bright edge highlight */}
             <ellipse
               cx="50" cy="55"
               rx={32 + bandThickness * 0.25}
@@ -287,24 +318,44 @@ const RealisticRing = ({
               strokeWidth="0.4"
               opacity="0.5"
             />
-
-            {/* Thin dark edge — bottom rim for depth */}
-            <ellipse
-              cx="50" cy="55"
-              rx={32 - bandThickness * 0.25}
-              ry={12 - bandThickness * 0.08}
-              fill="none"
-              stroke={palette.inner[2]}
-              strokeWidth="0.3"
-              opacity="0.4"
-            />
           </g>
 
-          {/* ── PRONG SETTING ── */}
+          {/* ── SIDE STONES ── */}
+          {sideStones !== 'none' && (
+            <g>
+               {[...Array(8)].map((_, i) => {
+                 const angle = Math.PI + (i * Math.PI / 7);
+                 const x = 50 + 32 * Math.cos(angle);
+                 const y = 55 + 12 * Math.sin(angle);
+                 return (
+                   <circle key={`side-stone-${i}`} cx={x} cy={y} r={bandThickness * 0.25} fill="#FFFFFF" opacity="0.9" stroke="#DDD" strokeWidth="0.5" />
+                 );
+               })}
+            </g>
+          )}
+
+          {/* ── SETTING & GEMSTONE ── */}
           {hasGem && (
             <g>
-              {/* 4-prong basket */}
-              {[
+              {/* Bezel Setting */}
+              {settingStyle === 'bezel' && (
+                 <circle cx="50" cy="43" r={gemSize * 0.6} fill="none" stroke={palette.prong} strokeWidth={gemSize * 0.15} opacity="0.9" />
+              )}
+              
+              {/* Halo Setting */}
+              {settingStyle === 'halo' && (
+                 <g>
+                   {[...Array(16)].map((_, i) => {
+                     const angle = (i / 16) * Math.PI * 2;
+                     const hx = 50 + gemSize * 0.65 * Math.cos(angle);
+                     const hy = 43 + gemSize * 0.65 * Math.sin(angle);
+                     return <circle key={`halo-${i}`} cx={hx} cy={hy} r={gemSize * 0.15} fill="#FFF" stroke="#DDD" strokeWidth="0.5" />;
+                   })}
+                 </g>
+              )}
+
+              {/* Prongs */}
+              {(settingStyle === 'prong' || settingStyle === 'cathedral') && [
                 { x1: 50 - gemSize * 0.45, y1: 43 + gemSize * 0.15, x2: 50 - gemSize * 0.2, y2: 43 - gemSize * 0.45 },
                 { x1: 50 + gemSize * 0.45, y1: 43 + gemSize * 0.15, x2: 50 + gemSize * 0.2, y2: 43 - gemSize * 0.45 },
                 { x1: 50 - gemSize * 0.15, y1: 43 + gemSize * 0.45, x2: 50 - gemSize * 0.4, y2: 43 - gemSize * 0.2 },
@@ -322,109 +373,72 @@ const RealisticRing = ({
                   transition={{ duration: 0.4, delay: 0.2 + i * 0.05 }}
                 />
               ))}
-              {/* Prong tips — small circles gripping the stone */}
-              {[
-                { cx: 50 - gemSize * 0.2, cy: 43 - gemSize * 0.45 },
-                { cx: 50 + gemSize * 0.2, cy: 43 - gemSize * 0.45 },
-                { cx: 50 - gemSize * 0.4, cy: 43 - gemSize * 0.2 },
-                { cx: 50 + gemSize * 0.4, cy: 43 - gemSize * 0.2 },
-              ].map((tip, i) => (
-                <motion.circle
-                  key={`tip-${i}`}
-                  cx={tip.cx} cy={tip.cy}
-                  r="1"
-                  fill={palette.highlight}
-                  stroke={palette.prong}
-                  strokeWidth="0.5"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.4 + i * 0.05 }}
-                />
-              ))}
+
+              {/* Gemstone */}
+              <AnimatePresence>
+                <motion.g
+                  key={`${gemstone.id}-${cut.id}-${caratWeight}`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+                  style={{ transformOrigin: '50px 43px' }}
+                >
+                  <polygon
+                    points={CUT_POLYGONS[cut.id]?.(gemSize) || CUT_POLYGONS['round'](gemSize)}
+                    fill={`url(#${gemGradientId})`}
+                    stroke={gemVis.crownColor}
+                    strokeWidth="0.5"
+                    opacity="0.92"
+                    transform="translate(0, -7)"
+                  />
+                  <polygon
+                    points={CUT_POLYGONS[cut.id]?.(gemSize * 0.85) || CUT_POLYGONS['round'](gemSize * 0.85)}
+                    fill={`url(#${gemFireId})`}
+                    opacity="0.6"
+                    transform="translate(0, -7)"
+                  />
+                  <polygon
+                    points={CUT_POLYGONS[cut.id]?.(gemSize * 0.4) || CUT_POLYGONS['round'](gemSize * 0.4)}
+                    fill={gemVis.tableColor}
+                    opacity="0.45"
+                    transform="translate(0, -7)"
+                  />
+                  <circle cx="47" cy="40" r={gemSize * 0.12} fill={gemVis.brilliance} opacity="0.7">
+                    <animate attributeName="opacity" values="0.7;0.3;0.7" dur="3s" repeatCount="indefinite" />
+                  </circle>
+                  {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const cx = 50, cy = 43;
+                    return (
+                      <line
+                        key={`facet-${i}`}
+                        x1={cx}
+                        y1={cy}
+                        x2={cx + gemSize * 0.8 * Math.cos(angle)}
+                        y2={(cy - 7) + gemSize * 0.8 * Math.sin(angle)}
+                        stroke={gemVis.brilliance}
+                        strokeWidth="0.3"
+                        opacity="0.25"
+                      />
+                    );
+                  })}
+                  {[
+                    { cx: 45, cy: 37, delay: 0 },
+                    { cx: 55, cy: 40, delay: 1.2 },
+                    { cx: 48, cy: 46, delay: 2.4 },
+                  ].map((spark, i) => (
+                    <circle key={`spark-${i}`} cx={spark.cx} cy={spark.cy} r="0.8" fill="#FFFFFF">
+                      <animate attributeName="opacity" values="0;1;0" dur="2.5s" begin={`${spark.delay}s`} repeatCount="indefinite" />
+                      <animate attributeName="r" values="0.5;1.2;0.5" dur="2.5s" begin={`${spark.delay}s`} repeatCount="indefinite" />
+                    </circle>
+                  ))}
+                </motion.g>
+              </AnimatePresence>
             </g>
           )}
 
-          {/* ── GEMSTONE ── */}
-          <AnimatePresence>
-            {hasGem && (
-              <motion.g
-                key={`${gemstone.id}-${cut.id}-${caratWeight}`}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-                style={{ transformOrigin: '50px 43px' }}
-              >
-                {/* Main gemstone body */}
-                <polygon
-                  points={CUT_POLYGONS[cut.id]?.(gemSize) || CUT_POLYGONS['round'](gemSize)}
-                  fill={`url(#${gemGradientId})`}
-                  stroke={gemVis.crownColor}
-                  strokeWidth="0.5"
-                  opacity="0.92"
-                  transform="translate(0, -7)"
-                />
-
-                {/* Fire dispersion overlay */}
-                <polygon
-                  points={CUT_POLYGONS[cut.id]?.(gemSize * 0.85) || CUT_POLYGONS['round'](gemSize * 0.85)}
-                  fill={`url(#${gemFireId})`}
-                  opacity="0.6"
-                  transform="translate(0, -7)"
-                />
-
-                {/* Table facet — bright center reflection */}
-                <polygon
-                  points={CUT_POLYGONS[cut.id]?.(gemSize * 0.4) || CUT_POLYGONS['round'](gemSize * 0.4)}
-                  fill={gemVis.tableColor}
-                  opacity="0.45"
-                  transform="translate(0, -7)"
-                />
-
-                {/* Brilliance point — white hot spot */}
-                <circle
-                  cx="47" cy="40"
-                  r={gemSize * 0.12}
-                  fill={gemVis.brilliance}
-                  opacity="0.7"
-                >
-                  <animate attributeName="opacity" values="0.7;0.3;0.7" dur="3s" repeatCount="indefinite" />
-                </circle>
-
-                {/* Facet lines — radial lines from center to edge */}
-                {Array.from({ length: 8 }).map((_, i) => {
-                  const angle = (i / 8) * Math.PI * 2;
-                  const cx = 50, cy = 43;
-                  return (
-                    <line
-                      key={`facet-${i}`}
-                      x1={cx}
-                      y1={cy}
-                      x2={cx + gemSize * 0.8 * Math.cos(angle)}
-                      y2={(cy - 7) + gemSize * 0.8 * Math.sin(angle)}
-                      stroke={gemVis.brilliance}
-                      strokeWidth="0.3"
-                      opacity="0.25"
-                    />
-                  );
-                })}
-
-                {/* Sparkle animation dots — simulates light catching facets */}
-                {[
-                  { cx: 45, cy: 37, delay: 0 },
-                  { cx: 55, cy: 40, delay: 1.2 },
-                  { cx: 48, cy: 46, delay: 2.4 },
-                ].map((spark, i) => (
-                  <circle key={`spark-${i}`} cx={spark.cx} cy={spark.cy} r="0.8" fill="#FFFFFF">
-                    <animate attributeName="opacity" values="0;1;0" dur="2.5s" begin={`${spark.delay}s`} repeatCount="indefinite" />
-                    <animate attributeName="r" values="0.5;1.2;0.5" dur="2.5s" begin={`${spark.delay}s`} repeatCount="indefinite" />
-                  </circle>
-                ))}
-              </motion.g>
-            )}
-          </AnimatePresence>
-
-          {/* ── ENGRAVING TEXT (curved along inner band) ── */}
+          {/* ── ENGRAVING TEXT ── */}
           {engravingText && (
             <text
               fontSize="3"
@@ -441,7 +455,7 @@ const RealisticRing = ({
           )}
         </svg>
 
-        {/* ── AMBIENT LIGHT REFLECTION (CSS overlay) ── */}
+        {/* ── AMBIENT LIGHT REFLECTION ── */}
         <div
           className="absolute inset-0 pointer-events-none rounded-full opacity-20"
           style={{
@@ -450,7 +464,7 @@ const RealisticRing = ({
         />
       </motion.div>
 
-      {/* ── SURFACE SHADOW beneath the ring ── */}
+      {/* ── SURFACE SHADOW ── */}
       <div
         className="absolute bottom-[12%] left-1/2 -translate-x-1/2 pointer-events-none"
         style={{

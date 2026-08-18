@@ -1,7 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const CustomOrder = require('../models/CustomOrder');
 const { sendAdminBespokeNotification, sendCustomerApprovalNotification } = require('../utils/emailService');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/custom-references/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
 
 /**
  * @route   POST /api/custom-orders
@@ -23,6 +34,15 @@ router.post('/', async (req, res) => {
       personalization,
       pricing,
       userId,
+      bandProfile,
+      bandWidthMm,
+      bandPattern,
+      bandFinish,
+      twoToneMetal,
+      diamondGrading,
+      settingStyle,
+      sideStones,
+      referenceImages,
     } = req.body;
 
     if (!customerName || !customerEmail || !customerPhone) {
@@ -47,6 +67,15 @@ router.post('/', async (req, res) => {
       caratWeight: caratWeight || 1.0,
       personalization: personalization || {},
       pricing: pricing || {},
+      bandProfile,
+      bandWidthMm,
+      bandPattern,
+      bandFinish,
+      twoToneMetal,
+      diamondGrading,
+      settingStyle,
+      sideStones,
+      referenceImages,
       status: 'pending_approval',
     });
 
@@ -64,6 +93,21 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error creating custom order:', error);
     res.status(500).json({ success: false, message: 'Server error submitting bespoke request.' });
+  }
+});
+
+/**
+ * @route   POST /api/custom-orders/upload-references
+ * @desc    Upload reference images for a custom order
+ * @access  Public
+ */
+router.post('/upload-references', upload.array('referenceImages', 3), (req, res) => {
+  try {
+    const urls = req.files.map(file => `/uploads/custom-references/${file.filename}`);
+    res.json({ success: true, urls });
+  } catch (error) {
+    console.error('Error uploading reference images:', error);
+    res.status(500).json({ success: false, message: 'Server error uploading images.' });
   }
 });
 
