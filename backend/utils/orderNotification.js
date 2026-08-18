@@ -199,14 +199,14 @@ async function sendOrderConfirmationEmail(order, user) {
           imageUrl = rawImg;
         } else if (rawImg.startsWith('/uploads/') || rawImg.startsWith('uploads/')) {
           // Local upload path - construct full URL
-          const cleanPath = rawImg.startsWith('/') ? rawImg : \`/\${rawImg}\`;
-          imageUrl = \`\${imageBase}\${cleanPath}\`;
+          const cleanPath = rawImg.startsWith('/') ? rawImg : `/${rawImg}`;
+          imageUrl = `${imageBase}${cleanPath}`;
         } else if (rawImg.startsWith('/')) {
           // Already starts with slash
-          imageUrl = \`\${imageBase}\${rawImg}\`;
+          imageUrl = `${imageBase}${rawImg}`;
         } else {
           // Relative path
-          imageUrl = \`\${imageBase}/\${rawImg}\`;
+          imageUrl = `${imageBase}/${rawImg}`;
         }
       }
       
@@ -216,53 +216,53 @@ async function sendOrderConfirmationEmail(order, user) {
       const hasDiamond = !!diamond.hasDiamond || String(product.material || '').toLowerCase() === 'diamond';
       const breakdown = product.priceBreakdown || item.priceBreakdown;
 
-      const diamondBlock = hasDiamond ? \`
+      const diamondBlock = hasDiamond ? `
         <div style="margin-top:10px; padding:10px 12px; background:#FAF9F7; border:1px solid #E5E2D9; border-radius:4px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
           <div style="font-size:11px; color:#B59A6C; font-weight:bold; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Diamond Specifications</div>
           <div style="font-size:13px; color:#555555; line-height:1.5;">
-            \${diamond.carat ? \`<span><strong>Carat:</strong> \${diamond.carat} ct</span><br/>\` : ''}
-            \${diamond.cut ? \`<span><strong>Cut:</strong> \${diamond.cut}</span><br/>\` : ''}
-            \${diamond.color ? \`<span><strong>Color:</strong> \${diamond.color}</span><br/>\` : ''}
-            \${diamond.clarity ? \`<span><strong>Clarity:</strong> \${diamond.clarity}</span><br/>\` : ''}
-            \${breakdown && breakdown.diamondCost ? \`<span><strong>Diamond Cost:</strong> ₹\${Math.round(breakdown.diamondCost).toLocaleString('en-IN')}</span><br/>\` : ''}
+            ${diamond.carat ? `<span><strong>Carat:</strong> ${diamond.carat} ct</span><br/>` : ''}
+            ${diamond.cut ? `<span><strong>Cut:</strong> ${diamond.cut}</span><br/>` : ''}
+            ${diamond.color ? `<span><strong>Color:</strong> ${diamond.color}</span><br/>` : ''}
+            ${diamond.clarity ? `<span><strong>Clarity:</strong> ${diamond.clarity}</span><br/>` : ''}
+            ${breakdown && breakdown.diamondCost ? `<span><strong>Diamond Cost:</strong> ₹${Math.round(breakdown.diamondCost).toLocaleString('en-IN')}</span><br/>` : ''}
           </div>
-          \${breakdown ? \`<div style="margin-top:8px; font-size:12px; color:#555555; line-height:1.5;">
-            \${breakdown.metalCost !== undefined ? \`<div>Metal: ₹\${Math.round(breakdown.metalCost).toLocaleString('en-IN')}</div>\` : ''}
-            \${breakdown.makingCharges !== undefined ? \`<div>Making: ₹\${Math.round(breakdown.makingCharges).toLocaleString('en-IN')}</div>\` : ''}
-            \${breakdown.gst !== undefined ? \`<div>GST: ₹\${Math.round(breakdown.gst).toLocaleString('en-IN')}</div>\` : ''}
-            \${breakdown.finalPrice !== undefined ? \`<div style="font-weight:bold; color:#111111;">Total: ₹\${Math.round(breakdown.finalPrice).toLocaleString('en-IN')}</div>\` : ''}
-          </div>\` : ''}
+          ${breakdown ? `<div style="margin-top:8px; font-size:12px; color:#555555; line-height:1.5;">
+            ${breakdown.metalCost !== undefined ? `<div>Metal: ₹${Math.round(breakdown.metalCost).toLocaleString('en-IN')}</div>` : ''}
+            ${breakdown.makingCharges !== undefined ? `<div>Making: ₹${Math.round(breakdown.makingCharges).toLocaleString('en-IN')}</div>` : ''}
+            ${breakdown.gst !== undefined ? `<div>GST: ₹${Math.round(breakdown.gst).toLocaleString('en-IN')}</div>` : ''}
+            ${breakdown.finalPrice !== undefined ? `<div style="font-weight:bold; color:#111111;">Total: ₹${Math.round(breakdown.finalPrice).toLocaleString('en-IN')}</div>` : ''}
+          </div>` : ''}
         </div>
-      \` : '';
+      ` : '';
       
-      return \`
+      return `
         <tr style="border-bottom: 1px solid #E5E2D9;">
           <td style="padding: 20px; vertical-align: top;">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td width="120" style="vertical-align: top;">
-                  \${imageUrl ? \`<img src="\${imageUrl}" alt="\${product.name || 'Product'}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />\` : ''}
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${product.name || 'Product'}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />` : ''}
                 </td>
                 <td style="padding-left: 15px; vertical-align: top; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                  <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #111111; font-weight: bold;">\${product.name || 'Product'}</h3>
+                  <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #111111; font-weight: bold;">${product.name || 'Product'}</h3>
                   <p style="margin: 5px 0; color: #555555; font-size: 14px;">
-                    <strong>Material:</strong> \${product.material || 'N/A'}
-                    \${product.material?.toLowerCase() === 'gold' && product.karat ? \` • <strong>\${product.karat}K</strong>\` : ''}
+                    <strong>Material:</strong> ${product.material || 'N/A'}
+                    ${product.material?.toLowerCase() === 'gold' && product.karat ? ` • <strong>${product.karat}K</strong>` : ''}
                   </p>
                   <p style="margin: 5px 0; color: #555555; font-size: 14px;">
-                    <strong>Weight:</strong> \${product.weight ? \`\${product.weight}g\` : 'N/A'}
+                    <strong>Weight:</strong> ${product.weight ? `${product.weight}g` : 'N/A'}
                   </p>
-                  \${product.description ? \`<p style="margin: 5px 0; color: #555555; font-size: 13px;">\${product.description.substring(0, 100)}\${product.description.length > 100 ? '...' : ''}</p>\` : ''}
-                  \${diamondBlock}
+                  ${product.description ? `<p style="margin: 5px 0; color: #555555; font-size: 13px;">${product.description.substring(0, 100)}${product.description.length > 100 ? '...' : ''}</p>` : ''}
+                  ${diamondBlock}
                   <p style="margin: 10px 0 0 0; color: #111111; font-size: 14px;">
-                    <strong>Quantity:</strong> \${item.quantity} × ₹\${(item.price || 0).toLocaleString('en-IN')} = <strong>₹\${((item.price || 0) * item.quantity).toLocaleString('en-IN')}</strong>
+                    <strong>Quantity:</strong> ${item.quantity} × ₹${(item.price || 0).toLocaleString('en-IN')} = <strong>₹${((item.price || 0) * item.quantity).toLocaleString('en-IN')}</strong>
                   </p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
 
     // Price breakdown
@@ -271,7 +271,7 @@ async function sendOrderConfirmationEmail(order, user) {
     const totalAmount = order.totalAmount || (subtotal + taxAmount);
     const paymentMethodText = (order.paymentMethod || 'cod') === 'cod' ? 'COD' : (order.paymentMethod || 'cod') === 'upi' ? 'UPI' : 'Card';
 
-  const html = \`
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -296,16 +296,16 @@ async function sendOrderConfirmationEmail(order, user) {
                 <td style="padding: 30px 30px 20px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER CONFIRMED</h2>
                   <p style="margin: 0 0 15px 0; font-size: 14px; color: #111111; line-height: 1.6;">
-                    Dear <strong>\${user.name || 'Valued Customer'}</strong>,
+                    Dear <strong>${user.name || 'Valued Customer'}</strong>,
                   </p>
                   <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.6;">
                     Your order has been successfully confirmed. We are preparing your pieces with the utmost care and attention to detail.
                   </p>
                   
-                  \${getProgressBarHTML('Confirmed')}
+                  ${getProgressBarHTML('Confirmed')}
                   
                   <div style="margin-top: 20px; font-size: 14px; color: #111111;">
-                    <strong>Order ID:</strong> #\${order._id || 'N/A'}
+                    <strong>Order ID:</strong> #${order._id || 'N/A'}
                   </div>
                 </td>
               </tr>
@@ -317,7 +317,7 @@ async function sendOrderConfirmationEmail(order, user) {
                     YOUR ITEMS
                   </h2>
                   <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FFFFFF; border: 1px solid #E5E2D9; border-radius: 4px; overflow: hidden;">
-                    \${itemsHtml}
+                    ${itemsHtml}
                   </table>
                 </td>
               </tr>
@@ -330,18 +330,18 @@ async function sendOrderConfirmationEmail(order, user) {
                     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
                       <tr>
                         <td style="font-size: 14px; color: #555555; padding: 4px 0;">Subtotal</td>
-                        <td align="right" style="font-size: 14px; color: #111111; padding: 4px 0;">₹\${subtotal.toLocaleString('en-IN')}</td>
+                        <td align="right" style="font-size: 14px; color: #111111; padding: 4px 0;">₹${subtotal.toLocaleString('en-IN')}</td>
                       </tr>
                       <tr>
                         <td style="font-size: 14px; color: #555555; padding: 4px 0;">GST (3%)</td>
-                        <td align="right" style="font-size: 14px; color: #111111; padding: 4px 0;">₹\${taxAmount.toLocaleString('en-IN')}</td>
+                        <td align="right" style="font-size: 14px; color: #111111; padding: 4px 0;">₹${taxAmount.toLocaleString('en-IN')}</td>
                       </tr>
                       <tr>
                         <td colspan="2"><div style="height: 1px; background: #E5E2D9; margin: 8px 0;"></div></td>
                       </tr>
                       <tr>
                         <td style="font-size: 14px; color: #111111; padding: 6px 0; font-weight: bold;">Total (incl. GST)</td>
-                        <td align="right" style="font-size: 18px; color: #111111; padding: 6px 0; font-weight: bold;">₹\${totalAmount.toLocaleString('en-IN')}</td>
+                        <td align="right" style="font-size: 18px; color: #111111; padding: 6px 0; font-weight: bold;">₹${totalAmount.toLocaleString('en-IN')}</td>
                       </tr>
                     </table>
                   </div>
@@ -354,15 +354,15 @@ async function sendOrderConfirmationEmail(order, user) {
                   <div style="background-color: #FAF9F7; padding: 20px; border-radius: 4px; border: 1px solid #E5E2D9;">
                     <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">DELIVERY ADDRESS</h2>
                     <p style="margin: 0 0 10px 0; font-size: 14px; color: #555555; line-height: 1.6;">
-                      <strong>\${order.shippingAddress?.name || user.name || ''}</strong><br/>
-                      \${order.shippingAddress?.line1 || ''}<br/>
-                      \${order.shippingAddress?.line2 ? \`\${order.shippingAddress.line2}<br/>\` : ''}
-                      \${order.shippingAddress?.city || ''}\${order.shippingAddress?.state ? \`, \${order.shippingAddress.state}\` : ''}\${order.shippingAddress?.pincode ? \` - \${order.shippingAddress.pincode}\` : ''}<br/>
-                      \${order.shippingAddress?.country || ''}<br/>
-                      Phone: \${(order.shippingAddress?.phone || user.phone || '').toString()}
+                      <strong>${order.shippingAddress?.name || user.name || ''}</strong><br/>
+                      ${order.shippingAddress?.line1 || ''}<br/>
+                      ${order.shippingAddress?.line2 ? `${order.shippingAddress.line2}<br/>` : ''}
+                      ${order.shippingAddress?.city || ''}${order.shippingAddress?.state ? `, ${order.shippingAddress.state}` : ''}${order.shippingAddress?.pincode ? ` - ${order.shippingAddress.pincode}` : ''}<br/>
+                      ${order.shippingAddress?.country || ''}<br/>
+                      Phone: ${(order.shippingAddress?.phone || user.phone || '').toString()}
                     </p>
                     <p style="margin: 0; font-size: 14px; color: #555555;">
-                      <strong>Payment Method:</strong> \${paymentMethodText}
+                      <strong>Payment Method:</strong> ${paymentMethodText}
                     </p>
                   </div>
                 </td>
@@ -371,7 +371,7 @@ async function sendOrderConfirmationEmail(order, user) {
               <!-- Track Order Button -->
               <tr>
                 <td style="padding: 10px 30px 30px 30px;" align="center">
-                  <a href="\${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display: inline-block; padding: 14px 28px; background-color: #B59A6C; color: #FFFFFF; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display: inline-block; padding: 14px 28px; background-color: #B59A6C; color: #FFFFFF; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
                     TRACK YOUR ORDER
                   </a>
                 </td>
@@ -384,14 +384,14 @@ async function sendOrderConfirmationEmail(order, user) {
                     Each piece is crafted with dedication exclusively for you. We hope it brings elegance to your everyday.
                   </p>
                   <p style="margin: 0 0 10px 0; font-size: 14px; color: #111111; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Share Your Experience</p>
-                  <a href="\${process.env.FRONTEND_URL || 'http://localhost:5173'}/products" style="display: inline-block; margin-top: 5px; padding: 10px 20px; border: 1px solid #B59A6C; color: #B59A6C; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/products" style="display: inline-block; margin-top: 5px; padding: 10px 20px; border: 1px solid #B59A6C; color: #B59A6C; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
                     CONTINUE SHOPPING
                   </a>
                 </td>
               </tr>
 
               <!-- Footer -->
-              \${getFooterHTML()}
+              ${getFooterHTML()}
 
             </table>
           </td>
@@ -399,14 +399,14 @@ async function sendOrderConfirmationEmail(order, user) {
       </table>
     </body>
     </html>
-  \`;
+  `;
 
     await sendEmail({
       to: user.email,
-      subject: \`Order Confirmed #\${order._id} - Glimmr Jewelry\`,
+      subject: `Order Confirmed #${order._id} - Glimmr Jewelry`,
       html
     });
-    console.log(\`[NOTIFICATION] Order confirmation email sent to \${user.email}\`);
+    console.log(`[NOTIFICATION] Order confirmation email sent to ${user.email}`);
   } catch (err) {
     console.error('[NOTIFICATION] Failed to send order confirmation email:', err.message);
   }
@@ -425,33 +425,33 @@ async function sendOrderShippedEmail(order, user) {
         if (rawImg.startsWith('http')) {
           imageUrl = rawImg;
         } else if (rawImg.startsWith('/uploads/') || rawImg.startsWith('uploads/')) {
-          const cleanPath = rawImg.startsWith('/') ? rawImg : \`/\${rawImg}\`;
-          imageUrl = \`\${imageBase}\${cleanPath}\`;
+          const cleanPath = rawImg.startsWith('/') ? rawImg : `/${rawImg}`;
+          imageUrl = `${imageBase}${cleanPath}`;
         } else if (rawImg.startsWith('/')) {
-          imageUrl = \`\${imageBase}\${rawImg}\`;
+          imageUrl = `${imageBase}${rawImg}`;
         } else {
-          imageUrl = \`\${imageBase}/\${rawImg}\`;
+          imageUrl = `${imageBase}/${rawImg}`;
         }
       }
       
-      return \`
+      return `
         <tr style="border-bottom: 1px solid #E5E2D9;">
           <td style="padding: 20px; vertical-align: top;">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td width="120" style="vertical-align: top;">
-                  \${imageUrl ? \`<img src="\${imageUrl}" alt="\${product.name || 'Product'}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />\` : ''}
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${product.name || 'Product'}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />` : ''}
                 </td>
                 <td style="padding-left: 15px; vertical-align: top; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                  <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #111111; font-weight: bold;">\${product.name || 'Product'}</h3>
-                  <p style="margin: 5px 0; color: #555555; font-size: 14px;"><strong>Quantity:</strong> \${item.quantity}</p>
-                  <p style="margin: 5px 0; color: #111111; font-size: 14px;"><strong>Line Total:</strong> <strong>₹\${(((item.price || 0) * (item.quantity || 1)) || 0).toLocaleString('en-IN')}</strong></p>
+                  <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #111111; font-weight: bold;">${product.name || 'Product'}</h3>
+                  <p style="margin: 5px 0; color: #555555; font-size: 14px;"><strong>Quantity:</strong> ${item.quantity}</p>
+                  <p style="margin: 5px 0; color: #111111; font-size: 14px;"><strong>Line Total:</strong> <strong>₹${(((item.price || 0) * (item.quantity || 1)) || 0).toLocaleString('en-IN')}</strong></p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
 
     const subtotal = (order.items || []).reduce((sum, itm) => sum + ((itm.price || 0) * (itm.quantity || 1)), 0);
@@ -459,17 +459,17 @@ async function sendOrderShippedEmail(order, user) {
     const totalAmount = order.totalAmount || (subtotal + taxAmount);
     const eta = order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleDateString() : 'Coming soon';
 
-    const trackingCard = order.trackingNumber || order.trackingUrl ? \`
+    const trackingCard = order.trackingNumber || order.trackingUrl ? `
       <div style="background-color:#FAF9F7; border:1px solid #E5E2D9; border-radius:4px; padding:20px;">
         <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">SHIPMENT DETAILS</h2>
-        \${order.courier ? \`<p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Courier:</strong> \${order.courier}</p>\` : ''}
-        \${order.trackingNumber ? \`<p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Tracking No:</strong> \${order.trackingNumber}</p>\` : ''}
-        <p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Estimated Delivery:</strong> \${eta}</p>
-        \${order.trackingUrl ? \`<div style="margin-top:15px;"><a href="\${order.trackingUrl}" style="display:inline-block; padding:10px 20px; background:#111111; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px;">TRACK SHIPMENT</a></div>\` : ''}
+        ${order.courier ? `<p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Courier:</strong> ${order.courier}</p>` : ''}
+        ${order.trackingNumber ? `<p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Tracking No:</strong> ${order.trackingNumber}</p>` : ''}
+        <p style="margin:4px 0; color:#555555; font-size:14px;"><strong>Estimated Delivery:</strong> ${eta}</p>
+        ${order.trackingUrl ? `<div style="margin-top:15px;"><a href="${order.trackingUrl}" style="display:inline-block; padding:10px 20px; background:#111111; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px;">TRACK SHIPMENT</a></div>` : ''}
       </div>
-    \` : '';
+    ` : '';
 
-    const html = \`
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -491,21 +491,21 @@ async function sendOrderShippedEmail(order, user) {
               <tr>
                 <td style="padding:30px 30px 20px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER SHIPPED</h2>
-                  <p style="margin:0 0 15px 0; font-size:14px; color:#111111; line-height:1.6;">Dear <strong>\${user.name || 'Customer'}</strong>,</p>
-                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#\${order._id}</strong> has been shipped. \${order.trackingNumber ? 'You can track its journey below.' : 'Tracking details will be available shortly.'}</p>
+                  <p style="margin:0 0 15px 0; font-size:14px; color:#111111; line-height:1.6;">Dear <strong>${user.name || 'Customer'}</strong>,</p>
+                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#${order._id}</strong> has been shipped. ${order.trackingNumber ? 'You can track its journey below.' : 'Tracking details will be available shortly.'}</p>
                   
-                  \${getProgressBarHTML('Shipped')}
+                  ${getProgressBarHTML('Shipped')}
                 </td>
               </tr>
 
               <tr>
-                <td style="padding:10px 30px;">\${trackingCard}</td>
+                <td style="padding:10px 30px;">${trackingCard}</td>
               </tr>
 
               <tr>
                 <td style="padding:10px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ITEMS IN THIS SHIPMENT</h2>
-                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">\${itemsHtml}</table>
+                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">${itemsHtml}</table>
                 </td>
               </tr>
 
@@ -514,10 +514,10 @@ async function sendOrderShippedEmail(order, user) {
                   <div style="background:#FAF9F7; padding:20px; border-radius:4px; border:1px solid #E5E2D9;">
                     <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER SUMMARY</h2>
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">Subtotal</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹\${subtotal.toLocaleString('en-IN')}</td></tr>
-                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">GST (3%)</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹\${taxAmount.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">Subtotal</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹${subtotal.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">GST (3%)</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹${taxAmount.toLocaleString('en-IN')}</td></tr>
                       <tr><td colspan="2"><div style="height:1px; background:#E5E2D9; margin:8px 0;"></div></td></tr>
-                      <tr><td style="font-size:14px; color:#111111; padding:6px 0; font-weight:bold;">Total (incl. GST)</td><td align="right" style="font-size:18px; color:#111111; padding:6px 0; font-weight:bold;">₹\${totalAmount.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#111111; padding:6px 0; font-weight:bold;">Total (incl. GST)</td><td align="right" style="font-size:18px; color:#111111; padding:6px 0; font-weight:bold;">₹${totalAmount.toLocaleString('en-IN')}</td></tr>
                     </table>
                   </div>
                 </td>
@@ -528,12 +528,12 @@ async function sendOrderShippedEmail(order, user) {
                   <div style="background:#FAF9F7; padding:20px; border-radius:4px; border:1px solid #E5E2D9;">
                     <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">DELIVERY ADDRESS</h2>
                     <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">
-                      <strong>\${order.shippingAddress?.name || user.name || ''}</strong><br/>
-                      \${order.shippingAddress?.line1 || ''}<br/>
-                      \${order.shippingAddress?.line2 ? \`\${order.shippingAddress.line2}<br/>\` : ''}
-                      \${order.shippingAddress?.city || ''}, \${order.shippingAddress?.state || ''} - \${order.shippingAddress?.pincode || ''}<br/>
-                      \${order.shippingAddress?.country || ''}<br/>
-                      Phone: \${order.shippingAddress?.phone || user.phone || ''}
+                      <strong>${order.shippingAddress?.name || user.name || ''}</strong><br/>
+                      ${order.shippingAddress?.line1 || ''}<br/>
+                      ${order.shippingAddress?.line2 ? `${order.shippingAddress.line2}<br/>` : ''}
+                      ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}<br/>
+                      ${order.shippingAddress?.country || ''}<br/>
+                      Phone: ${order.shippingAddress?.phone || user.phone || ''}
                     </p>
                   </div>
                 </td>
@@ -541,25 +541,25 @@ async function sendOrderShippedEmail(order, user) {
 
               <tr>
                 <td style="padding:10px 30px 30px 30px;" align="center">
-                  <a href="\${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">TRACK YOUR ORDER</a>
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">TRACK YOUR ORDER</a>
                 </td>
               </tr>
 
-              \${getFooterHTML()}
+              ${getFooterHTML()}
 
             </table>
           </td></tr>
         </table>
       </body>
       </html>
-    \`;
+    `;
 
     await sendEmail({
       to: user.email,
-      subject: \`Order Shipped #\${order._id} - Glimmr Jewelry\`,
+      subject: `Order Shipped #${order._id} - Glimmr Jewelry`,
       html
     });
-    console.log(\`[NOTIFICATION] Order shipped email sent to \${user.email}\`);
+    console.log(`[NOTIFICATION] Order shipped email sent to ${user.email}`);
   } catch (err) {
     console.error('[NOTIFICATION] Failed to send order shipped email:', err.message);
   }
@@ -572,32 +572,32 @@ async function sendOrderDeliveredEmail(order, user) {
     const itemsHtml = (order.items || []).map(item => {
       const product = item.product || {};
       const rawImg = product.images && product.images.length > 0 ? product.images[0] : '';
-      const imageUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : \`\${imageBase}\${rawImg.startsWith('/') ? '' : '/'}\${rawImg}\`) : '';
-      return \`
+      const imageUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${imageBase}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`) : '';
+      return `
         <tr style="border-bottom:1px solid #E5E2D9;">
           <td style="padding:20px; vertical-align:top;">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td width="120" style="vertical-align: top;">
-                  \${imageUrl ? \`<img src="\${imageUrl}" alt="\${product.name || 'Product'}" style="width:100px; height:100px; object-fit:cover; border-radius:4px; border:1px solid #E5E2D9;" />\` : ''}
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${product.name || 'Product'}" style="width:100px; height:100px; object-fit:cover; border-radius:4px; border:1px solid #E5E2D9;" />` : ''}
                 </td>
                 <td style="padding-left:15px; vertical-align:top; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                  <h3 style="margin:0 0 8px 0; font-size:16px; color:#111111; font-weight:bold;">\${product.name || 'Product'}</h3>
-                  <p style="margin:5px 0; color:#555555; font-size:14px;"><strong>Quantity:</strong> \${item.quantity}</p>
-                  <p style="margin:5px 0; color:#111111; font-size:14px;"><strong>Line Total:</strong> <strong>₹\${(((item.price || 0) * (item.quantity || 1)) || 0).toLocaleString('en-IN')}</strong></p>
+                  <h3 style="margin:0 0 8px 0; font-size:16px; color:#111111; font-weight:bold;">${product.name || 'Product'}</h3>
+                  <p style="margin:5px 0; color:#555555; font-size:14px;"><strong>Quantity:</strong> ${item.quantity}</p>
+                  <p style="margin:5px 0; color:#111111; font-size:14px;"><strong>Line Total:</strong> <strong>₹${(((item.price || 0) * (item.quantity || 1)) || 0).toLocaleString('en-IN')}</strong></p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
 
     const subtotal = (order.items || []).reduce((sum, itm) => sum + ((itm.price || 0) * (itm.quantity || 1)), 0);
     const taxAmount = (order.totalAmount || 0) - subtotal || Math.round(subtotal * 0.03);
     const totalAmount = order.totalAmount || (subtotal + taxAmount);
 
-    const html = \`
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -619,17 +619,17 @@ async function sendOrderDeliveredEmail(order, user) {
               <tr>
                 <td style="padding:30px 30px 20px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER DELIVERED</h2>
-                  <p style="margin:0 0 15px 0; font-size:14px; color:#111111; line-height:1.6;">Dear <strong>\${user.name || 'Customer'}</strong>,</p>
-                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#\${order._id}</strong> has been successfully delivered. We hope you adore your new jewelry.</p>
+                  <p style="margin:0 0 15px 0; font-size:14px; color:#111111; line-height:1.6;">Dear <strong>${user.name || 'Customer'}</strong>,</p>
+                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#${order._id}</strong> has been successfully delivered. We hope you adore your new jewelry.</p>
                   
-                  \${getProgressBarHTML('Delivered')}
+                  ${getProgressBarHTML('Delivered')}
                 </td>
               </tr>
 
               <tr>
                 <td style="padding:10px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">YOUR ITEMS</h2>
-                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">\${itemsHtml}</table>
+                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">${itemsHtml}</table>
                 </td>
               </tr>
 
@@ -638,10 +638,10 @@ async function sendOrderDeliveredEmail(order, user) {
                   <div style="background:#FAF9F7; padding:20px; border-radius:4px; border:1px solid #E5E2D9;">
                     <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER SUMMARY</h2>
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">Subtotal</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹\${subtotal.toLocaleString('en-IN')}</td></tr>
-                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">GST (3%)</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹\${taxAmount.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">Subtotal</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹${subtotal.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#555555; padding:4px 0;">GST (3%)</td><td align="right" style="font-size:14px; color:#111111; padding:4px 0;">₹${taxAmount.toLocaleString('en-IN')}</td></tr>
                       <tr><td colspan="2"><div style="height:1px; background:#E5E2D9; margin:8px 0;"></div></td></tr>
-                      <tr><td style="font-size:14px; color:#111111; padding:6px 0; font-weight:bold;">Total (incl. GST)</td><td align="right" style="font-size:18px; color:#111111; padding:6px 0; font-weight:bold;">₹\${totalAmount.toLocaleString('en-IN')}</td></tr>
+                      <tr><td style="font-size:14px; color:#111111; padding:6px 0; font-weight:bold;">Total (incl. GST)</td><td align="right" style="font-size:18px; color:#111111; padding:6px 0; font-weight:bold;">₹${totalAmount.toLocaleString('en-IN')}</td></tr>
                     </table>
                   </div>
                 </td>
@@ -649,25 +649,25 @@ async function sendOrderDeliveredEmail(order, user) {
 
               <tr>
                 <td style="padding:10px 30px 30px 30px;" align="center">
-                  <a href="\${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">VIEW ORDER</a>
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">VIEW ORDER</a>
                 </td>
               </tr>
 
-              \${getFooterHTML()}
+              ${getFooterHTML()}
 
             </table>
           </td></tr>
         </table>
       </body>
       </html>
-    \`;
+    `;
 
     await sendEmail({
       to: user.email,
-      subject: \`Order Delivered #\${order._id} - Glimmr Jewelry\`,
+      subject: `Order Delivered #${order._id} - Glimmr Jewelry`,
       html
     });
-    console.log(\`[NOTIFICATION] Order delivered email sent to \${user.email}\`);
+    console.log(`[NOTIFICATION] Order delivered email sent to ${user.email}`);
   } catch (err) {
     console.error('[NOTIFICATION] Failed to send order delivered email:', err.message);
   }
@@ -680,24 +680,24 @@ async function sendGenericStatusUpdateEmail(order, user, status) {
     const itemsHtml = (order.items || []).map(item => {
       const product = item.product || {};
       const rawImg = product.images && product.images.length > 0 ? product.images[0] : '';
-      const imageUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : \`\${imageBase}\${rawImg.startsWith('/') ? '' : '/'}\${rawImg}\`) : '';
-      return \`
+      const imageUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : `${imageBase}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`) : '';
+      return `
         <tr style="border-bottom: 1px solid #E5E2D9;">
           <td style="padding: 15px;">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
               <tr>
                 <td width="80" style="vertical-align: top;">
-                  \${imageUrl ? \`<img src="\${imageUrl}" alt="\${product.name || 'Product'}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />\` : ''}
+                  ${imageUrl ? `<img src="${imageUrl}" alt="${product.name || 'Product'}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #E5E2D9;" />` : ''}
                 </td>
                 <td style="padding-left: 12px; vertical-align: top; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">
-                  <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #111111; font-weight: bold;">\${product.name || 'Product'}</h4>
-                  <p style="margin: 3px 0; color: #555555; font-size: 13px;">Quantity: \${item.quantity}</p>
+                  <h4 style="margin: 0 0 5px 0; font-size: 14px; color: #111111; font-weight: bold;">${product.name || 'Product'}</h4>
+                  <p style="margin: 3px 0; color: #555555; font-size: 13px;">Quantity: ${item.quantity}</p>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
-      \`;
+      `;
     }).join('');
 
     const statusConfig = {
@@ -712,7 +712,7 @@ async function sendGenericStatusUpdateEmail(order, user, status) {
 
     const config = statusConfig[status] || statusConfig.pending;
 
-    const html = \`
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -733,50 +733,50 @@ async function sendGenericStatusUpdateEmail(order, user, status) {
 
               <tr>
                 <td style="padding:30px 30px 20px 30px;">
-                  <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">\${config.title}</h2>
-                  <p style="margin:0 0 10px 0; font-size:14px; color:#111111;">Dear <strong>\${user.name || 'Customer'}</strong>,</p>
-                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#\${order._id}</strong> status has been updated to <strong>\${status}</strong>. \${config.message}.</p>
+                  <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">${config.title}</h2>
+                  <p style="margin:0 0 10px 0; font-size:14px; color:#111111;">Dear <strong>${user.name || 'Customer'}</strong>,</p>
+                  <p style="margin:0; font-size:14px; color:#555555; line-height:1.6;">Your order <strong>#${order._id}</strong> status has been updated to <strong>${status}</strong>. ${config.message}.</p>
                 </td>
               </tr>
 
               <tr>
                 <td style="padding:0 30px 20px 30px;">
                   <h2 style="margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #B59A6C; font-weight: bold; border-bottom: 1px solid #E5E2D9; padding-bottom: 8px;">ORDER ITEMS</h2>
-                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">\${itemsHtml}</table>
+                  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#FFFFFF; border:1px solid #E5E2D9; border-radius:4px; overflow:hidden;">${itemsHtml}</table>
                 </td>
               </tr>
 
               <tr>
                 <td style="padding:0 30px 20px 30px;">
                   <div style="background:#FAF9F7; padding:20px; border-radius:4px; border:1px solid #E5E2D9;">
-                    <p style="margin:0; font-size:14px; color:#111111;"><strong>Total Amount:</strong> ₹\${(order.totalAmount || 0).toLocaleString('en-IN')}</p>
+                    <p style="margin:0; font-size:14px; color:#111111;"><strong>Total Amount:</strong> ₹${(order.totalAmount || 0).toLocaleString('en-IN')}</p>
                   </div>
                 </td>
               </tr>
 
               <tr>
                 <td style="padding:10px 30px 30px 30px;" align="center">
-                  <a href="\${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">VIEW ORDER DETAILS</a>
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile?tab=orders" style="display:inline-block; padding:14px 28px; background-color:#B59A6C; color:#FFFFFF; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:2px; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">VIEW ORDER DETAILS</a>
                 </td>
               </tr>
 
-              \${getFooterHTML()}
+              ${getFooterHTML()}
 
             </table>
           </td></tr>
         </table>
       </body>
       </html>
-    \`;
+    `;
 
     await sendEmail({
       to: user.email,
-      subject: \`Order Update: \${config.title} - #\${order._id}\`,
+      subject: `Order Update: ${config.title} - #${order._id}`,
       html
     });
-    console.log(\`[NOTIFICATION] Status update email (\${status}) sent to \${user.email}\`);
+    console.log(`[NOTIFICATION] Status update email (${status}) sent to ${user.email}`);
   } catch (err) {
-    console.error(\`[NOTIFICATION] Failed to send status update email (\${status}):\`, err.message);
+    console.error(`[NOTIFICATION] Failed to send status update email (${status}):`, err.message);
   }
 }
 
@@ -843,7 +843,7 @@ async function notifyOrderStatusChange(orderId, newStatus) {
     });
 
     await order.save();
-    console.log(\`[NOTIFICATION] Order \${orderId} status updated to \${newStatus}\`);
+    console.log(`[NOTIFICATION] Order ${orderId} status updated to ${newStatus}`);
   } catch (error) {
     console.error('[NOTIFICATION] Error notifying order status change:', error);
   }
