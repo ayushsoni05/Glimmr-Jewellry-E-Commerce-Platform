@@ -18,6 +18,7 @@ import {
 } from '../components/Icons';
 
 import TaxInvoiceModal from '../components/TaxInvoiceModal';
+import OrderTrackingModal from '../components/OrderTrackingModal';
 
 const ThankYou = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const ThankYou = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const [orderData, setOrderData] = useState(location.state?.orderData || null);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -232,8 +234,8 @@ const ThankYou = () => {
                       {orderData.shippingAddress?.city}, {orderData.shippingAddress?.state} - <span className="font-mono font-bold text-[#111111]">{orderData.shippingAddress?.pincode}</span>
                     </p>
                     <p className="mt-1 text-gray-500 font-medium">
-                      📞 Phone: {orderData.shippingAddress?.phone || 'N/A'}
-                    </p>
+                       Phone: {orderData.shippingAddress?.phone || 'N/A'}
+                     </p>
                   </div>
                 </div>
               </div>
@@ -300,6 +302,15 @@ const ThankYou = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => setIsTrackingOpen(true)}
+            className="flex-1 py-4 bg-[#B59A6C] text-white text-xs font-body font-bold uppercase tracking-[0.2em] hover:bg-[#A3885C] transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-lg"
+          >
+            <span>Track Your Order</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleDownloadInvoice}
             className="flex-1 py-4 bg-[#FAF9F7] border border-[#E5E2D9] text-[#111111] text-xs font-body font-bold uppercase tracking-[0.2em] hover:bg-white transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
@@ -321,6 +332,13 @@ const ThankYou = () => {
           isOpen={isInvoiceOpen} 
           onClose={() => setIsInvoiceOpen(false)} 
           order={orderData} 
+        />
+
+        {/* Order Tracking Modal */}
+        <OrderTrackingModal
+          isOpen={isTrackingOpen}
+          onClose={() => setIsTrackingOpen(false)}
+          order={orderData}
         />
 
       </motion.div>

@@ -35,6 +35,7 @@ import api from '../api';
 import { getProductImage } from '../utils/productImages';
 
 import TaxInvoiceModal from '../components/TaxInvoiceModal';
+import OrderTrackingModal from '../components/OrderTrackingModal';
 
 const Profile = () => {
   const { user, logout } = useAuth();
@@ -1837,6 +1838,13 @@ const Profile = () => {
       isOpen={invoiceModalOpen} 
       onClose={() => setInvoiceModalOpen(false)} 
       order={selectedInvoiceOrder} 
+    />
+
+    {/* Order Tracking Modal */}
+    <OrderTrackingModal
+      isOpen={orderTrackingOpen}
+      onClose={() => setOrderTrackingOpen(false)}
+      order={orderDetail}
     />
   </div>
 </div>
