@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
+import { Phone, Mail } from 'lucide-react';
 
 const AdminBespokeOrders = () => {
   const [customOrders, setCustomOrders] = useState([]);
@@ -150,15 +151,17 @@ const AdminBespokeOrders = () => {
                 <div className="flex gap-2 pt-1">
                   <a
                     href={`tel:${order.customerPhone}`}
-                    className="flex-1 text-center py-2 px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-mono font-bold rounded-[8px] transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-mono font-bold rounded-[8px] transition-colors"
                   >
-                    📞 Call Customer
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call Customer</span>
                   </a>
                   <a
                     href={`mailto:${order.customerEmail}?subject=Regarding Your Glimmr Bespoke Ring Request (${order.customOrderId})`}
-                    className="flex-1 text-center py-2 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-mono font-bold rounded-[8px] transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-mono font-bold rounded-[8px] transition-colors"
                   >
-                    ✉️ Email Customer
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Email Customer</span>
                   </a>
                 </div>
               </div>
