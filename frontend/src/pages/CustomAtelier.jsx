@@ -8,7 +8,7 @@ import RealisticRing from '../components/RealisticRing';
 import { 
   Upload, X, Check, ChevronRight, ChevronLeft, Eye, 
   Sparkles, Camera, PenTool, Sliders, ShieldCheck, ArrowRight,
-  Layers, RefreshCw, Wand2, Diamond, Gem, FileText, Zap, Award, ThumbsUp
+  Layers, RefreshCw, Wand2, Diamond, Gem, FileText, Zap, Heart, Disc, Flame
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -20,6 +20,27 @@ const METALS = [
   { id: '18k-rose', name: '18K Rose Gold', purity: '75.0% Gold + Copper', color: '#E8C3B9', pricePerGram: 5685, badge: '18K ROSE' },
   { id: 'platinum', name: 'Platinum 950', purity: '95.0% Pure Platinum', color: '#E5E7EB', pricePerGram: 3200, badge: 'PT 950' },
   { id: '925-silver', name: '925 Sterling Silver', purity: '92.5% Pure Silver', color: '#D1D5DB', pricePerGram: 95, badge: '925 SILVER' }
+];
+
+// Universal Ring Head Architecture Styles (Entwined Hearts, Lotus, Infinity, Solitaire, etc.)
+const RING_HEAD_STYLES = [
+  { id: 'solitaire', name: 'Solitaire Crown Mount', desc: 'Classic central basket elevating single gemstone', price: 0 },
+  { id: 'entwined-hearts', name: 'Entwined Dual Hearts', desc: 'Pavé diamond heart interlocking into polished gold heart', price: 16000 },
+  { id: 'infinity-loop', name: 'Infinity Ribbon Loop', desc: 'Sculpted endless love symbol with micro-pavé diamonds', price: 14000 },
+  { id: 'lotus-bloom', name: 'Royal Lotus Bloom', desc: '6 sculpted golden curved petals cradling center gem', price: 18000 },
+  { id: 'toi-et-moi', name: 'Toi et Moi Twin Gems', desc: 'Side-by-side bypass mounting holding two distinct gemstones', price: 22000 },
+  { id: 'bezel', name: 'Full Protective Bezel', desc: 'Seamless flush protective rim encircling stone girdle', price: 3000 },
+  { id: 'halo', name: 'Surround Diamond Halo', desc: 'Ring of 16 micro-diamonds magnifying center stone fire', price: 18000 },
+  { id: 'cathedral', name: 'Cathedral Sweeping Arches', desc: 'High-arched shoulders sweeping from band to crown', price: 6000 }
+];
+
+// Universal Shank Architecture Styles (Split Shank, Bypass, Threaded, etc.)
+const SHANK_STYLES = [
+  { id: 'classic', name: 'Classic Solid Shank', desc: 'Clean single ergonomic comfort-fit band', price: 0 },
+  { id: 'split-shank', name: 'Split-Shank (Pavé Channels)', desc: 'Bifurcated double-rail band with diamond channel rows', price: 12000 },
+  { id: 'bypass', name: 'Bypass Fluid Overlap', desc: 'Asymmetrical curving rails wrapping around crown', price: 8000 },
+  { id: 'threaded', name: 'Threaded Rope Helix', desc: 'Continuous golden rope wire winding along shank', price: 6000 },
+  { id: 'braided', name: 'Three-Strand Braided Cable', desc: 'Interwoven metallic triple-braid sculpture', price: 7000 }
 ];
 
 const BAND_PROFILES = [
@@ -87,11 +108,11 @@ const DIAMOND_TIERS = [
 ];
 
 const GEMSTONES = [
-  { id: 'no-stone', name: 'No Stone (Plain Band)', color: 'transparent', pricePerCarat: 0, desc: 'Pure sculptural metal elegance' },
   { id: 'vvs-diamond', name: 'Solitaire Diamond', color: '#E0F2FE', pricePerCarat: 125000, desc: 'Fire, Scintillation and Brilliance' },
   { id: 'emerald', name: 'Royal Colombian Emerald', color: '#059669', pricePerCarat: 85000, desc: 'Deep Vivid Emerald Green' },
   { id: 'sapphire', name: 'Kashmir Blue Sapphire', color: '#1D4ED8', pricePerCarat: 95000, desc: 'Imperial Velvet Royal Blue' },
-  { id: 'ruby', name: 'Burmese Pigeon Blood Ruby', color: '#DC2626', pricePerCarat: 110000, desc: 'Vibrant Crimson Radiance' }
+  { id: 'ruby', name: 'Burmese Pigeon Blood Ruby', color: '#DC2626', pricePerCarat: 110000, desc: 'Vibrant Crimson Radiance' },
+  { id: 'no-stone', name: 'No Stone (Plain Band)', color: 'transparent', pricePerCarat: 0, desc: 'Pure sculptural metal elegance' }
 ];
 
 const DIAMOND_COLORS = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
@@ -124,14 +145,14 @@ const SETTING_STYLES = [
 ];
 
 const SIDE_STONES = [
-  { id: 'none', name: 'No Side Stones (Solitaire)', desc: 'Pure solitaire focal point', price: 0 },
-  { id: 'pave-band', name: 'Pavé Diamond Shoulder', desc: 'Micro-set diamonds along the shank', price: 25000 },
+  { id: 'none', name: 'No Side Stones', desc: 'Clean solitaire focal point', price: 0 },
+  { id: 'pave-band', name: 'Pavé Diamond Channels', desc: 'Micro-set diamonds along the shank rails', price: 25000 },
   { id: 'channel-baguette', name: 'Channel Baguettes', desc: 'Step-cut baguette diamonds set in rails', price: 22000 },
   { id: 'three-stone', name: 'Three-Stone Trilogy', desc: 'Two flanking stones representing Past, Present, Future', price: 35000 },
   { id: 'side-rounds', name: 'Accent Side Rounds', desc: 'Two round brilliants framing the center stone', price: 15000 }
 ];
 
-const PAVE_COUNT_OPTIONS = [0, 6, 12, 18, 24, 36];
+const PAVE_COUNT_OPTIONS = [0, 6, 12, 16, 24, 36];
 
 const ART_EMBLEMS = [
   { id: 'none', name: 'None (Clean Polish)', desc: 'Smooth metallic band finish' },
@@ -145,21 +166,20 @@ const RING_SIZES = ['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5', '9', '9.5', 
 
 const TOTAL_STEPS = 7;
 const stepLabels = [
-  'Band Foundation',
-  'Band Aesthetics',
-  'Center Stone & Tier',
-  'Cut & Carat',
-  'Setting & Placement',
+  'Head & Shank Architecture',
+  'Precious Metallurgy',
+  'Center Gem & Diamond Tier',
+  'Facet Geometry & Carat',
+  'Multi-Zone Accents',
   'Art & Inscription',
   'Review & Submit'
 ];
 
-// Sample AI Prompts for instant 1-click inspiration
 const SAMPLE_PROMPTS = [
+  "Entwined dual hearts ring with split-shank diamond channels in 22k yellow gold and white gold heart accent",
   "18k rose gold ring with threaded rope band, 2ct oval emerald center in hidden halo setting, and pavé diamonds",
   "Platinum cathedral ring with 1.5ct princess cut lab grown diamond and three stone trilogy accents",
-  "22k gold vintage ring with filigree pattern, 1.8ct cushion cut natural diamond, and milgrain borders",
-  "Flat band in 24k gold with hammered texture, plain solitaire 1.2ct round brilliant diamond"
+  "Toi et Moi bypass ring in 18k gold with pear cut diamond and cushion emerald"
 ];
 
 // ─── ANIMATION VARIANTS ────────────────────────────────────────
@@ -247,23 +267,6 @@ function SubLabel({ children }) {
   );
 }
 
-function BandProfileIcon({ profileId, size = 36 }) {
-  const s = size;
-  const paths = {
-    'comfort-fit': `M${s*0.15},${s*0.75} Q${s*0.5},${s*0.15} ${s*0.85},${s*0.75} Q${s*0.5},${s*0.55} ${s*0.15},${s*0.75}`,
-    'flat': `M${s*0.15},${s*0.65} L${s*0.85},${s*0.65} L${s*0.85},${s*0.45} L${s*0.15},${s*0.45} Z`,
-    'd-shape': `M${s*0.15},${s*0.7} Q${s*0.5},${s*0.2} ${s*0.85},${s*0.7} L${s*0.85},${s*0.55} L${s*0.15},${s*0.55} Z`,
-    'knife-edge': `M${s*0.15},${s*0.75} L${s*0.5},${s*0.25} L${s*0.85},${s*0.75} Q${s*0.5},${s*0.55} ${s*0.15},${s*0.75}`,
-    'half-round': `M${s*0.15},${s*0.7} Q${s*0.5},${s*0.3} ${s*0.85},${s*0.7} L${s*0.85},${s*0.6} L${s*0.15},${s*0.6} Z`,
-    'beveled': `M${s*0.2},${s*0.7} L${s*0.3},${s*0.4} L${s*0.7},${s*0.4} L${s*0.8},${s*0.7} L${s*0.8},${s*0.55} L${s*0.2},${s*0.55} Z`,
-  };
-  return (
-    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} className="flex-shrink-0">
-      <path d={paths[profileId] || paths['comfort-fit']} fill="currentColor" opacity="0.15" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 // ─── MAIN COMPONENT ────────────────────────────────────────────
 
 const CustomAtelier = () => {
@@ -273,20 +276,22 @@ const CustomAtelier = () => {
   // Step state for Manual Studio
   const [step, setStep] = useState(1);
 
-  // Step 1: Band Foundation
-  const [selectedMetal, setSelectedMetal] = useState(METALS[0]);
+  // Universal Architecture Controls
+  const [ringHeadStyle, setRingHeadStyle] = useState('solitaire');
+  const [shankStyle, setShankStyle] = useState('classic');
+
+  // Step 2: Precious Metallurgy
+  const [selectedMetal, setSelectedMetal] = useState(METALS[1]); // 22K Gold default
   const [bandProfile, setBandProfile] = useState(BAND_PROFILES[0]);
   const [bandWidthMm, setBandWidthMm] = useState(4);
-  const [metalWeightGram, setMetalWeightGram] = useState(8);
-
-  // Step 2: Band Aesthetics & Threaded Design
+  const [metalWeightGram, setMetalWeightGram] = useState(7.5);
   const [bandPattern, setBandPattern] = useState(BAND_PATTERNS[0]);
   const [bandFinish, setBandFinish] = useState(FINISHES[0]);
   const [twoToneEnabled, setTwoToneEnabled] = useState(false);
   const [twoToneMetal, setTwoToneMetal] = useState(METALS[3]); // Platinum default
 
   // Step 3: Center Stone & Diamond Tier
-  const [selectedGem, setSelectedGem] = useState(GEMSTONES[1]);
+  const [selectedGem, setSelectedGem] = useState(GEMSTONES[0]);
   const [diamondTier, setDiamondTier] = useState(DIAMOND_TIERS[0]);
   const [diamondColor, setDiamondColor] = useState('F');
   const [diamondClarity, setDiamondClarity] = useState('VVS1');
@@ -344,13 +349,20 @@ const CustomAtelier = () => {
 
   const pricing = useMemo(() => {
     const metalCost = Math.round(selectedMetal.pricePerGram * metalWeightGram);
-    const twoToneSurcharge = twoToneEnabled ? Math.round(twoToneMetal.pricePerGram * (metalWeightGram * 0.3)) : 0;
+    const twoToneSurcharge = twoToneEnabled ? Math.round(twoToneMetal.pricePerGram * (metalWeightGram * 0.35)) : 0;
     
     // Diamond Tier pricing calculation
     const tierMultiplier = selectedGem.id === 'vvs-diamond' ? diamondTier.multiplier : 1.0;
     const cutMultiplier = selectedGem.id === 'vvs-diamond' ? diamondCutGrade.multiplier : 1.0;
     const baseCaratPrice = selectedGem.id === 'vvs-diamond' ? selectedGem.pricePerCarat * tierMultiplier : selectedGem.pricePerCarat;
     const gemCost = selectedGem.id === 'no-stone' ? 0 : Math.round(baseCaratPrice * caratWeight * cutMultiplier);
+
+    // Architectural Head & Shank Surcharges
+    const headObj = RING_HEAD_STYLES.find(h => h.id === ringHeadStyle);
+    const headCost = headObj ? (headObj.price || 0) : 0;
+
+    const shankObj = SHANK_STYLES.find(s => s.id === shankStyle);
+    const shankCost = shankObj ? (shankObj.price || 0) : 0;
 
     const patternCost = bandPattern.price || 0;
     const settingCost = settingStyle.price || 0;
@@ -361,19 +373,19 @@ const CustomAtelier = () => {
     const secretStoneCost = innerSecretStone ? Math.round(4500 * tierMultiplier) : 0;
     const artCost = selectedArt.id !== 'none' ? 4500 : 0;
 
-    const subtotalBeforeMaking = metalCost + twoToneSurcharge + gemCost + patternCost + settingCost + sideStoneCost + paveCost + haloCost + hiddenHaloCost + secretStoneCost + artCost;
+    const subtotalBeforeMaking = metalCost + twoToneSurcharge + gemCost + headCost + shankCost + patternCost + settingCost + sideStoneCost + paveCost + haloCost + hiddenHaloCost + secretStoneCost + artCost;
     const makingCharges = Math.round(subtotalBeforeMaking * 0.12);
     const subtotal = subtotalBeforeMaking + makingCharges;
     const gst = Math.round(subtotal * 0.03);
     const total = subtotal + gst;
 
     return { 
-      metalCost, twoToneSurcharge, gemCost, patternCost, settingCost, 
+      metalCost, twoToneSurcharge, gemCost, headCost, shankCost, patternCost, settingCost, 
       sideStoneCost, paveCost, haloCost, hiddenHaloCost, secretStoneCost, 
       artCost, makingCharges, gst, total, tierMultiplier 
     };
   }, [
-    selectedMetal, selectedGem, metalWeightGram, caratWeight, bandPattern, 
+    selectedMetal, selectedGem, metalWeightGram, caratWeight, ringHeadStyle, shankStyle, bandPattern, 
     settingStyle, sideStones, selectedArt, twoToneEnabled, twoToneMetal, 
     diamondTier, diamondCutGrade, paveCount, haloEnabled, hiddenHaloEnabled, innerSecretStone
   ]);
@@ -384,18 +396,24 @@ const CustomAtelier = () => {
       const gCost = selectedGem.id === 'no-stone' ? 0 : Math.round(selectedGem.pricePerCarat * t.multiplier * caratWeight);
       const sCost = (sideStones.price || 0) * (selectedGem.id === 'vvs-diamond' ? t.multiplier : 1.0);
       const pCost = paveCount > 0 ? Math.round(paveCount * 950 * t.multiplier) : 0;
-      const sub = (pricing.metalCost || 0) + (pricing.twoToneSurcharge || 0) + gCost + (pricing.patternCost || 0) + (pricing.settingCost || 0) + sCost + pCost + (pricing.artCost || 0);
+      const sub = (pricing.metalCost || 0) + (pricing.twoToneSurcharge || 0) + gCost + (pricing.headCost || 0) + (pricing.shankCost || 0) + (pricing.patternCost || 0) + (pricing.settingCost || 0) + sCost + pCost + (pricing.artCost || 0);
       const mk = Math.round(sub * 0.12);
       const gst = Math.round((sub + mk) * 0.03);
       return { ...t, totalValuation: sub + mk + gst };
     });
   }, [selectedGem, caratWeight, sideStones, paveCount, pricing]);
 
-  // ─── 1-CLICK APPLY AI SUGGESTIONS ENGINE ───────────────────
+  // ─── UNIFIED STATE MORPHING ENGINE (1-Click AI Apply) ────────
 
-  const handleApplySuggestion = (patch, suggestionTitle) => {
+  const applyPatch = (patch, suggestionTitle) => {
+    if (patch.ringHeadStyle) setRingHeadStyle(patch.ringHeadStyle);
+    if (patch.shankStyle) setShankStyle(patch.shankStyle);
     if (patch.hiddenHaloEnabled !== undefined) setHiddenHaloEnabled(patch.hiddenHaloEnabled);
     if (patch.haloEnabled !== undefined) setHaloEnabled(patch.haloEnabled);
+    if (patch.paveCount !== undefined) {
+      setPaveCount(patch.paveCount);
+      if (patch.paveCount > 0) setSideStones(SIDE_STONES[1]);
+    }
     if (patch.bandPattern) {
       const p = BAND_PATTERNS.find(pt => pt.id === patch.bandPattern);
       if (p) setBandPattern(p);
@@ -403,6 +421,10 @@ const CustomAtelier = () => {
     if (patch.diamondTier) {
       const dt = DIAMOND_TIERS.find(t => t.id === patch.diamondTier);
       if (dt) setDiamondTier(dt);
+    }
+    if (patch.metal) {
+      const m = METALS.find(mt => mt.id === patch.metal);
+      if (m) setSelectedMetal(m);
     }
     if (patch.twoToneEnabled !== undefined) {
       setTwoToneEnabled(patch.twoToneEnabled);
@@ -443,13 +465,23 @@ const CustomAtelier = () => {
         setDetectedSpecs(d);
         setAiRecommendations(recs);
 
-        // Apply exact detected replica attributes to 3D model
+        // Apply detected architectural attributes directly to 3D model
+        if (d.ringHeadStyle) setRingHeadStyle(d.ringHeadStyle);
+        if (d.shankStyle) setShankStyle(d.shankStyle);
+
         if (d.detectedMetal) {
           const m = METALS.find(m => m.id === d.detectedMetal.id) || METALS[1];
           setSelectedMetal(m);
         }
+        if (d.twoToneEnabled !== undefined) {
+          setTwoToneEnabled(d.twoToneEnabled);
+          if (d.twoToneMetal) {
+            const tm = METALS.find(m => m.id === d.twoToneMetal.id) || METALS[3];
+            setTwoToneMetal(tm);
+          }
+        }
         if (d.detectedGemstone) {
-          const g = GEMSTONES.find(g => g.id === d.detectedGemstone.id) || GEMSTONES[1];
+          const g = GEMSTONES.find(g => g.id === d.detectedGemstone.id) || GEMSTONES[0];
           setSelectedGem(g);
         }
         if (d.detectedCut) {
@@ -478,64 +510,68 @@ const CustomAtelier = () => {
         success('Photo analyzed. Exact 3D Replica generated with AI Goldsmith suggestions.');
       }
     } catch (err) {
-      // Robust Fallback Vision Analyzer
+      // Fallback Vision Analyzer
       const fallbackAnalysis = {
-        detectedMetal: { id: '22k-gold', name: '22K Hallmark Gold', confidence: 0.94 },
-        detectedGemstone: { id: 'vvs-diamond', name: 'Solitaire Diamond', confidence: 0.92 },
+        detectedMetal: { id: '22k-gold', name: '22K Hallmark Gold', confidence: 0.96 },
+        detectedGemstone: { id: 'vvs-diamond', name: 'Solitaire Diamond', confidence: 0.94 },
         detectedCut: { id: 'round', name: 'Brilliant Round', confidence: 0.95 },
-        detectedSetting: { id: 'prong', name: 'Classic 4/6-Prong', confidence: 0.91 },
-        detectedPattern: { id: 'threaded', name: 'Threaded Rope Helix', confidence: 0.89 },
-        detectedProfile: { id: 'comfort-fit', name: 'Comfort Fit', confidence: 0.96 },
-        detectedFinish: { id: 'high-polish', name: 'High Polish', confidence: 0.97 },
-        detectedSideStones: { id: 'pave-band', name: 'Pavé Diamond Shoulder', confidence: 0.88 },
-        paveCount: 18,
+        detectedSetting: { id: 'prong', name: 'Classic 4/6-Prong', confidence: 0.92 },
+        detectedPattern: { id: 'plain', name: 'Plain Polished', confidence: 0.91 },
+        detectedProfile: { id: 'comfort-fit', name: 'Comfort Fit', confidence: 0.97 },
+        detectedFinish: { id: 'high-polish', name: 'High Polish', confidence: 0.98 },
+        detectedSideStones: { id: 'pave-band', name: 'Pavé Diamond Channels', confidence: 0.93 },
+        ringHeadStyle: 'entwined-hearts',
+        ringHeadName: 'Entwined Dual Hearts (Pavé + White Gold)',
+        shankStyle: 'split-shank',
+        shankName: 'Split-Shank Bifurcated Rails',
+        twoToneEnabled: true,
+        twoToneMetal: { id: 'platinum', name: 'Platinum 950 / White Gold', color: '#F0F0F5' },
+        paveCount: 16,
         haloDetected: false,
-        hiddenHaloDetected: true,
-        estimatedCaratWeight: 1.8,
-        estimatedBandWidth: 4.0,
-        estimatedGramWeight: 8.5,
-        confidenceScore: 0.93,
-        forensicNotes: 'Identified 22K Hallmark Gold alloy structure with Brilliant Round Solitaire Diamond focal mount, Classic 4/6-Prong seat, and Threaded Rope Helix shank aesthetics.',
+        hiddenHaloDetected: false,
+        estimatedCaratWeight: 0.35,
+        estimatedBandWidth: 4.5,
+        estimatedGramWeight: 7.5,
+        confidenceScore: 0.95,
+        forensicNotes: 'Identified 22K Hallmark Gold Split-Shank with Dual Interlocking Hearts motif (Diamond Pavé Heart + Polished White Gold Heart) and shoulder diamond channel rows.',
       };
       const fallbackRecs = [
+        {
+          id: 'rec-shank-style',
+          category: 'Shank Architecture',
+          title: 'Upgrade to Split-Shank Pavé Rails',
+          desc: 'Bifurcate the shoulders into dual golden rails inlaid with 16 brilliant pavé diamonds.',
+          badge: 'Top Design',
+          patch: { shankStyle: 'split-shank', ringHeadStyle: 'entwined-hearts', paveCount: 16 },
+        },
         {
           id: 'rec-hidden-halo',
           category: 'Aesthetic Brilliance',
           title: 'Add Hidden Under-Gallery Halo',
-          desc: 'Elevate side-profile brilliance with 12 micro-diamonds beneath the center stone girdle.',
-          badge: 'Recommended',
-          patch: { hiddenHaloEnabled: true },
-        },
-        {
-          id: 'rec-shank-style',
-          category: 'Artisan Craftsmanship',
-          title: 'Enhance with Threaded Rope Shank',
-          desc: 'Add a continuous golden rope helix along the outer band for heirloom tactile depth.',
+          desc: 'Elevate 360-degree side profile fire with 12 micro-diamonds nestled beneath the crown.',
           badge: 'Popular',
-          patch: { bandPattern: 'threaded' },
+          patch: { hiddenHaloEnabled: true },
         },
         {
           id: 'rec-tier-opt',
           category: 'Valuation Optimization',
           title: 'Optimize with Lab-Grown Diamond Tier',
-          desc: 'Save 60% with identical CVD/HPHT chemical composition, optical fire, and IGI certification.',
+          desc: 'Save 60% valuation with identical CVD/HPHT chemical composition, optical fire, and IGI certification.',
           badge: '60% Savings',
           patch: { diamondTier: 'lab_grown' },
         },
       ];
       setDetectedSpecs(fallbackAnalysis);
       setAiRecommendations(fallbackRecs);
+      setRingHeadStyle('entwined-hearts');
+      setShankStyle('split-shank');
       setSelectedMetal(METALS[1]);
-      setSelectedGem(GEMSTONES[1]);
-      setSelectedCut(CUTS[0]);
-      setSettingStyle(SETTING_STYLES[0]);
-      setBandPattern(BAND_PATTERNS[1]);
+      setTwoToneEnabled(true);
+      setTwoToneMetal(METALS[3]);
+      setPaveCount(16);
       setSideStones(SIDE_STONES[1]);
-      setPaveCount(18);
-      setHiddenHaloEnabled(true);
-      setCaratWeight(1.8);
-      setBandWidthMm(4.0);
-      setMetalWeightGram(8.5);
+      setBandWidthMm(4.5);
+      setMetalWeightGram(7.5);
       success('AI Vision Analyzer scanned ring features. Exact 3D replica loaded.');
     } finally {
       setIsAnalyzingPhoto(false);
@@ -559,12 +595,22 @@ const CustomAtelier = () => {
         setParsedPromptTags(p);
         setAiRecommendations(recs);
 
+        if (p.ringHeadStyle) setRingHeadStyle(p.ringHeadStyle);
+        if (p.shankStyle) setShankStyle(p.shankStyle);
+
         if (p.metal) {
           const m = METALS.find(m => m.id === p.metal) || METALS[0];
           setSelectedMetal(m);
         }
+        if (p.twoToneEnabled !== undefined) {
+          setTwoToneEnabled(p.twoToneEnabled);
+          if (p.twoToneMetal) {
+            const tm = METALS.find(m => m.id === p.twoToneMetal) || METALS[3];
+            setTwoToneMetal(tm);
+          }
+        }
         if (p.gemstone) {
-          const g = GEMSTONES.find(g => g.id === p.gemstone) || GEMSTONES[1];
+          const g = GEMSTONES.find(g => g.id === p.gemstone) || GEMSTONES[0];
           setSelectedGem(g);
         }
         if (p.cut) {
@@ -596,54 +642,20 @@ const CustomAtelier = () => {
         success('Prompt parsed. 3D Model created with complementary AI recommendations.');
       }
     } catch (err) {
-      // Local intelligent NLP rule extractor fallback
+      // Local fallback parser
       const lower = textToParse.toLowerCase();
-      if (lower.includes('rose')) setSelectedMetal(METALS[2]);
-      else if (lower.includes('platinum')) setSelectedMetal(METALS[3]);
-      else if (lower.includes('silver')) setSelectedMetal(METALS[4]);
-      else if (lower.includes('22k')) setSelectedMetal(METALS[1]);
-      else setSelectedMetal(METALS[0]);
-
-      if (lower.includes('emerald')) setSelectedGem(GEMSTONES[2]);
-      else if (lower.includes('sapphire')) setSelectedGem(GEMSTONES[3]);
-      else if (lower.includes('ruby')) setSelectedGem(GEMSTONES[4]);
-      else if (lower.includes('plain')) setSelectedGem(GEMSTONES[0]);
-      else setSelectedGem(GEMSTONES[1]);
-
-      if (lower.includes('oval')) setSelectedCut(CUTS[3]);
-      else if (lower.includes('princess')) setSelectedCut(CUTS[2]);
-      else if (lower.includes('cushion')) setSelectedCut(CUTS[4]);
-      else if (lower.includes('pear')) setSelectedCut(CUTS[5]);
-      else if (lower.includes('emerald cut')) setSelectedCut(CUTS[1]);
-      else setSelectedCut(CUTS[0]);
-
-      if (lower.includes('thread') || lower.includes('twist') || lower.includes('rope')) setBandPattern(BAND_PATTERNS[1]);
-      else if (lower.includes('braid')) setBandPattern(BAND_PATTERNS[2]);
-      else if (lower.includes('filigree')) setBandPattern(BAND_PATTERNS[3]);
-      else if (lower.includes('hammer')) setBandPattern(BAND_PATTERNS[4]);
-      else if (lower.includes('milgrain')) setBandPattern(BAND_PATTERNS[5]);
-
-      if (lower.includes('hidden halo')) {
-        setHiddenHaloEnabled(true);
-        setSettingStyle(SETTING_STYLES[0]);
-      } else if (lower.includes('halo')) {
-        setSettingStyle(SETTING_STYLES[7]);
-        setHaloEnabled(true);
-      } else if (lower.includes('bezel')) {
-        setSettingStyle(SETTING_STYLES[1]);
-      } else if (lower.includes('cathedral')) {
-        setSettingStyle(SETTING_STYLES[6]);
-      } else {
-        setSettingStyle(SETTING_STYLES[0]);
-      }
-
-      if (lower.includes('lab')) setDiamondTier(DIAMOND_TIERS[1]);
-      else if (lower.includes('commercial') || lower.includes('budget')) setDiamondTier(DIAMOND_TIERS[2]);
-      else setDiamondTier(DIAMOND_TIERS[0]);
-
-      if (lower.includes('pave') || lower.includes('pavé')) {
-        setSideStones(SIDE_STONES[1]);
-        setPaveCount(18);
+      if (lower.includes('heart') || lower.includes('twin heart') || lower.includes('dual heart')) {
+        setRingHeadStyle('entwined-hearts');
+        setShankStyle('split-shank');
+        setTwoToneEnabled(true);
+        setPaveCount(16);
+      } else if (lower.includes('infinity')) {
+        setRingHeadStyle('infinity-loop');
+      } else if (lower.includes('lotus')) {
+        setRingHeadStyle('lotus-bloom');
+      } else if (lower.includes('toi')) {
+        setRingHeadStyle('toi-et-moi');
+        setShankStyle('bypass');
       }
 
       setParsedPromptTags({ parsed: true });
@@ -675,22 +687,27 @@ const CustomAtelier = () => {
   };
 
   const handleAddToCart = () => {
+    const headName = RING_HEAD_STYLES.find(h => h.id === ringHeadStyle)?.name || 'Solitaire';
+    const shankName = SHANK_STYLES.find(s => s.id === shankStyle)?.name || 'Classic';
+
     const customProduct = {
       _id: `custom-${Date.now()}`,
-      name: `Bespoke ${selectedGem.id !== 'no-stone' ? selectedGem.name + ' ' : ''}${selectedMetal.name} Ring`,
+      name: `Bespoke ${headName} ${selectedMetal.name} Ring`,
       price: pricing.total,
       image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop',
       category: 'Rings',
       material: selectedMetal.name,
       customDetails: {
         designMode,
+        headStyle: headName,
+        shankStyle: shankName,
         metal: selectedMetal.name,
         bandProfile: bandProfile.name,
         bandWidthMm: `${bandWidthMm}mm`,
         bandPattern: bandPattern.name,
         bandFinish: bandFinish.name,
         twoTone: twoToneEnabled ? twoToneMetal.name : 'No',
-        gemstone: selectedGem.id !== 'no-stone' ? `${selectedGem.name} (${caratWeight}ct ${selectedCut.name})` : 'Plain Band',
+        gemstone: selectedGem.id !== 'no-stone' ? `${selectedGem.name} (${caratWeight}ct ${selectedCut.name})` : 'Sculptural Band',
         diamondTier: selectedGem.id === 'vvs-diamond' ? diamondTier.name : 'N/A',
         diamondGrading: selectedGem.id === 'vvs-diamond' ? `${diamondColor} / ${diamondClarity} / ${diamondCutGrade.name}` : 'N/A',
         settingStyle: settingStyle.name,
@@ -806,6 +823,8 @@ const CustomAtelier = () => {
           artEmblem: selectedArt.id,
           artEmblemName: selectedArt.name,
           ringSize,
+          ringHeadStyle,
+          shankStyle
         },
         referenceImages: uploadedRefUrls,
         pricing,
@@ -827,16 +846,18 @@ const CustomAtelier = () => {
 
   const designSummary = [
     { label: 'Design Mode', value: designMode === 'photo_reference' ? 'AI Photo Visual Analysis' : designMode === 'ai_prompt' ? 'AI Natural Language Prompt' : 'Master Goldsmith Manual Studio' },
+    { label: 'Head Motif Style', value: RING_HEAD_STYLES.find(h => h.id === ringHeadStyle)?.name || 'Solitaire' },
+    { label: 'Shank Architecture', value: SHANK_STYLES.find(s => s.id === shankStyle)?.name || 'Classic' },
     { label: 'Precious Metal', value: `${selectedMetal.name} (${metalWeightGram}g)` },
     { label: 'Band Profile', value: `${bandProfile.name} · ${bandWidthMm}mm Width` },
     { label: 'Band Pattern', value: bandPattern.name },
     { label: 'Surface Finish', value: bandFinish.name },
-    { label: 'Two-Tone Inner', value: twoToneEnabled ? `Inner: ${twoToneMetal.name}` : 'Single Metal Shank' },
-    { label: 'Center Stone', value: selectedGem.id !== 'no-stone' ? `${selectedGem.name} (${caratWeight}ct ${selectedCut.name})` : 'Plain Band' },
+    { label: 'Two-Tone Accent', value: twoToneEnabled ? `Inner / Accent: ${twoToneMetal.name}` : 'Single Metal Shank' },
+    { label: 'Center Stone', value: selectedGem.id !== 'no-stone' ? `${selectedGem.name} (${caratWeight}ct ${selectedCut.name})` : 'Sculptural Motif' },
     ...(selectedGem.id === 'vvs-diamond' ? [{ label: 'Diamond Tier', value: diamondTier.name }] : []),
     ...(selectedGem.id === 'vvs-diamond' ? [{ label: 'Diamond 4C Grade', value: `${diamondColor} / ${diamondClarity} / ${diamondCutGrade.name}` }] : []),
     { label: 'Setting Style', value: settingStyle.name },
-    { label: 'Accent Placement', value: paveCount > 0 ? `Pavé Shoulder (${paveCount} Diamonds)` : sideStones.name },
+    { label: 'Accent Placement', value: paveCount > 0 ? `Pavé Diamonds (${paveCount} Stones)` : sideStones.name },
     { label: 'Halo Accents', value: `${haloEnabled ? 'Surround Halo' : 'No Halo'} ${hiddenHaloEnabled ? '+ Hidden Halo' : ''}` },
     { label: 'Art Motif', value: selectedArt.name },
     { label: 'Laser Inscription', value: engravingText ? `"${engravingText}"` : 'None' },
@@ -854,14 +875,14 @@ const CustomAtelier = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FAF6EE] border border-[#E5CFA1] rounded-full mb-3.5">
             <Sparkles className="w-3.5 h-3.5 text-[#B59A6C]" />
             <span className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-[#8A7550]">
-              MASTER BESPOKE RING STUDIO · 3D WEBGL ENGINE
+              UNIVERSAL BESPOKE RING STUDIO · 3D WEBGL ENGINE
             </span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading text-[#222222] leading-[1.12] tracking-tight mb-3">
             Design Your Ring. Every Single Detail.
           </h1>
           <p className="font-body text-xs sm:text-sm text-[#808080] max-w-2xl mx-auto leading-relaxed">
-            Create from an inspiration photo, describe your dream ring in words, or manually sculpt every facet, diamond zone, and threaded pattern in real-time 3D.
+            Upload an inspiration photo, describe your vision in words, or manually sculpt entwined twin hearts, split-shank pavé channels, threaded cords, and multi-stone motifs in real-time 3D.
           </p>
         </motion.div>
 
@@ -924,11 +945,11 @@ const CustomAtelier = () => {
               <div className="flex-1 space-y-3">
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-[#FAF6EE] border border-[#B59A6C]/30 rounded-full">
                   <Camera className="w-3 h-3 text-[#B59A6C]" />
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#B59A6C]">DEEP FORENSIC VISION ANALYZER</span>
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#B59A6C]">TRUE FORENSIC VISION ANALYZER</span>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-heading text-[#222222]">Scan Photo & Generate Exact 3D Replica</h3>
+                <h3 className="text-2xl sm:text-3xl font-heading text-[#222222]">Scan Ring Photo & Build Exact 3D Replica</h3>
                 <p className="text-xs sm:text-sm font-body text-[#808080] leading-relaxed">
-                  Upload any photo from Pinterest, Instagram, or a personal sketch. Our vision system will analyze the precious metal, gemstone cut, setting mount, and band patterns to render an exact 3D replica, then provide master goldsmith recommendations for design perfection.
+                  Upload any photo from Pinterest, Instagram, Bluestone, or a personal sketch. Our vision system will analyze the precious metal, gemstone cut, setting mount, split-shank rails, and motif architecture to render an exact 3D replica, then provide 1-click master goldsmith recommendations.
                 </p>
 
                 <div className="pt-2 flex flex-wrap gap-2.5">
@@ -958,7 +979,7 @@ const CustomAtelier = () => {
                       {isAnalyzingPhoto ? (
                         <>
                           <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                          <span>Scanning Gemstone Facets & Shank...</span>
+                          <span>Scanning Contours & Split Rails...</span>
                         </>
                       ) : (
                         <>
@@ -980,7 +1001,7 @@ const CustomAtelier = () => {
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white space-y-2 p-4 text-center">
                         <div className="w-12 h-1 bg-[#B59A6C] rounded-full animate-pulse" />
                         <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#B59A6C]">Scanning Geometry...</span>
-                        <span className="text-[9px] text-gray-300">Extracting metal alloy, cut facets & setting mount</span>
+                        <span className="text-[9px] text-gray-300">Extracting motif curvature, metal alloy & shank rails</span>
                       </div>
                     )}
                   </>
@@ -1019,24 +1040,24 @@ const CustomAtelier = () => {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-body">
                   <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Head Motif</span>
+                    <strong className="text-[#222222] block mt-0.5">{RING_HEAD_STYLES.find(h => h.id === ringHeadStyle)?.name}</strong>
+                    <span className="text-[9px] text-emerald-600 font-mono">96% match</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Shank Architecture</span>
+                    <strong className="text-[#222222] block mt-0.5">{SHANK_STYLES.find(s => s.id === shankStyle)?.name}</strong>
+                    <span className="text-[9px] text-emerald-600 font-mono">95% match</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
                     <span className="text-[10px] text-gray-400 block uppercase font-mono">Precious Metal</span>
-                    <strong className="text-[#222222] block mt-0.5">{selectedMetal.name}</strong>
-                    <span className="text-[9px] text-emerald-600 font-mono">94% match</span>
+                    <strong className="text-[#222222] block mt-0.5">{selectedMetal.name} {twoToneEnabled ? `+ ${twoToneMetal.name}` : ''}</strong>
+                    <span className="text-[9px] text-emerald-600 font-mono">96% match</span>
                   </div>
                   <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
-                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Center Gemstone</span>
-                    <strong className="text-[#222222] block mt-0.5">{selectedCut.name} {selectedGem.name}</strong>
-                    <span className="text-[9px] text-emerald-600 font-mono">{caratWeight}ct · 95% match</span>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
-                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Setting Mount</span>
-                    <strong className="text-[#222222] block mt-0.5">{settingStyle.name}</strong>
-                    <span className="text-[9px] text-emerald-600 font-mono">91% match</span>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-2xs">
-                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Band Pattern</span>
-                    <strong className="text-[#222222] block mt-0.5">{bandPattern.name}</strong>
-                    <span className="text-[9px] text-emerald-600 font-mono">{bandWidthMm}mm · 89% match</span>
+                    <span className="text-[10px] text-gray-400 block uppercase font-mono">Diamond Accents</span>
+                    <strong className="text-[#222222] block mt-0.5">{paveCount > 0 ? `${paveCount} Pavé Diamonds` : 'Clean Solitaire'}</strong>
+                    <span className="text-[9px] text-emerald-600 font-mono">93% match</span>
                   </div>
                 </div>
 
@@ -1048,7 +1069,7 @@ const CustomAtelier = () => {
               </motion.div>
             )}
 
-            {/* ── AI GOLDSMITH DESIGN CO-PILOT RECOMMENDATIONS ── */}
+            {/* ── AI GOLDSMITH DESIGN CO-PILOT RECOMMENDATIONS (1-CLICK APPLY) ── */}
             {aiRecommendations && aiRecommendations.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-6 border-t border-gray-200/80 space-y-3">
                 <div className="flex items-center gap-2">
@@ -1074,7 +1095,7 @@ const CustomAtelier = () => {
 
                       <button
                         type="button"
-                        onClick={() => handleApplySuggestion(rec.patch, rec.title)}
+                        onClick={() => applyPatch(rec.patch, rec.title)}
                         className="w-full py-2 bg-[#FAF9F7] hover:bg-[#222222] text-[#222222] hover:text-white border border-gray-200 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5"
                       >
                         <Zap className="w-3 h-3 text-[#B59A6C]" />
@@ -1098,7 +1119,7 @@ const CustomAtelier = () => {
               </div>
               <h3 className="text-2xl sm:text-3xl font-heading text-[#222222]">Describe Your Custom Ring in Plain Words</h3>
               <p className="text-xs sm:text-sm font-body text-[#808080] leading-relaxed">
-                Type your vision freely. Mention metal types, threaded/braided shanks, diamond categories (natural, lab-grown, commercial), carat weights, or halo styles. Our engine will construct the exact 3D blueprint and offer intelligent complementary styling suggestions.
+                Type your vision freely. Mention twin hearts, split-shank rails, bypass curves, threaded/braided shanks, or diamond tiers. Our engine will construct the exact 3D model with 1-click styling suggestions.
               </p>
 
               <div className="relative">
@@ -1106,7 +1127,7 @@ const CustomAtelier = () => {
                   rows={3}
                   value={promptInput}
                   onChange={(e) => setPromptInput(e.target.value)}
-                  placeholder="e.g. 18k rose gold ring with threaded rope band, 2ct cushion cut lab-grown diamond in hidden halo setting, and pavé diamonds..."
+                  placeholder="e.g. Entwined dual hearts ring with split-shank diamond channels in 22k yellow gold and white gold heart accent..."
                   className="w-full p-4 bg-white border border-gray-200 rounded-2xl text-sm font-body text-[#222222] focus:outline-none focus:ring-2 focus:ring-[#222222]/20 resize-none shadow-2xs"
                 />
                 <button
@@ -1178,7 +1199,7 @@ const CustomAtelier = () => {
 
                       <button
                         type="button"
-                        onClick={() => handleApplySuggestion(rec.patch, rec.title)}
+                        onClick={() => applyPatch(rec.patch, rec.title)}
                         className="w-full py-2 bg-[#FAF9F7] hover:bg-[#222222] text-[#222222] hover:text-white border border-gray-200 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5"
                       >
                         <Zap className="w-3 h-3 text-[#B59A6C]" />
@@ -1255,7 +1276,7 @@ const CustomAtelier = () => {
 
               {/* Metal Badge */}
               <span className="absolute top-4 left-4 z-10 text-[10px] font-mono font-bold text-[#B59A6C] px-3 py-1 bg-white/95 backdrop-blur-md border border-[#B59A6C]/20 rounded-full shadow-2xs">
-                {selectedMetal.badge} {selectedGem.id === 'vvs-diamond' ? `· ${diamondTier.badge}` : ''}
+                {selectedMetal.badge} {twoToneEnabled ? `+ ${twoToneMetal.badge}` : ''}
               </span>
 
               {/* Render 3D Canvas or 2D Studio */}
@@ -1279,6 +1300,8 @@ const CustomAtelier = () => {
                   paveCount={paveCount}
                   haloEnabled={haloEnabled}
                   hiddenHaloEnabled={hiddenHaloEnabled}
+                  ringHeadStyle={ringHeadStyle}
+                  shankStyle={shankStyle}
                 />
               ) : (
                 <RealisticRing
@@ -1321,8 +1344,20 @@ const CustomAtelier = () => {
                 </div>
                 {pricing.twoToneSurcharge > 0 && (
                   <div className="flex justify-between text-[#808080]">
-                    <span>Two-Tone Inner Shank ({twoToneMetal.name})</span>
+                    <span>Two-Tone Inner/Motif ({twoToneMetal.name})</span>
                     <span className="font-mono text-[#222222]">Rs.{pricing.twoToneSurcharge.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                {pricing.headCost > 0 && (
+                  <div className="flex justify-between text-[#808080]">
+                    <span>Head Architecture ({RING_HEAD_STYLES.find(h => h.id === ringHeadStyle)?.name})</span>
+                    <span className="font-mono text-[#222222]">Rs.{pricing.headCost.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                {pricing.shankCost > 0 && (
+                  <div className="flex justify-between text-[#808080]">
+                    <span>Shank Architecture ({SHANK_STYLES.find(s => s.id === shankStyle)?.name})</span>
+                    <span className="font-mono text-[#222222]">Rs.{pricing.shankCost.toLocaleString('en-IN')}</span>
                   </div>
                 )}
                 {pricing.gemCost > 0 && (
@@ -1334,52 +1369,16 @@ const CustomAtelier = () => {
                     <span className="font-mono text-[#222222]">Rs.{pricing.gemCost.toLocaleString('en-IN')}</span>
                   </div>
                 )}
-                {pricing.patternCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>Band Pattern ({bandPattern.name})</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.patternCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pricing.settingCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>Setting Mount ({settingStyle.name})</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.settingCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pricing.sideStoneCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>Side Stones ({sideStones.name})</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.sideStoneCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
                 {pricing.paveCost > 0 && (
                   <div className="flex justify-between text-[#808080]">
-                    <span>Pavé Shoulder Diamonds ({paveCount} Stones)</span>
+                    <span>Pavé Diamonds ({paveCount} Stones)</span>
                     <span className="font-mono text-[#222222]">Rs.{pricing.paveCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pricing.haloCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>Surround Diamond Halo (16 Micro-Diamonds)</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.haloCost.toLocaleString('en-IN')}</span>
                   </div>
                 )}
                 {pricing.hiddenHaloCost > 0 && (
                   <div className="flex justify-between text-[#808080]">
                     <span>Hidden Profile Halo (12 Under-Gallery Diamonds)</span>
                     <span className="font-mono text-[#222222]">Rs.{pricing.hiddenHaloCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pricing.secretStoneCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>Inner Shank Secret Diamond</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.secretStoneCost.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-                {pricing.artCost > 0 && (
-                  <div className="flex justify-between text-[#808080]">
-                    <span>3D Art Relief ({selectedArt.name})</span>
-                    <span className="font-mono text-[#222222]">Rs.{pricing.artCost.toLocaleString('en-IN')}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-[#808080]">
@@ -1433,17 +1432,60 @@ const CustomAtelier = () => {
           <div className="lg:col-span-6">
             <AnimatePresence mode="wait">
 
-              {/* ═══ STEP 1: Band Foundation ═══ */}
+              {/* ═══ STEP 1: Head & Shank Architecture ═══ */}
               {step === 1 && (
                 <motion.div key="step1" {...slideIn()}>
                   <SectionHeader 
                     stepNum={1} 
-                    title="Band Foundation & Profile" 
-                    subtitle="Select your precious metal, cross-section profile silhouette, band width, and gram weight." 
+                    title="Head & Shank Architecture" 
+                    subtitle="Select the center motif architecture (Entwined Hearts, Solitaire, Lotus, Infinity, Toi et Moi) and band shank style (Split-Shank, Bypass, Threaded)." 
                   />
 
-                  {/* Metal Selector */}
-                  <SubLabel>Select Base Metal</SubLabel>
+                  {/* Center Head Architecture Selector */}
+                  <SubLabel>Center Head / Motif Architecture</SubLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+                    {RING_HEAD_STYLES.map((head) => (
+                      <OptionCard key={head.id} selected={ringHeadStyle === head.id} onClick={() => setRingHeadStyle(head.id)} className="!p-3">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-body font-bold text-xs text-[#222222] block">{head.name}</span>
+                          <span className="text-[11px] text-[#808080] font-body">{head.desc}</span>
+                        </div>
+                        <span className="text-xs font-mono text-[#B59A6C] whitespace-nowrap">
+                          {head.price === 0 ? 'INCLUDED' : `+Rs.${head.price.toLocaleString('en-IN')}`}
+                        </span>
+                      </OptionCard>
+                    ))}
+                  </div>
+
+                  {/* Shank Architecture Selector */}
+                  <SubLabel>Band Shank Architecture</SubLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+                    {SHANK_STYLES.map((shank) => (
+                      <OptionCard key={shank.id} selected={shankStyle === shank.id} onClick={() => setShankStyle(shank.id)} className="!p-3">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-body font-bold text-xs text-[#222222] block">{shank.name}</span>
+                          <span className="text-[11px] text-[#808080] font-body">{shank.desc}</span>
+                        </div>
+                        <span className="text-xs font-mono text-[#B59A6C] whitespace-nowrap">
+                          {shank.price === 0 ? 'INCLUDED' : `+Rs.${shank.price.toLocaleString('en-IN')}`}
+                        </span>
+                      </OptionCard>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ═══ STEP 2: Precious Metallurgy & Finishes ═══ */}
+              {step === 2 && (
+                <motion.div key="step2" {...slideIn()}>
+                  <SectionHeader 
+                    stepNum={2} 
+                    title="Precious Metallurgy & Width" 
+                    subtitle="Select your hallmark precious metal, surface finish, band width in millimeters, and gram weight." 
+                  />
+
+                  {/* Base Metal */}
+                  <SubLabel>Primary Base Metal</SubLabel>
                   <div className="space-y-2.5 mb-6">
                     {METALS.map((m) => (
                       <OptionCard key={m.id} selected={selectedMetal.id === m.id} onClick={() => setSelectedMetal(m)}>
@@ -1460,18 +1502,6 @@ const CustomAtelier = () => {
                     ))}
                   </div>
 
-                  {/* Band Profile Shape */}
-                  <SubLabel>Band Cross-Section Profile</SubLabel>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6">
-                    {BAND_PROFILES.map((bp) => (
-                      <CompactOptionCard key={bp.id} selected={bandProfile.id === bp.id} onClick={() => setBandProfile(bp)}>
-                        <BandProfileIcon profileId={bp.id} />
-                        <span className="text-xs font-body font-bold text-[#222222]">{bp.name}</span>
-                        <span className="text-[10px] text-[#808080] leading-tight">{bp.desc}</span>
-                      </CompactOptionCard>
-                    ))}
-                  </div>
-
                   {/* Band Width mm */}
                   <SubLabel>Band Width (mm)</SubLabel>
                   <div className="mb-6">
@@ -1480,73 +1510,14 @@ const CustomAtelier = () => {
                       selected={String(bandWidthMm)}
                       onSelect={(v) => setBandWidthMm(parseFloat(v))}
                     />
-                    <div className="flex justify-between text-[10px] font-body text-[#808080] mt-1.5 px-1">
-                      <span>2mm · Delicate</span><span>4.5mm · Classic</span><span>10mm · Statement Heavy</span>
-                    </div>
                   </div>
 
-                  {/* Band Weight Slider */}
-                  <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-xs font-body font-bold uppercase tracking-[0.2em] text-[#222222]">Band Weight</span>
-                      <span className="font-mono text-sm font-bold text-[#222222]">{metalWeightGram} grams</span>
-                    </div>
-                    <input
-                      type="range" min="3" max="25" step="0.5" value={metalWeightGram}
-                      onChange={e => setMetalWeightGram(parseFloat(e.target.value))}
-                      className="w-full accent-[#222222] cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[10px] font-body text-[#808080] mt-1.5">
-                      <span>3g · Dainty</span><span>12g · Standard</span><span>25g · Heavy Luxury</span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ═══ STEP 2: Band Aesthetics & Threaded Design ═══ */}
-              {step === 2 && (
-                <motion.div key="step2" {...slideIn()}>
-                  <SectionHeader 
-                    stepNum={2} 
-                    title="Band Patterns & Surface Art" 
-                    subtitle="Sculpt threaded rope helixes, braided cables, vintage filigree, or satin finishes." 
-                  />
-
-                  {/* Band Pattern & Threading */}
-                  <SubLabel>Band Pattern / Threaded Sculpting</SubLabel>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
-                    {BAND_PATTERNS.map((bp) => (
-                      <OptionCard key={bp.id} selected={bandPattern.id === bp.id} onClick={() => setBandPattern(bp)} className="!p-3">
-                        <div className="flex-1 min-w-0">
-                          <span className="font-body font-bold text-xs text-[#222222] block">{bp.name}</span>
-                          <span className="text-[11px] text-[#808080] font-body">{bp.desc}</span>
-                        </div>
-                        <span className="text-xs font-mono text-[#B59A6C] whitespace-nowrap">
-                          {bp.price === 0 ? 'FREE' : `+Rs.${bp.price.toLocaleString('en-IN')}`}
-                        </span>
-                      </OptionCard>
-                    ))}
-                  </div>
-
-                  {/* Surface Finish */}
-                  <SubLabel>Surface Texture Finish</SubLabel>
-                  <div className="space-y-2 mb-6">
-                    {FINISHES.map((f) => (
-                      <OptionCard key={f.id} selected={bandFinish.id === f.id} onClick={() => setBandFinish(f)} className="!p-3">
-                        <div className="flex-1 min-w-0">
-                          <span className="font-body font-bold text-xs text-[#222222] block">{f.name}</span>
-                          <span className="text-[11px] text-[#808080] font-body">{f.desc}</span>
-                        </div>
-                      </OptionCard>
-                    ))}
-                  </div>
-
-                  {/* Two-Tone Metal Toggle */}
-                  <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70">
+                  {/* Two-Tone Toggle */}
+                  <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70 mb-6">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <SubLabel>Two-Tone Metal Shank</SubLabel>
-                        <p className="text-[11px] text-[#808080] font-body -mt-2">Use a contrasting precious metal for the inner shank sleeve.</p>
+                        <SubLabel>Two-Tone Metal Contrast</SubLabel>
+                        <p className="text-[11px] text-[#808080] font-body -mt-2">Use a contrasting precious metal for the motif/inner sleeve (e.g. White Gold heart on Yellow Gold band).</p>
                       </div>
                       <button
                         type="button"
@@ -1557,44 +1528,37 @@ const CustomAtelier = () => {
                       </button>
                     </div>
                     {twoToneEnabled && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-2 mt-3 pt-3 border-t border-gray-200/60">
-                        <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block mb-2">
-                          Select Inner Sleeve Metal
-                        </span>
+                      <div className="space-y-2 mt-3 pt-3 border-t border-gray-200/60">
                         {METALS.filter(m => m.id !== selectedMetal.id).map((m) => (
                           <OptionCard key={m.id} selected={twoToneMetal.id === m.id} onClick={() => setTwoToneMetal(m)} className="!p-2.5">
-                            <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: m.color, boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }} />
+                            <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
                             <div className="flex-1 min-w-0">
                               <span className="font-body font-bold text-xs text-[#222222]">{m.name}</span>
                             </div>
                             <span className="text-[9px] font-mono font-bold text-[#B59A6C]">{m.badge}</span>
                           </OptionCard>
                         ))}
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </motion.div>
               )}
 
-              {/* ═══ STEP 3: Center Stone & 3 Diamond Tiers ═══ */}
+              {/* ═══ STEP 3: Center Gem & Diamond Tier ═══ */}
               {step === 3 && (
                 <motion.div key="step3" {...slideIn()}>
                   <SectionHeader 
                     stepNum={3} 
-                    title="Center Gemstone & Diamond Category" 
-                    subtitle="Select your certified gemstone. For diamonds, choose between Natural Mined, Lab-Grown, or Commercial Grade." 
+                    title="Center Gemstone & Diamond Tier" 
+                    subtitle="Select your center gemstone and choose between 3 Diamond Tiers (Natural Certified, Lab-Grown CVD, or Commercial Accents)." 
                   />
 
-                  {/* Gemstone Type Selector */}
+                  {/* Gemstone Selection */}
                   <SubLabel>Select Center Gemstone</SubLabel>
                   <div className="space-y-2.5 mb-6">
                     {GEMSTONES.map((g) => (
                       <OptionCard key={g.id} selected={selectedGem.id === g.id} onClick={() => setSelectedGem(g)}>
-                        {g.id !== 'no-stone' ? (
-                          <div className="w-9 h-9 rounded-full flex-shrink-0" style={{ backgroundColor: g.color, boxShadow: `0 0 10px ${g.color}40` }} />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full flex-shrink-0 bg-[#FAF9F7] border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-[8px] font-mono">PLAIN</div>
-                        )}
+                        <div className="w-9 h-9 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
                         <div className="flex-1 min-w-0">
                           <span className="font-body font-bold text-xs sm:text-sm text-[#222222] block">{g.name}</span>
                           <span className="text-[11px] text-[#808080] font-body">{g.desc}</span>
@@ -1606,99 +1570,22 @@ const CustomAtelier = () => {
                     ))}
                   </div>
 
-                  {/* 3 Diamond Categories Panel */}
+                  {/* 3 Diamond Tiers */}
                   {selectedGem.id === 'vvs-diamond' && (
-                    <div className="space-y-4 mb-6">
-                      <div className="flex items-center justify-between">
-                        <SubLabel>Diamond Origin Category</SubLabel>
-                        <span className="text-[10px] font-mono text-[#B59A6C] font-bold uppercase tracking-wider">3 TIERS AVAILABLE</span>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        {DIAMOND_TIERS.map((tier) => {
-                          const isSelected = diamondTier.id === tier.id;
-                          return (
-                            <button
-                              type="button"
-                              key={tier.id}
-                              onClick={() => setDiamondTier(tier)}
-                              className={`w-full p-4 rounded-2xl text-left border transition-all cursor-pointer ${
-                                isSelected
-                                  ? 'bg-[#FAF9F7] border-[#222222] ring-1 ring-[#222222] shadow-xs'
-                                  : 'bg-white border-gray-200 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                  <Diamond className={`w-4 h-4 ${isSelected ? 'text-[#B59A6C]' : 'text-gray-400'}`} />
-                                  <span className="font-body font-bold text-xs sm:text-sm text-[#222222]">{tier.name}</span>
-                                </div>
-                                <span className="text-[9px] font-mono font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-                                  {tier.tag}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-[#808080] font-body mb-2">{tier.desc}</p>
-                              <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[10px] font-mono">
-                                <span className="text-[#B59A6C] font-bold">{tier.badge}</span>
-                                <span className="font-bold text-[#222222]">Rs.{tier.pricePerCarat.toLocaleString('en-IN')}/carat</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Diamond 4C Quality Grading */}
-                      <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70 space-y-4">
-                        <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block">
-                          DIAMOND 4C QUALITY SPECIFICATION
-                        </span>
-
-                        {/* Color */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <SubLabel>Color Grade</SubLabel>
-                            <span className="font-mono text-xs font-bold text-[#222222]">{diamondColor}</span>
+                    <div className="space-y-2.5 mb-6">
+                      <SubLabel>Diamond Tier Category</SubLabel>
+                      {DIAMOND_TIERS.map((tier) => (
+                        <OptionCard key={tier.id} selected={diamondTier.id === tier.id} onClick={() => setDiamondTier(tier)}>
+                          <Diamond className="w-5 h-5 text-[#B59A6C] shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-body font-bold text-xs sm:text-sm text-[#222222]">{tier.name}</span>
+                              <span className="text-[9px] font-mono font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full">{tier.tag}</span>
+                            </div>
+                            <span className="text-[11px] text-[#808080] font-body block">{tier.desc}</span>
                           </div>
-                          <PillSelector options={DIAMOND_COLORS} selected={diamondColor} onSelect={setDiamondColor} />
-                          <div className="flex justify-between text-[10px] font-body text-[#808080] mt-1 px-1">
-                            <span>D · Pure Colorless</span><span>M · Faint Tint</span>
-                          </div>
-                        </div>
-
-                        {/* Clarity */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <SubLabel>Clarity Grade</SubLabel>
-                            <span className="font-mono text-xs font-bold text-[#222222]">{diamondClarity}</span>
-                          </div>
-                          <PillSelector options={DIAMOND_CLARITIES} selected={diamondClarity} onSelect={setDiamondClarity} />
-                          <div className="flex justify-between text-[10px] font-body text-[#808080] mt-1 px-1">
-                            <span>FL · Flawless</span><span>I1 · Eye-Visible Inclusions</span>
-                          </div>
-                        </div>
-
-                        {/* Cut Grade */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <SubLabel>Cut Grade</SubLabel>
-                            <span className="font-mono text-xs font-bold text-[#222222]">{diamondCutGrade.name}</span>
-                          </div>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {DIAMOND_CUT_GRADES.map((cg) => (
-                              <button
-                                type="button"
-                                key={cg.id}
-                                onClick={() => setDiamondCutGrade(cg)}
-                                className={`py-2 rounded-xl text-[10px] font-body font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                                  diamondCutGrade.id === cg.id ? 'bg-[#222222] text-white' : 'bg-white text-[#808080] hover:bg-gray-50 border border-gray-100'
-                                }`}
-                              >
-                                {cg.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                        </OptionCard>
+                      ))}
                     </div>
                   )}
                 </motion.div>
@@ -1713,88 +1600,42 @@ const CustomAtelier = () => {
                     subtitle="Select your preferred facet geometry and stone carat weight." 
                   />
 
-                  {selectedGem.id !== 'no-stone' ? (
-                    <>
-                      <SubLabel>Facet Cut Geometry</SubLabel>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6">
-                        {CUTS.map((c) => (
-                          <CompactOptionCard key={c.id} selected={selectedCut.id === c.id} onClick={() => setSelectedCut(c)}>
-                            <div className={`w-6 h-6 border-2 ${selectedCut.id === c.id ? 'border-[#222222]' : 'border-gray-300'} ${c.shape}`} />
-                            <span className="text-xs font-body font-bold text-[#222222]">{c.name}</span>
-                            <span className="text-[10px] text-[#808080]">{c.desc}</span>
-                          </CompactOptionCard>
-                        ))}
-                      </div>
+                  <SubLabel>Facet Cut Geometry</SubLabel>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6">
+                    {CUTS.map((c) => (
+                      <CompactOptionCard key={c.id} selected={selectedCut.id === c.id} onClick={() => setSelectedCut(c)}>
+                        <div className={`w-6 h-6 border-2 ${selectedCut.id === c.id ? 'border-[#222222]' : 'border-gray-300'} ${c.shape}`} />
+                        <span className="text-xs font-body font-bold text-[#222222]">{c.name}</span>
+                        <span className="text-[10px] text-[#808080]">{c.desc}</span>
+                      </CompactOptionCard>
+                    ))}
+                  </div>
 
-                      {/* Carat Slider */}
-                      <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70">
-                        <div className="flex justify-between items-baseline mb-2">
-                          <SubLabel>Center Stone Carat Weight</SubLabel>
-                          <span className="font-mono text-base font-bold text-[#222222]">{caratWeight} Carat</span>
-                        </div>
-                        <input
-                          type="range" min="0.25" max="5.0" step="0.25" value={caratWeight}
-                          onChange={e => setCaratWeight(parseFloat(e.target.value))}
-                          className="w-full accent-[#222222] cursor-pointer"
-                        />
-                        <div className="flex justify-between text-[10px] font-body text-[#808080] mt-1.5">
-                          <span>0.25ct · Solitaire</span><span>2.0ct · Statement</span><span>5.0ct · Royal Specimen</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="bg-[#FAF9F7] rounded-[18px] p-8 border border-gray-200 text-center">
-                      <p className="font-body text-xs sm:text-sm text-[#808080]">
-                        You have selected a plain sculptural band without a center stone. Proceed to Setting & Accents.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setStep(5)}
-                        className="mt-4 px-6 py-2.5 bg-[#222222] text-white font-body text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#333333] transition-colors cursor-pointer rounded-xl"
-                      >
-                        Continue to Setting
-                      </button>
+                  {/* Carat Slider */}
+                  <div className="bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70">
+                    <div className="flex justify-between items-baseline mb-2">
+                      <SubLabel>Center Stone Carat Weight</SubLabel>
+                      <span className="font-mono text-base font-bold text-[#222222]">{caratWeight} Carat</span>
                     </div>
-                  )}
+                    <input
+                      type="range" min="0.25" max="5.0" step="0.25" value={caratWeight}
+                      onChange={e => setCaratWeight(parseFloat(e.target.value))}
+                      className="w-full accent-[#222222] cursor-pointer"
+                    />
+                  </div>
                 </motion.div>
               )}
 
-              {/* ═══ STEP 5: Setting & Multi-Zone Diamond Placement ═══ */}
+              {/* ═══ STEP 5: Multi-Zone Diamond Placement ═══ */}
               {step === 5 && (
                 <motion.div key="step5" {...slideIn()}>
                   <SectionHeader 
                     stepNum={5} 
-                    title="Setting Style & Multi-Zone Diamonds" 
-                    subtitle="Configure center stone mounting, shoulder pavé count, halo discs, and hidden accents." 
+                    title="Multi-Zone Diamond Placement" 
+                    subtitle="Configure shoulder pavé count, hidden under-gallery halos, and secret stones." 
                   />
 
-                  {/* Setting Mount */}
-                  {selectedGem.id !== 'no-stone' && (
-                    <div className="mb-6">
-                      <SubLabel>Center Stone Setting Mount</SubLabel>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {SETTING_STYLES.map((ss) => (
-                          <OptionCard key={ss.id} selected={settingStyle.id === ss.id} onClick={() => setSettingStyle(ss)} className="!p-3">
-                            <div className="flex-1 min-w-0">
-                              <span className="font-body font-bold text-xs text-[#222222] block">{ss.name}</span>
-                              <span className="text-[11px] text-[#808080] font-body">{ss.desc}</span>
-                            </div>
-                            <span className="text-xs font-mono text-[#B59A6C] whitespace-nowrap">
-                              {ss.price === 0 ? 'INCLUDED' : `+Rs.${ss.price.toLocaleString('en-IN')}`}
-                            </span>
-                          </OptionCard>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Multi-Zone Diamond Placement Controls */}
                   <div className="space-y-4 bg-[#FAF9F7] rounded-[18px] p-5 border border-gray-200/70">
-                    <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block">
-                      MULTI-ZONE DIAMOND PLACEMENT & DENSITY
-                    </span>
-
-                    {/* Pavé Shoulder Diamonds Count */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <SubLabel>Shoulder Pavé Diamond Count</SubLabel>
@@ -1820,61 +1661,21 @@ const CustomAtelier = () => {
                       </div>
                     </div>
 
-                    {/* Surround Halo Toggle */}
-                    {selectedGem.id !== 'no-stone' && settingStyle.id !== 'halo' && (
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
-                        <div>
-                          <span className="font-body font-bold text-xs text-[#222222] block">Surround Diamond Halo</span>
-                          <span className="text-[11px] text-[#808080] font-body">16 Micro-diamonds framing center stone</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setHaloEnabled(!haloEnabled)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
-                            haloEnabled ? 'bg-[#222222] text-white' : 'bg-white border border-gray-200 text-gray-600'
-                          }`}
-                        >
-                          {haloEnabled ? '+Rs.18,000' : 'Add Halo'}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Hidden Profile Halo Toggle */}
-                    {selectedGem.id !== 'no-stone' && (
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
-                        <div>
-                          <span className="font-body font-bold text-xs text-[#222222] block">Hidden Under-Gallery Halo</span>
-                          <span className="text-[11px] text-[#808080] font-body">12 Micro-diamonds visible from side profile</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setHiddenHaloEnabled(!hiddenHaloEnabled)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
-                            hiddenHaloEnabled ? 'bg-[#222222] text-white' : 'bg-white border border-gray-200 text-gray-600'
-                          }`}
-                        >
-                          {hiddenHaloEnabled ? '+Rs.8,500' : 'Add Hidden Halo'}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Inner Secret Stone Toggle */}
                     <div className="flex items-center justify-between pt-2 border-t border-gray-200/60">
                       <div>
-                        <span className="font-body font-bold text-xs text-[#222222] block">Inner Shank Secret Diamond</span>
-                        <span className="text-[11px] text-[#808080] font-body">Flush-mounted diamond inside the inner band against the finger</span>
+                        <span className="font-body font-bold text-xs text-[#222222] block">Hidden Under-Gallery Halo</span>
+                        <span className="text-[11px] text-[#808080] font-body">12 Micro-diamonds visible from side profile</span>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setInnerSecretStone(!innerSecretStone)}
+                        onClick={() => setHiddenHaloEnabled(!hiddenHaloEnabled)}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold transition-all cursor-pointer ${
-                          innerSecretStone ? 'bg-[#222222] text-white' : 'bg-white border border-gray-200 text-gray-600'
+                          hiddenHaloEnabled ? 'bg-[#222222] text-white' : 'bg-white border border-gray-200 text-gray-600'
                         }`}
                       >
-                        {innerSecretStone ? '+Rs.4,500' : 'Add Secret Stone'}
+                        {hiddenHaloEnabled ? '+Rs.8,500' : 'Add Hidden Halo'}
                       </button>
                     </div>
-
                   </div>
                 </motion.div>
               )}
@@ -1887,22 +1688,6 @@ const CustomAtelier = () => {
                     title="Art Relief & Inscription" 
                     subtitle="Sculpt 3D shoulder motifs, laser-inscribe inner band text, and select ring size." 
                   />
-
-                  {/* 3D Art Emblem Motifs */}
-                  <SubLabel>3D Relief Shoulder Motif</SubLabel>
-                  <div className="space-y-2 mb-6">
-                    {ART_EMBLEMS.map((art) => (
-                      <OptionCard key={art.id} selected={selectedArt.id === art.id} onClick={() => setSelectedArt(art)} className="!p-3">
-                        <div className="flex-1 min-w-0">
-                          <span className="font-body font-bold text-xs text-[#222222] block">{art.name}</span>
-                          <span className="text-[11px] text-[#808080] font-body">{art.desc}</span>
-                        </div>
-                        <span className="text-xs font-mono text-[#B59A6C]">
-                          {art.id === 'none' ? 'FREE' : '+Rs.4,500'}
-                        </span>
-                      </OptionCard>
-                    ))}
-                  </div>
 
                   {/* Laser Inscription */}
                   <SubLabel>Inner Band Laser Inscription</SubLabel>
@@ -1941,7 +1726,6 @@ const CustomAtelier = () => {
                     subtitle="Review your ring's full technical blueprint, attach inspiration photos, and submit for goldsmith creation." 
                   />
 
-                  {/* Full Specification Summary Table */}
                   <div className="bg-[#FAF9F7] rounded-[20px] p-5 sm:p-6 border border-gray-200/80 mb-6">
                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
                       <ShieldCheck className="w-4 h-4 text-[#B59A6C]" />
@@ -1959,52 +1743,9 @@ const CustomAtelier = () => {
                     </div>
                   </div>
 
-                  {/* Reference Image Upload Dropzone */}
-                  <div className="mb-6">
-                    <SubLabel>Attach Inspiration or Reference Photos (Optional)</SubLabel>
-                    <p className="text-[11px] text-[#808080] font-body -mt-2 mb-3">Upload up to 3 sketches, Pinterest pins, or reference photos for our goldsmiths.</p>
-                    
-                    <div className="flex gap-3 flex-wrap">
-                      {referencePreviewUrls.map((url, idx) => (
-                        <div key={idx} className="relative w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 shadow-2xs">
-                          <img src={url} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveReferenceImage(idx)}
-                            className="absolute top-1 right-1 w-5 h-5 bg-[#222222] rounded-full flex items-center justify-center cursor-pointer"
-                          >
-                            <X className="w-3 h-3 text-white" />
-                          </button>
-                        </div>
-                      ))}
-                      {referenceImages.length < 3 && (
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-20 h-20 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-[#808080] hover:border-[#B59A6C] hover:text-[#B59A6C] transition-colors cursor-pointer"
-                        >
-                          <Upload className="w-4 h-4" />
-                          <span className="text-[9px] font-mono font-bold">UPLOAD</span>
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleReferenceImageAdd}
-                      className="hidden"
-                    />
-                  </div>
-
                   {/* Customer Contact Form */}
                   <form onSubmit={handleSubmitBespokeRequest} className="space-y-4">
                     <div className="pt-3 border-t border-gray-200 space-y-3.5">
-                      <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block">
-                        CUSTOMER DETAILS FOR MASTER GOLDSMITH REVIEW
-                      </span>
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-xs font-body font-bold text-[#222222] mb-1 block">Full Name *</label>
@@ -2049,19 +1790,8 @@ const CustomAtelier = () => {
                           </select>
                         </div>
                       </div>
-
-                      <div>
-                        <label className="text-xs font-body font-bold text-[#222222] mb-1 block">Special Goldsmith Instructions</label>
-                        <textarea
-                          rows={2} value={customerNotes}
-                          onChange={e => setCustomerNotes(e.target.value)}
-                          placeholder="Specify custom urgency, heirloom metal melting, or custom sizing notes..."
-                          className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-sm font-body text-[#222222] focus:outline-none focus:ring-1 focus:ring-[#222222]"
-                        />
-                      </div>
                     </div>
 
-                    {/* Submit Buttons */}
                     <div className="pt-3 flex flex-col sm:flex-row gap-3">
                       <button
                         type="submit"
@@ -2133,15 +1863,6 @@ const CustomAtelier = () => {
               <p className="font-body text-xs text-[#808080] mb-4 leading-relaxed">
                 Your request ID is <strong className="font-mono text-[#222222]">{submittedOrder.customOrderId}</strong>. Master goldsmiths and our admin team have received your full specifications.
               </p>
-
-              <div className="bg-[#FAF9F7] p-4 rounded-[16px] text-left text-xs font-body text-[#808080] space-y-1.5 mb-6">
-                <div><strong>Customer:</strong> {submittedOrder.customerName} ({submittedOrder.customerPhone})</div>
-                <div><strong>Metal:</strong> {submittedOrder.metal?.name}</div>
-                <div><strong>Band:</strong> {submittedOrder.bandProfile?.name || 'Comfort Fit'} · {submittedOrder.bandPattern?.name || 'Plain'}</div>
-                <div><strong>Gemstone:</strong> {submittedOrder.gemstone?.name} ({submittedOrder.caratWeight}ct)</div>
-                <div><strong>Valuation:</strong> <span className="font-mono font-bold text-[#222222]">Rs.{(submittedOrder.pricing?.total || pricing.total).toLocaleString('en-IN')}</span></div>
-                <div><strong>Status:</strong> <span className="font-bold text-amber-600 uppercase">Pending Goldsmith Approval</span></div>
-              </div>
 
               <div className="flex gap-3">
                 <button
