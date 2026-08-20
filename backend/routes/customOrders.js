@@ -43,6 +43,11 @@ router.post('/', async (req, res) => {
       settingStyle,
       sideStones,
       referenceImages,
+      designMode,
+      aiPrompt,
+      diamondTier,
+      diamondPlacement,
+      threadedDesign,
     } = req.body;
 
     if (!customerName || !customerEmail || !customerPhone) {
@@ -76,6 +81,11 @@ router.post('/', async (req, res) => {
       settingStyle,
       sideStones,
       referenceImages,
+      designMode,
+      aiPrompt,
+      diamondTier,
+      diamondPlacement,
+      threadedDesign,
       status: 'pending_approval',
     });
 
@@ -194,6 +204,63 @@ router.patch('/:id/status', async (req, res) => {
   } catch (error) {
     console.error('Error updating custom order status:', error);
     res.status(500).json({ success: false, message: 'Server error updating bespoke order.' });
+  }
+});
+
+router.post('/analyze-photo', upload.single('referencePhoto'), async (req, res) => {
+  try {
+    // Simulated AI analysis - returns detected ring attributes
+    // In production, this would call a vision AI model
+    const analysis = {
+      detectedMetal: { id: '22k-gold', name: '22K Hallmark Gold', confidence: 0.85 },
+      detectedGemstone: { id: 'vvs-diamond', name: 'VVS1 Diamond', confidence: 0.78 },
+      detectedCut: { id: 'round', name: 'Brilliant Round', confidence: 0.92 },
+      detectedSetting: { id: 'prong', name: 'Classic Prong', confidence: 0.88 },
+      detectedPattern: { id: 'plain', name: 'Plain Polished', confidence: 0.95 },
+      detectedSideStones: { id: 'none', name: 'No Side Stones', confidence: 0.90 },
+      detectedFinish: { id: 'high-polish', name: 'High Polish', confidence: 0.93 },
+      estimatedCaratWeight: 1.5,
+      estimatedBandWidth: 4,
+      photoUrl: req.file ? `/api/uploads/custom-references/${req.file.filename}` : null,
+    };
+    res.json({ success: true, analysis });
+  } catch (error) {
+    console.error('Photo analysis error:', error);
+    res.status(500).json({ success: false, message: 'Failed to analyze reference photo.' });
+  }
+});
+
+router.post('/parse-prompt', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt || prompt.trim().length < 5) {
+      return res.status(400).json({ success: false, message: 'Please provide a descriptive design prompt.' });
+    }
+    const lowerPrompt = prompt.toLowerCase();
+    // Intelligent keyword extraction
+    const parsedConfig = {
+      metal: lowerPrompt.includes('platinum') ? '24k-gold' : lowerPrompt.includes('rose') ? '18k-rose' : lowerPrompt.includes('silver') ? '925-silver' : lowerPrompt.includes('22k') ? '22k-gold' : '24k-gold',
+      gemstone: lowerPrompt.includes('emerald') ? 'emerald' : lowerPrompt.includes('sapphire') ? 'sapphire' : lowerPrompt.includes('ruby') ? 'ruby' : lowerPrompt.includes('plain') ? 'no-stone' : 'vvs-diamond',
+      cut: lowerPrompt.includes('oval') ? 'oval' : lowerPrompt.includes('emerald cut') ? 'emerald-cut' : lowerPrompt.includes('princess') ? 'princess' : lowerPrompt.includes('cushion') ? 'cushion' : lowerPrompt.includes('pear') ? 'pear' : 'round',
+      setting: lowerPrompt.includes('halo') ? 'halo' : lowerPrompt.includes('bezel') ? 'bezel' : lowerPrompt.includes('tension') ? 'tension' : lowerPrompt.includes('cathedral') ? 'cathedral' : lowerPrompt.includes('channel') ? 'channel' : lowerPrompt.includes('pave') ? 'pave' : 'prong',
+      pattern: lowerPrompt.includes('thread') || lowerPrompt.includes('twist') || lowerPrompt.includes('rope') ? 'rope-twist' : lowerPrompt.includes('braid') ? 'braided' : lowerPrompt.includes('hammer') ? 'hammered' : lowerPrompt.includes('milgrain') ? 'milgrain' : lowerPrompt.includes('celtic') ? 'celtic-knot' : lowerPrompt.includes('filigree') ? 'filigree' : 'plain',
+      diamondTier: lowerPrompt.includes('lab') ? 'lab_grown' : lowerPrompt.includes('commercial') || lowerPrompt.includes('budget') ? 'commercial_grade' : 'natural_certified',
+      caratWeight: 1.0,
+      bandWidthMm: 4,
+      sideStones: lowerPrompt.includes('pave') || lowerPrompt.includes('pavé') ? 'pave-band' : lowerPrompt.includes('three stone') || lowerPrompt.includes('trilogy') ? 'three-stone' : 'none',
+      finish: lowerPrompt.includes('matte') ? 'matte' : lowerPrompt.includes('satin') ? 'satin' : 'high-polish',
+    };
+    // Extract carat weight from prompt if mentioned
+    const caratMatch = prompt.match(/(\d+\.?\d*)\s*(?:ct|carat)/i);
+    if (caratMatch) parsedConfig.caratWeight = parseFloat(caratMatch[1]);
+    // Extract band width if mentioned
+    const widthMatch = prompt.match(/(\d+\.?\d*)\s*mm/i);
+    if (widthMatch) parsedConfig.bandWidthMm = parseFloat(widthMatch[1]);
+
+    res.json({ success: true, parsedConfig, rawPrompt: prompt });
+  } catch (error) {
+    console.error('Prompt parsing error:', error);
+    res.status(500).json({ success: false, message: 'Failed to parse design prompt.' });
   }
 });
 

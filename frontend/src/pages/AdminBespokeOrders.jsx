@@ -171,10 +171,22 @@ const AdminBespokeOrders = () => {
                 <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block">
                   FULL RING SPECIFICATIONS
                 </span>
+                {order.designMode && (
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span>Design Mode</span>
+                    <strong className="text-[#222222] capitalize">{order.designMode.replace('_', ' ')}</strong>
+                  </div>
+                )}
                 <div className="flex justify-between py-1 border-b border-gray-100">
                   <span>Precious Metal</span>
                   <strong className="text-[#222222]">{order.metal?.name} ({order.metal?.weightGrams}g)</strong>
                 </div>
+                {order.diamondTier && (
+                  <div className="flex justify-between py-1 border-b border-gray-100">
+                    <span>Diamond Tier</span>
+                    <strong className="text-[#B59A6C] capitalize">{order.diamondTier.replace('_', ' ')}</strong>
+                  </div>
+                )}
                 <div className="flex justify-between py-1 border-b border-gray-100">
                   <span>Band Profile</span>
                   <strong className="text-[#222222]">{order.bandProfile?.name || 'Comfort Fit'}</strong>
