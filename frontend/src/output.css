@@ -1638,12 +1638,12 @@ img {
   height: 1.25rem;
 }
 
-.h-56{
-  height: 14rem;
-}
-
 .h-6{
   height: 1.5rem;
+}
+
+.h-60{
+  height: 15rem;
 }
 
 .h-64{
@@ -6870,8 +6870,8 @@ img {
     width: 9rem;
   }
 
-  .md\:w-56{
-    width: 14rem;
+  .md\:w-60{
+    width: 15rem;
   }
 
   .md\:w-64{
