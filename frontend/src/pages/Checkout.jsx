@@ -264,18 +264,34 @@ const Checkout = () => {
     }
   };
 
-  const getItemPrice = (p) => {
-    if (!p) return 0;
+  const getItemBreakdown = (p) => {
+    if (!p) return { totalLivePrice: 0, rawMetalCost: 0, makingCharges: 0, gemstoneCost: 0, gstTax: 0, subtotal: 0, weight: 0, karat: 0, material: '', purityPercentageStr: '', diamondDetails: null };
     const isFramerProduct = typeof p.id === 'string' && !p._id;
-    if (isFramerProduct) return Number(p.price) || 0;
-    return getLiveProductPrice(p).totalLivePrice;
+    if (isFramerProduct) {
+      const price = Number(p.price) || 0;
+      return { totalLivePrice: price, rawMetalCost: price, makingCharges: 0, gemstoneCost: 0, gstTax: 0, subtotal: price, weight: 0, karat: 0, material: '', purityPercentageStr: '', diamondDetails: null };
+    }
+    return getLiveProductPrice(p);
   };
 
-  const calculateSubtotal = () => {
-    return cart.items.reduce((sum, item) => sum + getItemPrice(item.product) * item.quantity, 0);
+  const getItemPrice = (p) => getItemBreakdown(p).totalLivePrice;
+
+  const getOrderBreakdown = () => {
+    let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalGst = 0, totalSubtotal = 0, totalPayable = 0;
+    cart.items.forEach((item) => {
+      const bd = getItemBreakdown(item.product);
+      const qty = item.quantity;
+      totalMetal += bd.rawMetalCost * qty;
+      totalMaking += bd.makingCharges * qty;
+      totalDiamond += bd.gemstoneCost * qty;
+      totalGst += bd.gstTax * qty;
+      totalSubtotal += bd.subtotal * qty;
+      totalPayable += bd.totalLivePrice * qty;
+    });
+    return { totalMetal, totalMaking, totalDiamond, totalGst, totalSubtotal, totalPayable };
   };
-  const calculateTax = () => 0; // Tax (3% GST) is included in totalLivePrice breakdown
-  const calculateTotal = () => calculateSubtotal();
+
+  const calculateTotal = () => getOrderBreakdown().totalPayable;
 
   if (authLoading || loading) {
     return <GlimmrLoader subtitle="INITIALIZING SECURE CHECKOUT..." fullScreen={true} />;
@@ -787,22 +803,84 @@ const Checkout = () => {
                 </div>
 
                 <div className="space-y-3.5 text-xs font-body">
-                  <div className="flex justify-between items-center text-gray-600">
-                    <span>Subtotal</span>
-                    <span className="font-mono font-bold text-[#111111]">₹{calculateSubtotal().toLocaleString('en-IN')}</span>
-                  </div>
 
-                  <div className="flex justify-between items-center text-gray-600">
-                    <span className="flex items-center gap-1.5">
-                      <TruckIcon size={14} className="text-[#B59A6C]" /> Insured Transit
-                    </span>
-                    <span className="font-bold text-emerald-700 uppercase text-[10px] tracking-wider">COMPLIMENTARY</span>
-                  </div>
+                  {/* Per-Item Breakdown */}
+                  {cart.items.map((item, idx) => {
+                    const p = item.product || {};
+                    const bd = getItemBreakdown(p);
+                    const qty = item.quantity;
+                    return (
+                      <div key={item._id || idx} className="pb-3 border-b border-gray-100 last:border-b-0 space-y-1.5">
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="font-heading font-bold text-[#111111] text-xs leading-snug break-words flex-1">{p.name || 'Jewelry Piece'}</span>
+                          <span className="font-mono font-extrabold text-[#111111] whitespace-nowrap">₹{(bd.totalLivePrice * qty).toLocaleString('en-IN')}</span>
+                        </div>
+                        {bd.weight > 0 && (
+                          <div className="pl-2 space-y-0.5 text-[10px] text-gray-500">
+                            <div className="flex justify-between">
+                              <span>{(bd.material || 'gold').charAt(0).toUpperCase() + (bd.material || 'gold').slice(1)} Cost ({bd.weight}g, {bd.karat}K {bd.purityPercentageStr})</span>
+                              <span className="font-mono">₹{(bd.rawMetalCost * qty).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Artisan Making Charges</span>
+                              <span className="font-mono">₹{(bd.makingCharges * qty).toLocaleString('en-IN')}</span>
+                            </div>
+                            {bd.gemstoneCost > 0 && (
+                              <div className="flex justify-between">
+                                <span>Diamond / Gemstone ({bd.diamondDetails?.carat}ct {bd.diamondDetails?.cut} {bd.diamondDetails?.color}/{bd.diamondDetails?.clarity})</span>
+                                <span className="font-mono">₹{(bd.gemstoneCost * qty).toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between">
+                              <span>GST (3%)</span>
+                              <span className="font-mono">₹{(bd.gstTax * qty).toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
+                        )}
+                        {qty > 1 && (
+                          <span className="text-[10px] font-body text-gray-400 font-mono pl-2">Qty: {qty}</span>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                  <div className="flex justify-between items-center text-gray-600">
-                    <span>Tax (GST 3%)</span>
-                    <span className="font-mono font-bold text-[#111111]">₹{calculateTax().toLocaleString('en-IN')}</span>
-                  </div>
+                  {/* Aggregate Totals */}
+                  {(() => {
+                    const ob = getOrderBreakdown();
+                    return (
+                      <div className="pt-3 border-t border-gray-200 space-y-2">
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span>Metal Value</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{ob.totalMetal.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span>Making Charges</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{ob.totalMaking.toLocaleString('en-IN')}</span>
+                        </div>
+                        {ob.totalDiamond > 0 && (
+                          <div className="flex justify-between items-center text-gray-600">
+                            <span>Diamond / Gemstone</span>
+                            <span className="font-mono font-bold text-[#111111]">₹{ob.totalDiamond.toLocaleString('en-IN')}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span>Subtotal (Before Tax)</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{ob.totalSubtotal.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span>GST (3%)</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{ob.totalGst.toLocaleString('en-IN')}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span className="flex items-center gap-1.5">
+                            <TruckIcon size={14} className="text-[#B59A6C]" /> Insured Transit
+                          </span>
+                          <span className="font-bold text-emerald-700 uppercase text-[10px] tracking-wider">COMPLIMENTARY</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="pt-4 border-t border-gray-200">
                     <div className="flex justify-between items-end">

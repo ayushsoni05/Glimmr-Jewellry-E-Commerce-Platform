@@ -23,10 +23,38 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
   });
 
   const handleDownloadPDF = () => {
-    const renderNativePDF = () => {
+    const loadImageAsBase64 = (src) => {
+      return new Promise((resolve) => {
+        if (!src) { resolve(null); return; }
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 80, 80);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } catch { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    };
+
+    const renderNativePDF = async () => {
       if (!window.jspdf) return;
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // Preload all product images
+      const items = order.items || [];
+      const imagePromises = items.map((item) => {
+        const p = item.product || {};
+        return loadImageAsBase64(getProductImage(p));
+      });
+      const imageDataArr = await Promise.all(imagePromises);
 
       // Top Gold Accent Bar
       doc.setFillColor(181, 154, 108);
@@ -42,7 +70,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFontSize(7.5);
       doc.setTextColor(120, 120, 120);
       doc.text('HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY', 15, 25);
-      doc.text('GSTIN: 27AAAAA0000A1Z5   •   HSN Code: 7113   •   BIS License: HM-916-84920', 15, 29);
+      doc.text('GSTIN: 27AAAAA0000A1Z5   \u2022   HSN Code: 7113   \u2022   BIS License: HM-916-84920', 15, 29);
       doc.text('Atelier Tower, Bandra Kurla Complex, Mumbai, Maharashtra 400051', 15, 33);
 
       // Header: Invoice Metadata Right Block
@@ -60,7 +88,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setTextColor(100, 100, 100);
       doc.text(`Date: ${invoiceDate}`, 195, 29, { align: 'right' });
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(16, 122, 59); // Emerald status
+      doc.setTextColor(16, 122, 59);
       doc.text(`Status: ${(order.status || 'CONFIRMED').toUpperCase()}`, 195, 34, { align: 'right' });
 
       // Divider Line
@@ -74,7 +102,6 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setDrawColor(229, 226, 217);
       doc.rect(15, 42, 180, 28, 'S');
 
-      // Address Column
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(181, 154, 108);
@@ -94,9 +121,8 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       const cityState = `${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}`;
       const phone = `Phone: ${order.shippingAddress?.phone || 'N/A'}`;
       doc.text(`${line1}${line2}`, 20, 58);
-      doc.text(`${cityState} • ${phone}`, 20, 63);
+      doc.text(`${cityState} \u2022 ${phone}`, 20, 63);
 
-      // Order Reference Column
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(181, 154, 108);
@@ -118,37 +144,56 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFontSize(8);
       doc.setTextColor(255, 255, 255);
       doc.text('ITEM DESCRIPTION', 20, y + 5.5);
-      doc.text('SPEC / PURITY', 95, y + 5.5);
+      doc.text('SPEC / PURITY', 105, y + 5.5);
       doc.text('QTY', 140, y + 5.5, { align: 'center' });
       doc.text('UNIT PRICE (Rs.)', 165, y + 5.5, { align: 'right' });
       doc.text('TOTAL (Rs.)', 190, y + 5.5, { align: 'right' });
 
-      // Table Rows
+      // Table Rows with Product Images & Breakdown
       y += 8;
 
-      (order.items || []).forEach((item) => {
+      items.forEach((item, index) => {
         const p = item.product || {};
         const unitPrice = p.price || item.price || 0;
         const itemTotal = unitPrice * item.quantity;
+        const imgData = imageDataArr[index];
+
+        // Product Image (if available)
+        const textX = imgData ? 32 : 20;
+        if (imgData) {
+          try {
+            doc.addImage(imgData, 'JPEG', 20, y + 1, 10, 10);
+          } catch { /* skip image if addImage fails */ }
+        }
 
         // Item Name
         doc.setFont('times', 'bold');
         doc.setFontSize(9.5);
         doc.setTextColor(17, 17, 17);
         const prodName = p.name || 'Fine Jewelry Piece';
-        doc.text(prodName, 20, y + 5);
+        doc.text(prodName.length > 35 ? prodName.substring(0, 35) + '...' : prodName, textX, y + 5);
 
         // HSN / Hallmarking Subtitle
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         doc.setTextColor(140, 140, 140);
-        doc.text('HSN: 7113 • BIS Hallmarked Certified', 20, y + 9);
+        doc.text('HSN: 7113 \u2022 BIS Hallmarked Certified', textX, y + 9);
+
+        // Metal & Making breakdown
+        const weight = Number(p.metalWeight) || Number(p.weight) || 0;
+        if (weight > 0) {
+          doc.setFontSize(6.5);
+          doc.setTextColor(120, 120, 120);
+          const metalCost = Math.round(weight * (p.karat === 24 ? 15064 : p.karat === 18 ? 11298 : 13808.67));
+          const makingCost = Math.round(weight * 450);
+          doc.text(`Metal: Rs.${(metalCost * item.quantity).toLocaleString('en-IN')}  |  Making: Rs.${(makingCost * item.quantity).toLocaleString('en-IN')}`, textX, y + 12.5);
+        }
 
         // Purity & Weight
         doc.setFontSize(8);
         doc.setTextColor(80, 80, 80);
-        const spec = `${p.material || 'Gold'} ${p.karat ? p.karat + 'K' : ''} ${p.weight ? '• ' + p.weight + 'g' : ''}`;
-        doc.text(spec, 95, y + 6);
+        const spec = `${p.material || 'Gold'} ${p.karat ? p.karat + 'K' : ''} ${p.weight ? '\u2022 ' + p.weight + 'g' : ''}`;
+        doc.text(spec, 105, y + 6);
 
         // Qty, Unit Price, Total
         doc.text(String(item.quantity), 140, y + 6, { align: 'center' });
@@ -158,7 +203,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
         doc.setTextColor(17, 17, 17);
         doc.text(`Rs. ${itemTotal.toLocaleString('en-IN')}`, 190, y + 6, { align: 'right' });
 
-        y += 12;
+        y += (weight > 0 ? 16 : 12);
         doc.setDrawColor(230, 230, 230);
         doc.line(15, y, 195, y);
       });
@@ -232,7 +277,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
     } else {
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      script.onload = renderNativePDF;
+      script.onload = () => renderNativePDF();
       document.body.appendChild(script);
     }
   };
@@ -413,14 +458,14 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
               </div>
             </div>
 
-            {/* Fixed Table Width Layout to Prevent Amount Overflow */}
+            {/* Fixed Table Width Layout with Product Images and Breakdown */}
             <div className="w-full overflow-hidden border border-gray-200">
               <table className="w-full text-left border-collapse table-fixed">
                 <thead>
                   <tr className="bg-[#111111] text-[#FAF9F7] text-[9px] font-body uppercase tracking-widest">
-                    <th className="py-2.5 px-3 w-[36%]">Item Description</th>
-                    <th className="py-2.5 px-3 w-[24%]">Spec / Purity</th>
-                    <th className="py-2.5 px-3 w-[10%] text-center">Qty</th>
+                    <th className="py-2.5 px-3 w-[44%]">Item Description</th>
+                    <th className="py-2.5 px-3 w-[18%]">Spec / Purity</th>
+                    <th className="py-2.5 px-3 w-[8%] text-center">Qty</th>
                     <th className="py-2.5 px-3 w-[15%] text-right">Unit Price</th>
                     <th className="py-2.5 px-3 w-[15%] text-right">Total (₹)</th>
                   </tr>
@@ -430,14 +475,31 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                     const p = item.product || {};
                     const unitPrice = p.price || item.price || 0;
                     const itemTotal = unitPrice * item.quantity;
+                    const imgSrc = getProductImage(p);
                     return (
                       <tr key={idx} className="hover:bg-gray-50/50">
                         <td className="py-3 px-3 break-words">
-                          <p className="font-heading font-bold text-[#111111] leading-snug break-words">{p.name || 'Fine Jewelry Piece'}</p>
-                          <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider block mt-0.5">HSN: 7113 • BIS Hallmarked</span>
+                          <div className="flex items-start gap-2.5">
+                            <img 
+                              src={imgSrc} 
+                              alt={p.name || 'Product'} 
+                              className="w-10 h-10 object-cover border border-gray-200 shrink-0 bg-[#FAF9F7]" 
+                            />
+                            <div className="min-w-0">
+                              <p className="font-heading font-bold text-[#111111] leading-snug break-words">{p.name || 'Fine Jewelry Piece'}</p>
+                              <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider block mt-0.5">HSN: 7113 &bull; BIS Hallmarked</span>
+                              {/* Per-item breakdown sub-details */}
+                              {(p.weight || p.metalWeight) && (
+                                <div className="mt-1 text-[9px] text-gray-500 space-y-0.5">
+                                  <span className="block">Metal: ₹{Math.round(((Number(p.metalWeight) || Number(p.weight) || 5) * (p.karat === 24 ? 15064 : p.karat === 18 ? 11298 : 13808.67)) * item.quantity).toLocaleString('en-IN')}</span>
+                                  <span className="block">Making: ₹{Math.round((Number(p.metalWeight) || Number(p.weight) || 5) * 450 * item.quantity).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-gray-600 break-words">
-                          {p.material || 'Gold'} {p.karat ? `${p.karat}K` : ''} {p.weight ? `• ${p.weight}g` : ''}
+                          {p.material || 'Gold'} {p.karat ? `${p.karat}K` : ''} {p.weight ? `\u2022 ${p.weight}g` : ''}
                         </td>
                         <td className="py-3 px-3 text-center font-mono font-bold">{item.quantity}</td>
                         <td className="py-3 px-3 text-right font-mono whitespace-nowrap">₹{unitPrice.toLocaleString('en-IN')}</td>

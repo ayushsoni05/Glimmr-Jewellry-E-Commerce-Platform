@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import api from '../api';
 import { getProductImage } from '../utils/productImages';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 import { 
   CheckCircleIcon, 
   OrderIcon, 
@@ -25,6 +26,7 @@ const ThankYou = () => {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
+  const { getLiveProductPrice } = useMetalRates();
   const [orderData, setOrderData] = useState(location.state?.orderData || null);
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
@@ -184,32 +186,117 @@ const ThankYou = () => {
                   <div className="space-y-3">
                     {orderData.items.map((item, idx) => {
                       const p = item.product || {};
+                      const bd = getLiveProductPrice(p);
+                      const qty = item.quantity;
+                      const liveTotal = bd.totalLivePrice * qty;
                       return (
-                        <div key={idx} className="p-4 bg-white border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-4 min-w-0">
-                            <img 
-                              src={getProductImage(p)} 
-                              alt={p.name} 
-                              className="w-14 h-14 object-cover border border-gray-200 shrink-0 bg-[#FAF9F7]" 
-                            />
-                            <div className="min-w-0">
-                              <h4 className="font-heading font-extrabold text-sm text-[#111111] leading-snug break-words">
-                                {p.name || 'Jewelry Piece'}
-                              </h4>
-                              <p className="text-[10px] font-body text-gray-500 mt-0.5 uppercase tracking-wider">
-                                Qty: {item.quantity} {p.material && `• ${p.material}`} {p.karat && `• ${p.karat}K`}
-                              </p>
+                        <div key={idx} className="p-4 bg-white border border-gray-200 space-y-2">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <img 
+                                src={getProductImage(p)} 
+                                alt={p.name} 
+                                className="w-14 h-14 object-cover border border-gray-200 shrink-0 bg-[#FAF9F7]" 
+                              />
+                              <div className="min-w-0">
+                                <h4 className="font-heading font-extrabold text-sm text-[#111111] leading-snug break-words">
+                                  {p.name || 'Jewelry Piece'}
+                                </h4>
+                                <p className="text-[10px] font-body text-gray-500 mt-0.5 uppercase tracking-wider">
+                                  Qty: {qty} {p.material && `\u2022 ${p.material}`} {p.karat && `\u2022 ${p.karat}K`} {bd.weight > 0 && `\u2022 ${bd.weight}g`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="font-mono text-sm font-extrabold text-[#111111]">
+                                ₹{liveTotal.toLocaleString('en-IN')}
+                              </span>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="font-mono text-sm font-extrabold text-[#111111]">
-                              ₹{((p.price || 0) * item.quantity).toLocaleString('en-IN')}
-                            </span>
-                          </div>
+                          {/* Per-item breakdown */}
+                          {bd.weight > 0 && (
+                            <div className="pl-[72px] grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-[10px] font-body text-gray-500">
+                              <div>
+                                <span className="block text-gray-400 uppercase tracking-wider">Metal Cost</span>
+                                <span className="font-mono font-bold text-[#111111]">₹{(bd.rawMetalCost * qty).toLocaleString('en-IN')}</span>
+                              </div>
+                              <div>
+                                <span className="block text-gray-400 uppercase tracking-wider">Making Charges</span>
+                                <span className="font-mono font-bold text-[#111111]">₹{(bd.makingCharges * qty).toLocaleString('en-IN')}</span>
+                              </div>
+                              {bd.gemstoneCost > 0 && (
+                                <div>
+                                  <span className="block text-gray-400 uppercase tracking-wider">Diamond Cost</span>
+                                  <span className="font-mono font-bold text-[#111111]">₹{(bd.gemstoneCost * qty).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
+                              <div>
+                                <span className="block text-gray-400 uppercase tracking-wider">GST (3%)</span>
+                                <span className="font-mono font-bold text-[#111111]">₹{(bd.gstTax * qty).toLocaleString('en-IN')}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
+
+                  {/* Price Breakdown Summary */}
+                  {(() => {
+                    let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalGst = 0, totalSubtotal = 0, grandTotal = 0;
+                    orderData.items.forEach((item) => {
+                      const bd = getLiveProductPrice(item.product || {});
+                      const qty = item.quantity;
+                      totalMetal += bd.rawMetalCost * qty;
+                      totalMaking += bd.makingCharges * qty;
+                      totalDiamond += bd.gemstoneCost * qty;
+                      totalGst += bd.gstTax * qty;
+                      totalSubtotal += bd.subtotal * qty;
+                      grandTotal += bd.totalLivePrice * qty;
+                    });
+                    return (
+                      <div className="mt-4 p-5 bg-[#FAF9F7] border border-gray-200 space-y-2.5">
+                        <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block mb-3">
+                          PRICE BREAKDOWN SUMMARY
+                        </span>
+                        <div className="flex justify-between text-xs font-body text-gray-600">
+                          <span>Metal Value</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{totalMetal.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-xs font-body text-gray-600">
+                          <span>Artisan Making Charges</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{totalMaking.toLocaleString('en-IN')}</span>
+                        </div>
+                        {totalDiamond > 0 && (
+                          <div className="flex justify-between text-xs font-body text-gray-600">
+                            <span>Diamond / Gemstone</span>
+                            <span className="font-mono font-bold text-[#111111]">₹{totalDiamond.toLocaleString('en-IN')}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs font-body text-gray-600 pt-1 border-t border-gray-200">
+                          <span>Subtotal (Before Tax)</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{totalSubtotal.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-xs font-body text-gray-600">
+                          <span>GST (3%)</span>
+                          <span className="font-mono font-bold text-[#111111]">₹{totalGst.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between text-xs font-body text-gray-600">
+                          <span className="flex items-center gap-1.5">
+                            <TruckIcon size={14} className="text-[#B59A6C]" /> Insured Transit
+                          </span>
+                          <span className="font-bold text-emerald-700 uppercase text-[10px] tracking-wider">COMPLIMENTARY</span>
+                        </div>
+                        <div className="flex justify-between items-end pt-2 border-t border-gray-300">
+                          <div>
+                            <span className="text-[10px] font-body font-bold uppercase tracking-widest text-[#B59A6C] block">NET TOTAL</span>
+                            <span className="text-lg font-heading font-extrabold text-[#111111]">Grand Total</span>
+                          </div>
+                          <span className="font-mono text-2xl font-extrabold text-[#111111]">₹{grandTotal.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
