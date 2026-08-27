@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { FastForward, Check, Copy, ArrowRight, MapPin, Package } from 'lucide-react';
+import { FastForward, Check, Copy, ArrowRight, MapPin, Package, Truck } from 'lucide-react';
 import { getProductImage } from '../utils/productImages';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 
 const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const { getLiveProductPrice } = useMetalRates();
 
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -25,10 +27,34 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const items = orderData?.items || orderData?.orderItems || [];
   const firstItem = items[0] || {};
   const productObj = firstItem.product || firstItem;
-  const productName = productObj.name || firstItem.name || 'Glimmr Royal Creation';
-  const productImage = getProductImage ? getProductImage(productObj) : null;
+  const productName = productObj.name || firstItem.name || 'Glimmr Fine Jewelry Creation';
   const shippingAddress = orderData?.shippingAddress || {};
-  const totalAmount = orderData?.totalAmount || 0;
+
+  // Calculate live price breakdown for every item
+  const getItemLiveBreakdown = (p) => {
+    if (!p) return { totalLivePrice: 0, rawMetalCost: 0, makingCharges: 0, gemstoneCost: 0, gstTax: 0, subtotal: 0, weight: 0, karat: 0, material: '' };
+    if (typeof getLiveProductPrice === 'function') {
+      const res = getLiveProductPrice(p);
+      if (res && res.totalLivePrice > 0) return res;
+    }
+    const price = Number(p.price) || 0;
+    return { totalLivePrice: price, rawMetalCost: price, makingCharges: 0, gemstoneCost: 0, gstTax: Math.round(price * 0.03), subtotal: price, weight: 0, karat: 0, material: '' };
+  };
+
+  let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalGst = 0, totalSubtotal = 0, computedGrandTotal = 0;
+  items.forEach(item => {
+    const p = item.product || item;
+    const bd = getItemLiveBreakdown(p);
+    const qty = item.quantity || 1;
+    totalMetal += bd.rawMetalCost * qty;
+    totalMaking += bd.makingCharges * qty;
+    totalDiamond += bd.gemstoneCost * qty;
+    totalGst += bd.gstTax * qty;
+    totalSubtotal += bd.subtotal * qty;
+    computedGrandTotal += bd.totalLivePrice * qty;
+  });
+
+  const displayTotal = orderData?.totalAmount > 0 ? orderData.totalAmount : computedGrandTotal;
 
   // Video playback management
   useEffect(() => {
@@ -126,7 +152,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
               <div className="flex items-center gap-2.5 px-4 py-1 bg-[#15151a]/90 border border-[#B59A6C]/35 rounded-full shadow-xl mb-3 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-ping" />
                 <span className="text-[9px] font-mono tracking-[0.22em] text-[#E8D5B7] uppercase font-bold">
-                  GLIMMR ATELIER · ORDER IN TRANSIT
+                  GLIMMR ATELIER &bull; ORDER REGISTERED
                 </span>
               </div>
 
@@ -153,7 +179,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                   />
                 </div>
 
-                {/* Top Control Bar (Skip Only - Mute Button Removed) */}
+                {/* Top Control Bar (Skip Button) */}
                 <div className="absolute top-3 right-3 flex items-center pointer-events-auto">
                   <button
                     onClick={triggerConfirmation}
@@ -178,7 +204,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
               {/* Top Shimmer Line */}
               <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#B59A6C]/70 to-transparent" />
 
-              <div className="p-6 sm:p-8">
+              <div className="p-6 sm:p-8 max-h-[85vh] overflow-y-auto">
 
                 {/* Success Header */}
                 <div className="flex flex-col items-center mb-6">
@@ -199,7 +225,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                     Thank You for Your Acquisition
                   </h3>
                   <p className="text-xs text-gray-400 text-center max-w-sm leading-relaxed">
-                    Your order has been confirmed and our artisans have begun preparation for{' '}
+                    Your order has been confirmed and our master jewelers have begun handcrafting{' '}
                     <strong className="text-[#E8D5B7]">{productName}</strong>.
                   </p>
                 </div>
@@ -223,57 +249,104 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                   </div>
                 </div>
 
-                {/* Ordered Item Preview */}
+                {/* Ordered Items Preview */}
                 {items.length > 0 && (
-                  <div className="bg-[#1A1A1E] border border-[#B59A6C]/20 rounded-xl p-4 mb-5 max-w-md mx-auto">
-                    <span className="text-[8px] font-mono text-gray-500 uppercase tracking-[0.2em] block mb-3">
+                  <div className="bg-[#1A1A1E] border border-[#B59A6C]/20 rounded-xl p-4 mb-5 max-w-md mx-auto space-y-3">
+                    <span className="text-[8px] font-mono text-gray-500 uppercase tracking-[0.2em] block">
                       ORDERED {items.length > 1 ? `ITEMS (${items.length})` : 'ITEM'}
                     </span>
-                    <div className="space-y-3">
-                      {items.slice(0, 3).map((item, idx) => {
+                    <div className="space-y-3 divide-y divide-white/5">
+                      {items.map((item, idx) => {
                         const p = item.product || item;
                         const img = getProductImage ? getProductImage(p) : null;
+                        const bd = getItemLiveBreakdown(p);
+                        const qty = item.quantity || 1;
+                        const itemLiveTotal = bd.totalLivePrice * qty;
+
                         return (
-                          <div key={idx} className="flex items-center gap-3">
-                            {img && (
-                              <img
-                                src={img}
-                                alt={p.name || 'Item'}
-                                className="w-11 h-11 rounded-lg object-cover border border-[#B59A6C]/15 bg-[#0f0f12] shrink-0"
-                              />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <h4 className="text-xs font-bold text-white truncate">
-                                {p.name || 'Jewelry Piece'}
-                              </h4>
-                              <p className="text-[10px] text-gray-500 font-mono mt-0.5">
-                                Qty: {item.quantity || 1}
-                                {p.material && ` · ${p.material}`}
-                                {p.karat && ` · ${p.karat}K`}
-                              </p>
+                          <div key={idx} className="pt-2 first:pt-0 space-y-1.5">
+                            <div className="flex items-center gap-3">
+                              {img && (
+                                <img
+                                  src={img}
+                                  alt={p.name || 'Item'}
+                                  className="w-12 h-12 rounded-lg object-cover border border-[#B59A6C]/25 bg-[#0f0f12] shrink-0"
+                                />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <h4 className="text-xs font-bold text-white truncate">
+                                  {p.name || 'Fine Jewelry Piece'}
+                                </h4>
+                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                  Qty: {qty} {p.material && `• ${p.material}`} {p.karat && `• ${p.karat}K`} {bd.weight > 0 && `• ${bd.weight}g`}
+                                </p>
+                              </div>
+                              <span className="font-mono text-xs font-bold text-[#E8D5B7] shrink-0">
+                                {'\u20B9'}{itemLiveTotal.toLocaleString('en-IN')}
+                              </span>
                             </div>
-                            <span className="font-mono text-xs font-bold text-[#E8D5B7] shrink-0">
-                              {'\u20B9'}{((p.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
-                            </span>
+
+                            {/* Per-Item Detailed Specs */}
+                            {bd.weight > 0 && (
+                              <div className="pl-15 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] font-mono text-gray-400">
+                                <div>Metal: <span className="text-gray-200">{'\u20B9'}{(bd.rawMetalCost * qty).toLocaleString('en-IN')}</span></div>
+                                <div>Making: <span className="text-gray-200">{'\u20B9'}{(bd.makingCharges * qty).toLocaleString('en-IN')}</span></div>
+                                {bd.gemstoneCost > 0 && (
+                                  <div>Diamond: <span className="text-gray-200">{'\u20B9'}{(bd.gemstoneCost * qty).toLocaleString('en-IN')}</span></div>
+                                )}
+                                <div>GST (3%): <span className="text-gray-200">{'\u20B9'}{(bd.gstTax * qty).toLocaleString('en-IN')}</span></div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
-                      {items.length > 3 && (
-                        <p className="text-[10px] text-gray-500 font-mono text-center pt-1">
-                          +{items.length - 3} more item{items.length - 3 > 1 ? 's' : ''}
-                        </p>
-                      )}
                     </div>
-                    {totalAmount > 0 && (
-                      <div className="mt-3 pt-3 border-t border-[#B59A6C]/10 flex items-center justify-between">
-                        <span className="text-[9px] font-mono text-gray-500 uppercase tracking-wider">Total</span>
-                        <span className="font-mono text-sm font-bold text-white">
-                          {'\u20B9'}{totalAmount.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )}
+
+                {/* Price Breakdown Card */}
+                <div className="bg-[#1A1A1E] border border-[#B59A6C]/20 rounded-xl p-4 mb-5 max-w-md mx-auto space-y-2 text-xs font-body">
+                  <span className="text-[8px] font-mono text-[#B59A6C] uppercase tracking-[0.2em] block mb-2 font-bold">
+                    VALUATION BREAKDOWN
+                  </span>
+                  <div className="flex justify-between text-gray-400 text-[11px]">
+                    <span>Metal Value</span>
+                    <span className="font-mono text-gray-200 font-bold">{'\u20B9'}{totalMetal.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400 text-[11px]">
+                    <span>Artisan Making Charges</span>
+                    <span className="font-mono text-gray-200 font-bold">{'\u20B9'}{totalMaking.toLocaleString('en-IN')}</span>
+                  </div>
+                  {totalDiamond > 0 && (
+                    <div className="flex justify-between text-gray-400 text-[11px]">
+                      <span>Diamond / Gemstone</span>
+                      <span className="font-mono text-gray-200 font-bold">{'\u20B9'}{totalDiamond.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-400 text-[11px] pt-1 border-t border-white/5">
+                    <span>Subtotal (Before Tax)</span>
+                    <span className="font-mono text-gray-200 font-bold">{'\u20B9'}{totalSubtotal.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400 text-[11px]">
+                    <span>GST (3%)</span>
+                    <span className="font-mono text-gray-200 font-bold">{'\u20B9'}{totalGst.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400 text-[11px]">
+                    <span className="flex items-center gap-1">
+                      <Truck className="w-3 h-3 text-[#B59A6C]" /> Insured Transit
+                    </span>
+                    <span className="font-bold text-emerald-400 text-[9px] uppercase tracking-wider">COMPLIMENTARY</span>
+                  </div>
+                  <div className="pt-2 border-t border-[#B59A6C]/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-[8px] font-mono text-[#B59A6C] uppercase tracking-widest block font-bold">TOTAL PAYABLE</span>
+                      <span className="text-sm font-heading font-extrabold text-white">Grand Total</span>
+                    </div>
+                    <span className="font-mono text-lg font-bold text-[#E8D5B7]">
+                      {'\u20B9'}{displayTotal.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
 
                 {/* Order Progress Timeline */}
                 <div className="mb-5 max-w-md mx-auto">

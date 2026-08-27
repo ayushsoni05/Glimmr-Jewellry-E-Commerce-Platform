@@ -1,19 +1,63 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProductImage } from '../utils/productImages';
 import { ShieldCheckIcon, DownloadIcon, CheckCircleIcon } from './Icons';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 
 const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
+  const { getLiveProductPrice } = useMetalRates ? useMetalRates() : { getLiveProductPrice: () => null };
+
   if (!isOpen || !order) return null;
 
-  const subtotal = (order.items || []).reduce((sum, item) => {
-    const unitPrice = item.product?.price || item.price || 0;
-    return sum + unitPrice * item.quantity;
-  }, 0);
+  // Calculate detailed live pricing for every item to guarantee 100% mathematical consistency
+  const getItemBreakdown = (p, storedPrice) => {
+    if (typeof getLiveProductPrice === 'function') {
+      const live = getLiveProductPrice(p);
+      if (live && live.totalLivePrice > 0) return live;
+    }
+    const price = storedPrice || Number(p?.price) || 0;
+    const sub = Math.round(price / 1.03);
+    const gst = price - sub;
+    return {
+      rawMetalCost: sub,
+      makingCharges: 0,
+      gemstoneCost: 0,
+      subtotal: sub,
+      gstTax: gst,
+      totalLivePrice: price,
+      weight: Number(p?.weight || p?.metalWeight || 0),
+      karat: Number(p?.karat || 22),
+      material: p?.material || 'Gold'
+    };
+  };
 
-  const cgst = Math.round(subtotal * 0.015); // 1.5% CGST
-  const sgst = Math.round(subtotal * 0.015); // 1.5% SGST
-  const totalTax = cgst + sgst;
-  const totalPayable = subtotal + totalTax;
+  const itemDetails = (order.items || []).map((item) => {
+    const p = item.product || {};
+    const bd = getItemBreakdown(p, item.price);
+    const qty = item.quantity || 1;
+    return {
+      item,
+      product: p,
+      quantity: qty,
+      unitSubtotal: bd.subtotal,
+      unitTotal: bd.totalLivePrice,
+      metalCost: bd.rawMetalCost,
+      makingCharges: bd.makingCharges,
+      gemstoneCost: bd.gemstoneCost,
+      gstTax: bd.gstTax,
+      lineSubtotal: bd.subtotal * qty,
+      lineTotal: bd.totalLivePrice * qty,
+      lineGst: bd.gstTax * qty,
+      weight: bd.weight,
+      karat: bd.karat,
+      material: bd.material
+    };
+  });
+
+  const subtotal = itemDetails.reduce((sum, d) => sum + d.lineSubtotal, 0);
+  const totalTax = itemDetails.reduce((sum, d) => sum + d.lineGst, 0);
+  const cgst = Math.round(totalTax / 2);
+  const sgst = totalTax - cgst;
+  const totalPayable = order.totalAmount > 0 ? order.totalAmount : (subtotal + totalTax);
 
   const invoiceNo = `INV-2026-${(order._id || '1000').slice(-6).toUpperCase()}`;
   const invoiceDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {
@@ -49,11 +93,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
       // Preload all product images
-      const items = order.items || [];
-      const imagePromises = items.map((item) => {
-        const p = item.product || {};
-        return loadImageAsBase64(getProductImage(p));
-      });
+      const imagePromises = itemDetails.map((d) => loadImageAsBase64(getProductImage(d.product)));
       const imageDataArr = await Promise.all(imagePromises);
 
       // Top Gold Accent Bar
@@ -70,7 +110,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFontSize(7.5);
       doc.setTextColor(120, 120, 120);
       doc.text('HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY', 15, 25);
-      doc.text('GSTIN: 27AAAAA0000A1Z5   \u2022   HSN Code: 7113   \u2022   BIS License: HM-916-84920', 15, 29);
+      doc.text('GSTIN: 27AAAAA0000A1Z5   •   HSN Code: 7113   •   BIS License: HM-916-84920', 15, 29);
       doc.text('Atelier Tower, Bandra Kurla Complex, Mumbai, Maharashtra 400051', 15, 33);
 
       // Header: Invoice Metadata Right Block
@@ -121,7 +161,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       const cityState = `${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.pincode || ''}`;
       const phone = `Phone: ${order.shippingAddress?.phone || 'N/A'}`;
       doc.text(`${line1}${line2}`, 20, 58);
-      doc.text(`${cityState} \u2022 ${phone}`, 20, 63);
+      doc.text(`${cityState} • ${phone}`, 20, 63);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
@@ -152,10 +192,8 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       // Table Rows with Product Images & Breakdown
       y += 8;
 
-      items.forEach((item, index) => {
-        const p = item.product || {};
-        const unitPrice = p.price || item.price || 0;
-        const itemTotal = unitPrice * item.quantity;
+      itemDetails.forEach((d, index) => {
+        const p = d.product || {};
         const imgData = imageDataArr[index];
 
         // Product Image (if available)
@@ -163,7 +201,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
         if (imgData) {
           try {
             doc.addImage(imgData, 'JPEG', 20, y + 1, 10, 10);
-          } catch { /* skip image if addImage fails */ }
+          } catch { /* skip */ }
         }
 
         // Item Name
@@ -177,33 +215,30 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         doc.setTextColor(140, 140, 140);
-        doc.text('HSN: 7113 \u2022 BIS Hallmarked Certified', textX, y + 9);
+        doc.text('HSN: 7113 • BIS Hallmarked Certified', textX, y + 9);
 
         // Metal & Making breakdown
-        const weight = Number(p.metalWeight) || Number(p.weight) || 0;
-        if (weight > 0) {
+        if (d.weight > 0) {
           doc.setFontSize(6.5);
           doc.setTextColor(120, 120, 120);
-          const metalCost = Math.round(weight * (p.karat === 24 ? 15064 : p.karat === 18 ? 11298 : 13808.67));
-          const makingCost = Math.round(weight * 450);
-          doc.text(`Metal: Rs.${(metalCost * item.quantity).toLocaleString('en-IN')}  |  Making: Rs.${(makingCost * item.quantity).toLocaleString('en-IN')}`, textX, y + 12.5);
+          doc.text(`Metal: Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')}  |  Making: Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}`, textX, y + 12.5);
         }
 
         // Purity & Weight
         doc.setFontSize(8);
         doc.setTextColor(80, 80, 80);
-        const spec = `${p.material || 'Gold'} ${p.karat ? p.karat + 'K' : ''} ${p.weight ? '\u2022 ' + p.weight + 'g' : ''}`;
+        const spec = `${d.material} ${d.karat ? d.karat + 'K' : ''} ${d.weight ? '• ' + d.weight + 'g' : ''}`;
         doc.text(spec, 105, y + 6);
 
         // Qty, Unit Price, Total
-        doc.text(String(item.quantity), 140, y + 6, { align: 'center' });
-        doc.text(`Rs. ${unitPrice.toLocaleString('en-IN')}`, 165, y + 6, { align: 'right' });
+        doc.text(String(d.quantity), 140, y + 6, { align: 'center' });
+        doc.text(`Rs. ${d.unitTotal.toLocaleString('en-IN')}`, 165, y + 6, { align: 'right' });
 
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(17, 17, 17);
-        doc.text(`Rs. ${itemTotal.toLocaleString('en-IN')}`, 190, y + 6, { align: 'right' });
+        doc.text(`Rs. ${d.lineTotal.toLocaleString('en-IN')}`, 190, y + 6, { align: 'right' });
 
-        y += (weight > 0 ? 16 : 12);
+        y += (d.weight > 0 ? 16 : 12);
         doc.setDrawColor(230, 230, 230);
         doc.line(15, y, 195, y);
       });
@@ -225,17 +260,17 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       // Financial Calculation Block
       doc.setFontSize(8.5);
       doc.setTextColor(80, 80, 80);
-      doc.text('Subtotal:', 145, y + 4);
+      doc.text('Subtotal (Before Tax):', 140, y + 4);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(17, 17, 17);
       doc.text(`Rs. ${subtotal.toLocaleString('en-IN')}`, 190, y + 4, { align: 'right' });
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(80, 80, 80);
-      doc.text('CGST (1.5%):', 145, y + 9);
+      doc.text('CGST (1.5%):', 140, y + 9);
       doc.text(`Rs. ${cgst.toLocaleString('en-IN')}`, 190, y + 9, { align: 'right' });
 
-      doc.text('SGST (1.5%):', 145, y + 14);
+      doc.text('SGST (1.5%):', 140, y + 14);
       doc.text(`Rs. ${sgst.toLocaleString('en-IN')}`, 190, y + 14, { align: 'right' });
 
       doc.setDrawColor(17, 17, 17);
@@ -245,7 +280,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFont('times', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(17, 17, 17);
-      doc.text('Total Payable:', 145, y + 23);
+      doc.text('Total Payable:', 140, y + 23);
       doc.text(`Rs. ${totalPayable.toLocaleString('en-IN')}`, 190, y + 23, { align: 'right' });
 
       // Footer Seal & Signatory
@@ -365,7 +400,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
           <div className="sticky top-0 z-20 bg-[#FAF9F7] border-b border-[#E5E2D9] px-6 py-4 flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-body font-bold text-[#111111] uppercase tracking-wider">
               <ShieldCheckIcon size={18} className="text-[#B59A6C]" />
-              <span>Official GST Tax Invoice • Glimmr Atelier</span>
+              <span>Official GST Tax Invoice &bull; Glimmr Atelier</span>
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
@@ -392,7 +427,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                 className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-[#111111] hover:border-[#111111] flex items-center justify-center transition-colors cursor-pointer text-sm font-bold"
                 title="Close"
               >
-                ✕
+                &#x2715;
               </button>
             </div>
           </div>
@@ -413,7 +448,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                   HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY
                 </p>
                 <p className="text-[10px] font-body text-gray-500 mt-2 leading-relaxed">
-                  GSTIN: <span className="font-mono font-bold text-[#111111]">27AAAAA0000A1Z5</span> • HSN Code: <span className="font-mono font-bold text-[#111111]">7113</span><br />
+                  GSTIN: <span className="font-mono font-bold text-[#111111]">27AAAAA0000A1Z5</span> &bull; HSN Code: <span className="font-mono font-bold text-[#111111]">7113</span><br />
                   BIS License: <span className="font-mono font-bold text-[#111111]">HM-916-84920</span><br />
                   Atelier Tower, Bandra Kurla Complex, Mumbai, Maharashtra 400051
                 </p>
@@ -442,7 +477,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                   {order.shippingAddress?.line1}
                   {order.shippingAddress?.line2 && `, ${order.shippingAddress.line2}`}<br />
                   {order.shippingAddress?.city}, {order.shippingAddress?.state} - <span className="font-mono font-bold">{order.shippingAddress?.pincode}</span><br />
-                  {order.shippingAddress?.country || 'India'} • Phone: {order.shippingAddress?.phone}
+                  {order.shippingAddress?.country || 'India'} &bull; Phone: {order.shippingAddress?.phone}
                 </p>
               </div>
 
@@ -471,10 +506,8 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 text-xs font-body text-[#111111]">
-                  {(order.items || []).map((item, idx) => {
-                    const p = item.product || {};
-                    const unitPrice = p.price || item.price || 0;
-                    const itemTotal = unitPrice * item.quantity;
+                  {itemDetails.map((d, idx) => {
+                    const p = d.product || {};
                     const imgSrc = getProductImage(p);
                     return (
                       <tr key={idx} className="hover:bg-gray-50/50">
@@ -489,21 +522,20 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                               <p className="font-heading font-bold text-[#111111] leading-snug break-words">{p.name || 'Fine Jewelry Piece'}</p>
                               <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider block mt-0.5">HSN: 7113 &bull; BIS Hallmarked</span>
                               {/* Per-item breakdown sub-details */}
-                              {(p.weight || p.metalWeight) && (
+                              {d.weight > 0 && (
                                 <div className="mt-1 text-[9px] text-gray-500 space-y-0.5">
-                                  <span className="block">Metal: ₹{Math.round(((Number(p.metalWeight) || Number(p.weight) || 5) * (p.karat === 24 ? 15064 : p.karat === 18 ? 11298 : 13808.67)) * item.quantity).toLocaleString('en-IN')}</span>
-                                  <span className="block">Making: ₹{Math.round((Number(p.metalWeight) || Number(p.weight) || 5) * 450 * item.quantity).toLocaleString('en-IN')}</span>
+                                  <span className="block">Metal: ₹{(d.metalCost * d.quantity).toLocaleString('en-IN')} &bull; Making: ₹{(d.makingCharges * d.quantity).toLocaleString('en-IN')}</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         </td>
                         <td className="py-3 px-3 text-gray-600 break-words">
-                          {p.material || 'Gold'} {p.karat ? `${p.karat}K` : ''} {p.weight ? `\u2022 ${p.weight}g` : ''}
+                          {d.material} {d.karat ? `${d.karat}K` : ''} {d.weight ? `• ${d.weight}g` : ''}
                         </td>
-                        <td className="py-3 px-3 text-center font-mono font-bold">{item.quantity}</td>
-                        <td className="py-3 px-3 text-right font-mono whitespace-nowrap">₹{unitPrice.toLocaleString('en-IN')}</td>
-                        <td className="py-3 px-3 text-right font-mono font-bold whitespace-nowrap">₹{itemTotal.toLocaleString('en-IN')}</td>
+                        <td className="py-3 px-3 text-center font-mono font-bold">{d.quantity}</td>
+                        <td className="py-3 px-3 text-right font-mono whitespace-nowrap">₹{d.unitTotal.toLocaleString('en-IN')}</td>
+                        <td className="py-3 px-3 text-right font-mono font-bold whitespace-nowrap">₹{d.lineTotal.toLocaleString('en-IN')}</td>
                       </tr>
                     );
                   })}
@@ -520,7 +552,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
 
               <div className="w-full sm:w-64 space-y-1.5 text-xs font-body text-gray-600 shrink-0">
                 <div className="flex justify-between items-center">
-                  <span>Subtotal:</span>
+                  <span>Subtotal (Before Tax):</span>
                   <span className="font-mono font-bold text-[#111111] whitespace-nowrap">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center">

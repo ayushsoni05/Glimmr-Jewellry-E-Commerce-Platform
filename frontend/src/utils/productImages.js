@@ -4,16 +4,16 @@
 const categoryMaterialImageMap = {
   rings: {
     gold: [
-      'https://images.pexels.com/photos/2552014/pexels-photo-2552014.jpeg',
-      'https://images.pexels.com/photos/3622619/pexels-photo-3622619.jpeg'
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80',
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&q=80'
     ],
     silver: [
-      'https://images.pexels.com/photos/5632639/pexels-photo-5632639.jpeg',
-      'https://images.pexels.com/photos/3622628/pexels-photo-3622628.jpeg'
+      'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?w=800&q=80',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80'
     ],
     diamond: [
-      'https://images.pexels.com/photos/2552014/pexels-photo-2552014.jpeg',
-      'https://images.pexels.com/photos/3622624/pexels-photo-3622624.jpeg'
+      'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&q=80',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80'
     ]
   },
   necklaces: {

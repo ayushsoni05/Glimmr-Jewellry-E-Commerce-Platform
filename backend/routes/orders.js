@@ -242,18 +242,12 @@ router.post('/', async (req, res) => {
       }
     });
 
+    // Return fully populated order
+    const populatedOrder = await Order.findById(order._id).populate('items.product');
+
     res.status(201).json({
       message: 'Order created successfully',
-      order: {
-        _id: order._id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        paymentMethod: order.paymentMethod,
-        shippingAddress: order.shippingAddress,
-        items: order.items,
-        createdAt: order.createdAt,
-        paymentIntentId: order.paymentIntentId
-      }
+      order: populatedOrder || order
     });
   } catch (err) {
     console.error('Order creation error:', err);

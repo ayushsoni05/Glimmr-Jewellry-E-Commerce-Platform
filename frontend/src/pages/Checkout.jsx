@@ -243,7 +243,18 @@ const Checkout = () => {
         shippingAddress,
         paymentMethod
       });
-      const orderData = response.data.order || response.data;
+      const baseOrderData = response.data.order || response.data;
+      // Enrich orderData with cart items to guarantee full product fields (images, name, specs, live prices)
+      const enrichedOrderData = {
+        ...baseOrderData,
+        items: (baseOrderData.items && baseOrderData.items.length > 0 && baseOrderData.items[0]?.product?.name)
+          ? baseOrderData.items
+          : cart.items.map(ci => ({
+              product: ci.product,
+              quantity: ci.quantity,
+              price: getItemPrice(ci.product)
+            }))
+      };
       setCart({ items: [] });
       try {
         await updateCartCount();
@@ -251,7 +262,7 @@ const Checkout = () => {
         console.warn('Failed to update cart count:', e);
       }
       // Trigger the 5-Act Jewelry Order Story Animation
-      setStoryOrderData(orderData);
+      setStoryOrderData(enrichedOrderData);
       setShowStoryModal(true);
     } catch (err) {
       let errorMessage = 'Checkout failed. Please try again.';
