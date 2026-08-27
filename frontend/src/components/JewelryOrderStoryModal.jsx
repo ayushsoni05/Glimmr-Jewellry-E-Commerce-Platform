@@ -337,6 +337,12 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
                     </span>
                     <span className="font-bold text-emerald-400 text-[9px] uppercase tracking-wider">COMPLIMENTARY</span>
                   </div>
+                  {orderData?.discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-400 text-[11px] bg-emerald-950/40 p-2 border border-emerald-800/40 rounded-sm">
+                      <span className="font-bold uppercase text-[9px] tracking-wider">Voucher ({orderData.couponCode || 'Privilege'})</span>
+                      <span className="font-mono font-bold">-₹{Number(orderData.discountAmount).toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
                   <div className="pt-2 border-t border-[#B59A6C]/20 flex items-center justify-between">
                     <div>
                       <span className="text-[8px] font-mono text-[#B59A6C] uppercase tracking-widest block font-bold">TOTAL PAYABLE</span>

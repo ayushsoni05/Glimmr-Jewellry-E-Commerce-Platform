@@ -57,7 +57,8 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
   const totalTax = itemDetails.reduce((sum, d) => sum + d.lineGst, 0);
   const cgst = Math.round(totalTax / 2);
   const sgst = totalTax - cgst;
-  const totalPayable = subtotal + totalTax;
+  const discountAmount = Number(order.discountAmount) || 0;
+  const totalPayable = Math.max(0, (subtotal + totalTax) - discountAmount);
 
   const invoiceNo = `INV-2026-${(order._id || '1000').slice(-6).toUpperCase()}`;
   const invoiceDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {
@@ -273,15 +274,24 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.text('SGST (1.5%):', 140, y + 14);
       doc.text(`Rs. ${sgst.toLocaleString('en-IN')}`, 190, y + 14, { align: 'right' });
 
+      let currentYOffset = y + 14;
+      if (discountAmount > 0) {
+        currentYOffset += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(20, 120, 50);
+        doc.text(`Voucher (${order.couponCode || 'Privilege'}):`, 140, currentYOffset);
+        doc.text(`-Rs. ${discountAmount.toLocaleString('en-IN')}`, 190, currentYOffset, { align: 'right' });
+      }
+
       doc.setDrawColor(17, 17, 17);
       doc.setLineWidth(0.4);
-      doc.line(140, y + 17, 195, y + 17);
+      doc.line(140, currentYOffset + 3, 195, currentYOffset + 3);
 
       doc.setFont('times', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(17, 17, 17);
-      doc.text('Total Payable:', 140, y + 23);
-      doc.text(`Rs. ${totalPayable.toLocaleString('en-IN')}`, 190, y + 23, { align: 'right' });
+      doc.text('Total Payable:', 140, currentYOffset + 9);
+      doc.text(`Rs. ${totalPayable.toLocaleString('en-IN')}`, 190, currentYOffset + 9, { align: 'right' });
 
       // Footer Seal & Signatory
       y += 32;
@@ -563,6 +573,12 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
                   <span>SGST (1.5%):</span>
                   <span className="font-mono text-gray-700 whitespace-nowrap">₹{sgst.toLocaleString('en-IN')}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200">
+                    <span className="font-bold uppercase text-[10px]">Voucher ({order.couponCode || 'Privilege'}):</span>
+                    <span className="font-mono font-bold whitespace-nowrap">-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-t border-gray-200 pt-2 text-sm">
                   <span className="font-heading font-extrabold text-[#111111]">Total Payable:</span>
                   <span className="font-mono font-extrabold text-[#111111] whitespace-nowrap">₹{totalPayable.toLocaleString('en-IN')}</span>

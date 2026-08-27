@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
@@ -9,6 +9,7 @@ import { useMetalRates } from '../contexts/MetalRatesContext';
 import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode } from '../utils/addressUtils';
 import { INDIAN_CITIES } from '../utils/indianCities';
 import { getProductImage } from '../utils/productImages';
+import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
 import GlimmrLoader from '../components/GlimmrLoader';
 import JewelryOrderStoryModal from '../components/JewelryOrderStoryModal';
 import { 
@@ -32,6 +33,7 @@ const Checkout = () => {
   const { updateCartCount } = useCart();
   const { getLiveProductPrice } = useMetalRates();
   const navigate = useNavigate();
+  const location = useLocation();
   const { error: toastError, success: toastSuccess } = useToast();
   
   const [savedAddresses, setSavedAddresses] = useState([]);
@@ -39,6 +41,20 @@ const Checkout = () => {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [saveAddress, setSaveAddress] = useState(true);
   const [isStateMenuOpen, setIsStateMenuOpen] = useState(false);
+
+  // Voucher State
+  const [voucherCodeInput, setVoucherCodeInput] = useState('');
+  const [voucherError, setVoucherError] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState(() => {
+    const fromNav = location.state?.appliedVoucher;
+    if (fromNav) return fromNav;
+    try {
+      const saved = localStorage.getItem('glimmr_applied_voucher');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   
   const [shippingAddress, setShippingAddress] = useState({
     name: '',
@@ -238,15 +254,23 @@ const Checkout = () => {
     
     setLoading(true);
     try {
+      const ob = getOrderBreakdown();
       const response = await api.post('/orders', { 
         userId: user.id || user._id,
         shippingAddress,
-        paymentMethod
+        paymentMethod,
+        couponCode: appliedVoucher?.code || '',
+        discountAmount: ob.discountAmount || 0,
+        totalAmount: ob.totalPayable
       });
       const baseOrderData = response.data.order || response.data;
       // Enrich orderData with cart items to guarantee full product fields (images, name, specs, live prices)
       const enrichedOrderData = {
         ...baseOrderData,
+        discountAmount: ob.discountAmount || 0,
+        couponCode: appliedVoucher?.code || '',
+        appliedVoucher: appliedVoucher,
+        totalAmount: ob.totalPayable,
         items: (baseOrderData.items && baseOrderData.items.length > 0 && baseOrderData.items[0]?.product?.name)
           ? baseOrderData.items
           : cart.items.map(ci => ({
@@ -255,6 +279,7 @@ const Checkout = () => {
               price: getItemPrice(ci.product)
             }))
       };
+      localStorage.removeItem('glimmr_applied_voucher');
       setCart({ items: [] });
       try {
         await updateCartCount();
@@ -288,7 +313,7 @@ const Checkout = () => {
   const getItemPrice = (p) => getItemBreakdown(p).totalLivePrice;
 
   const getOrderBreakdown = () => {
-    let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalGst = 0, totalSubtotal = 0, totalPayable = 0;
+    let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalGst = 0, totalSubtotal = 0, totalPayableBeforeDiscount = 0;
     cart.items.forEach((item) => {
       const bd = getItemBreakdown(item.product);
       const qty = item.quantity;
@@ -297,9 +322,61 @@ const Checkout = () => {
       totalDiamond += bd.gemstoneCost * qty;
       totalGst += bd.gstTax * qty;
       totalSubtotal += bd.subtotal * qty;
-      totalPayable += bd.totalLivePrice * qty;
+      totalPayableBeforeDiscount += bd.totalLivePrice * qty;
     });
-    return { totalMetal, totalMaking, totalDiamond, totalGst, totalSubtotal, totalPayable };
+
+    let discountAmount = 0;
+    if (appliedVoucher) {
+      const res = validateVoucher(appliedVoucher.code, totalPayableBeforeDiscount);
+      if (res.valid) {
+        discountAmount = res.voucher.calculatedDiscount;
+      }
+    }
+
+    const totalPayable = Math.max(0, totalPayableBeforeDiscount - discountAmount);
+
+    return { 
+      totalMetal, 
+      totalMaking, 
+      totalDiamond, 
+      totalGst, 
+      totalSubtotal, 
+      totalPayableBeforeDiscount, 
+      discountAmount, 
+      totalPayable 
+    };
+  };
+
+  const handleApplyVoucher = (e, explicitCode = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setVoucherError('');
+    const code = (explicitCode || voucherCodeInput || '').trim().toUpperCase();
+
+    if (!code) {
+      setVoucherError('Please enter a voucher code');
+      return;
+    }
+
+    const ob = getOrderBreakdown();
+    const result = validateVoucher(code, ob.totalPayableBeforeDiscount);
+
+    if (result.valid) {
+      setAppliedVoucher(result.voucher);
+      setVoucherCodeInput(result.voucher.code);
+      localStorage.setItem('glimmr_applied_voucher', JSON.stringify(result.voucher));
+      toastSuccess(result.message);
+    } else {
+      setVoucherError(result.message);
+      toastError(result.message);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherCodeInput('');
+    setVoucherError('');
+    localStorage.removeItem('glimmr_applied_voucher');
+    toastSuccess('Voucher removed');
   };
 
   const calculateTotal = () => getOrderBreakdown().totalPayable;
@@ -889,9 +966,76 @@ const Checkout = () => {
                           </span>
                           <span className="font-bold text-emerald-700 uppercase text-[10px] tracking-wider">COMPLIMENTARY</span>
                         </div>
+
+                        {ob.discountAmount > 0 && (
+                          <div className="flex justify-between items-center text-emerald-800 bg-emerald-50/80 p-2.5 border border-emerald-300/80">
+                            <div className="space-y-0.5">
+                              <span className="font-bold uppercase text-[10px] tracking-wider text-emerald-900">Voucher ({appliedVoucher?.code})</span>
+                              <span className="text-[9px] text-emerald-700 block">{appliedVoucher?.description || 'Privilege Concession'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-extrabold text-sm text-emerald-800">-₹{ob.discountAmount.toLocaleString('en-IN')}</span>
+                              <button
+                                type="button"
+                                onClick={handleRemoveVoucher}
+                                className="text-[10px] text-rose-600 hover:text-rose-800 font-bold uppercase tracking-wider underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
+
+                  {/* Checkout Promo Voucher Drawer */}
+                  <div className="pt-4 border-t border-gray-100 space-y-2.5">
+                    <form onSubmit={handleApplyVoucher} className="space-y-2">
+                      <label className="block text-[10px] font-body font-bold uppercase tracking-widest text-gray-500">
+                        Atelier Voucher / Privilege Code
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={voucherCodeInput}
+                          onChange={(e) => setVoucherCodeInput(e.target.value)}
+                          placeholder="e.g. WELCOME10"
+                          className="flex-1 px-3.5 py-2 bg-[#FAF9F7] border border-gray-200 text-xs font-mono font-bold uppercase text-[#111111] focus:bg-white focus:border-[#111111] focus:outline-none transition-all rounded-none"
+                        />
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-[#111111] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] transition-colors cursor-pointer"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {voucherError && (
+                        <p className="text-[10px] font-body text-rose-600 font-bold">{voucherError}</p>
+                      )}
+                    </form>
+
+                    {/* Quick Voucher Chips */}
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      {AVAILABLE_VOUCHERS.slice(0, 3).map((v) => {
+                        const isCurrent = appliedVoucher?.code === v.code;
+                        return (
+                          <button
+                            key={v.code}
+                            type="button"
+                            onClick={() => handleApplyVoucher(null, v.code)}
+                            className={`px-2 py-1 border text-[9px] font-mono font-bold uppercase tracking-wider cursor-pointer transition-all ${
+                              isCurrent
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'bg-[#FAF9F7] border-gray-200 text-gray-700 hover:border-[#111111]'
+                            }`}
+                          >
+                            {v.code} {v.discountPercent ? `(${v.discountPercent}% OFF)` : `(₹${v.discountAmount} OFF)`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <div className="pt-4 border-t border-gray-200">
                     <div className="flex justify-between items-end">

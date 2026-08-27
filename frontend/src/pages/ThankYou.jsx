@@ -287,6 +287,12 @@ const ThankYou = () => {
                           </span>
                           <span className="font-bold text-emerald-700 uppercase text-[10px] tracking-wider">COMPLIMENTARY</span>
                         </div>
+                        {orderData.discountAmount > 0 && (
+                          <div className="flex justify-between text-xs font-body text-emerald-800 bg-emerald-50 px-2 py-1.5 border border-emerald-200">
+                            <span className="font-bold uppercase text-[10px]">Voucher Concession ({orderData.couponCode || 'Privilege'})</span>
+                            <span className="font-mono font-bold">-₹{Number(orderData.discountAmount).toLocaleString('en-IN')}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between items-end pt-2 border-t border-gray-300">
                           <div>
                             <span className="text-[10px] font-body font-bold uppercase tracking-widest text-[#B59A6C] block">NET TOTAL</span>

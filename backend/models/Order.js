@@ -10,6 +10,8 @@ const orderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   items: [orderItemSchema],
   totalAmount: { type: Number, required: true },
+  discountAmount: { type: Number, default: 0 },
+  couponCode: { type: String, default: '' },
   status: { type: String, default: 'pending', enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'] },
   paymentMethod: { type: String, enum: ['cod', 'card', 'upi'], default: 'cod' },
   paymentIntentId: { type: String },

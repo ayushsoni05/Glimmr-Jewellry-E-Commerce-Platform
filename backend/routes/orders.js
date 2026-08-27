@@ -87,12 +87,14 @@ function computeLivePrice(product, perGram) {
 
 // POST /api/orders - create order from cart
 router.post('/', async (req, res) => {
-  const { userId, guestId, paymentMethod, shippingAddress } = req.body;
+  const { userId, guestId, paymentMethod, shippingAddress, couponCode, discountAmount } = req.body;
   try {
     console.log('[ORDER] POST request received');
     console.log('[ORDER] userId:', userId);
     console.log('[ORDER] guestId:', guestId);
     console.log('[ORDER] paymentMethod:', paymentMethod);
+    console.log('[ORDER] couponCode:', couponCode);
+    console.log('[ORDER] discountAmount:', discountAmount);
     console.log('[ORDER] shippingAddress:', shippingAddress);
 
     // Validate required fields
@@ -126,7 +128,7 @@ router.post('/', async (req, res) => {
     }
 
     // Fetch live gold/silver rates at checkout time with timeout protection
-    let perGramRates = { goldPerGram: 15064, silverPerGram: 231.3 }; // defaults
+    let perGramRates = { goldPerGram: 15600, silverPerGram: 235.0 }; // defaults
     const startTime = Date.now();
     try {
       perGramRates = await Promise.race([
@@ -167,16 +169,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'No valid cart items to place order. Please refresh your cart.' });
     }
     
-    // Total amount including tax - matches frontend live pricing
-    const totalAmount = subtotal + totalTax;
+    // Total amount including tax minus valid voucher discount
+    const discount = Math.max(0, Number(discountAmount) || 0);
+    const totalAmount = Math.max(0, (subtotal + totalTax) - discount);
 
-    console.log('[ORDER] Subtotal: ₹' + subtotal + ', Tax: ₹' + totalTax + ', Total: ₹' + totalAmount);
+    console.log('[ORDER] Subtotal: ₹' + subtotal + ', Tax: ₹' + totalTax + ', Discount: ₹' + discount + ', Total: ₹' + totalAmount);
 
-    // Create order with LIVE prices
+    // Create order with LIVE prices and voucher details
     const order = new Order({
       user: userId,
       items: itemsWithLivePrice,
       totalAmount,
+      discountAmount: discount,
+      couponCode: couponCode || '',
       shippingAddress,
       paymentMethod: paymentMethod || 'cod',
       status: paymentMethod === 'cod' ? 'confirmed' : 'pending',

@@ -7,6 +7,7 @@ import { useMetalRates } from '../contexts/MetalRatesContext';
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { getProductImage } from '../utils/productImages';
+import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { 
   ShoppingBagIcon, 
@@ -26,7 +27,14 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    try {
+      const saved = localStorage.getItem('glimmr_applied_voucher');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [couponError, setCouponError] = useState('');
   const { user, loading: authLoading } = useAuth();
   const { updateCartCount } = useCart();
@@ -105,28 +113,6 @@ const Cart = () => {
     }
   };
 
-  const handleApplyCoupon = (e) => {
-    e.preventDefault();
-    setCouponError('');
-    const code = couponCode.trim().toUpperCase();
-
-    if (!code) {
-      setCouponError('Please enter a voucher code');
-      return;
-    }
-
-    if (code === 'WELCOME10') {
-      setAppliedCoupon({ code: 'WELCOME10', discountPercent: 10, description: '10% Welcome Connoisseur Discount' });
-      toastSuccess('Coupon WELCOME10 applied! (10% OFF)');
-    } else if (code === 'GLIMMR500') {
-      setAppliedCoupon({ code: 'GLIMMR500', discountAmount: 500, description: '₹500 VIP Voucher Discount' });
-      toastSuccess('Voucher GLIMMR500 applied! (₹500 OFF)');
-    } else {
-      setCouponError('Invalid or expired voucher code');
-      toastError('Invalid voucher code');
-    }
-  };
-
   const getItemPrice = (p) => {
     if (!p) return 0;
     const isFramerProduct = typeof p.id === 'string' && !p._id;
@@ -140,6 +126,38 @@ const Cart = () => {
     }, 0);
   };
 
+  const handleApplyCoupon = (e, explicitCode = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setCouponError('');
+    const code = (explicitCode || couponCode || '').trim().toUpperCase();
+
+    if (!code) {
+      setCouponError('Please enter a voucher code');
+      return;
+    }
+
+    const currentSubtotal = calculateSubtotal();
+    const result = validateVoucher(code, currentSubtotal);
+
+    if (result.valid) {
+      setAppliedCoupon(result.voucher);
+      setCouponCode(result.voucher.code);
+      localStorage.setItem('glimmr_applied_voucher', JSON.stringify(result.voucher));
+      toastSuccess(result.message);
+    } else {
+      setCouponError(result.message);
+      toastError(result.message);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    localStorage.removeItem('glimmr_applied_voucher');
+    toastSuccess('Voucher removed');
+  };
+
   const calculateTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
@@ -147,11 +165,9 @@ const Cart = () => {
   const calculateDiscount = () => {
     const subtotal = calculateSubtotal();
     if (!appliedCoupon) return 0;
-    if (appliedCoupon.discountPercent) {
-      return Math.round((subtotal * appliedCoupon.discountPercent) / 100);
-    }
-    if (appliedCoupon.discountAmount) {
-      return Math.min(subtotal, appliedCoupon.discountAmount);
+    const res = validateVoucher(appliedCoupon.code, subtotal);
+    if (res.valid) {
+      return res.voucher.calculatedDiscount;
     }
     return 0;
   };
@@ -518,9 +534,24 @@ const Cart = () => {
                     </div>
 
                     {appliedCoupon && (
-                      <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 p-2.5 border border-emerald-200">
-                        <span className="font-bold uppercase text-[10px] tracking-wider">Voucher ({appliedCoupon.code})</span>
-                        <span className="font-mono font-bold">-₹{calculateDiscount().toLocaleString('en-IN')}</span>
+                      <div className="flex justify-between items-center text-emerald-800 bg-emerald-50/80 p-3 border border-emerald-300/80">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold uppercase text-[11px] tracking-wider text-emerald-900">{appliedCoupon.code}</span>
+                            <span className="text-[9px] bg-emerald-200/80 text-emerald-900 px-1.5 py-0.5 font-bold uppercase tracking-widest">{appliedCoupon.badge || 'Applied'}</span>
+                          </div>
+                          <p className="text-[10px] text-emerald-700 font-medium">{appliedCoupon.description || appliedCoupon.name}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-extrabold text-sm text-emerald-800">-₹{calculateDiscount().toLocaleString('en-IN')}</span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveCoupon}
+                            className="text-[10px] text-rose-600 hover:text-rose-800 font-bold uppercase tracking-wider underline cursor-pointer ml-1"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -537,11 +568,11 @@ const Cart = () => {
                     </div>
                   </div>
 
-                  {/* Promo Voucher Drawer */}
-                  <div className="pt-4 border-t border-gray-100">
+                  {/* Luxury Promo Voucher Drawer */}
+                  <div className="pt-5 border-t border-gray-100 space-y-3">
                     <form onSubmit={handleApplyCoupon} className="space-y-2">
-                      <label className="block text-[10px] font-body font-bold uppercase tracking-wider text-gray-500">
-                        Atelier Voucher / Referral Code
+                      <label className="block text-[10px] font-body font-bold uppercase tracking-widest text-gray-500">
+                        Atelier Voucher / Privilege Code
                       </label>
                       <div className="flex gap-2">
                         <input
@@ -553,7 +584,7 @@ const Cart = () => {
                         />
                         <button
                           type="submit"
-                          className="px-5 py-2.5 bg-[#111111] text-white text-xs font-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] transition-colors cursor-pointer"
+                          className="px-5 py-2.5 bg-[#111111] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] transition-colors cursor-pointer"
                         >
                           Apply
                         </button>
@@ -561,18 +592,46 @@ const Cart = () => {
                       {couponError && (
                         <p className="text-[10px] font-body text-rose-600 font-bold">{couponError}</p>
                       )}
-                      <p className="text-[10px] font-body text-gray-400 flex items-center gap-1">
-                        <TagIcon size={12} className="text-[#B59A6C] shrink-0" />
-                        <span>Tip: Try code <span className="font-mono font-bold text-[#111111]">WELCOME10</span> or <span className="font-mono font-bold text-[#111111]">GLIMMR500</span></span>
-                      </p>
                     </form>
+
+                    {/* Available Privileges Carousel / Quick Apply Chips */}
+                    <div className="space-y-1.5 pt-1">
+                      <span className="text-[9px] font-body font-bold uppercase tracking-widest text-[#B59A6C] block">
+                        Available Atelier Privileges:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {AVAILABLE_VOUCHERS.map((v) => {
+                          const isCurrent = appliedCoupon?.code === v.code;
+                          return (
+                            <button
+                              key={v.code}
+                              type="button"
+                              onClick={() => handleApplyCoupon(null, v.code)}
+                              className={`text-left p-2 border transition-all text-xs flex flex-col justify-between cursor-pointer ${
+                                isCurrent 
+                                  ? 'border-emerald-600 bg-emerald-50/60' 
+                                  : 'border-gray-200 bg-[#FAF9F7] hover:border-[#111111] hover:bg-white'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between w-full mb-0.5">
+                                <span className="font-mono font-extrabold text-[11px] text-[#111111]">{v.code}</span>
+                                <span className={`text-[8px] font-bold uppercase px-1 py-0.2 tracking-wider ${isCurrent ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                                  {isCurrent ? 'Active' : v.badge}
+                                </span>
+                              </div>
+                              <p className="text-[9px] text-gray-500 line-clamp-1">{v.description}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Proceed to Checkout CTA Button */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/checkout')}
+                    onClick={() => navigate('/checkout', { state: { appliedVoucher: appliedCoupon } })}
                     className="w-full py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.25em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-3 cursor-pointer group"
                   >
                     <span>Proceed to Checkout</span>
