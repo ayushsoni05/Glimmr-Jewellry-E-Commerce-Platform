@@ -44,8 +44,8 @@ const getProducts = async (req, res) => {
     }
 
     // Fetch live per-gram prices (with fallbacks)
-    let perGramGold = 6500;
-    let perGramSilver = 75;
+    let perGramGold = 15600;
+    let perGramSilver = 235;
     try {
       const backendPort = process.env.PORT || process.env.BACKEND_PORT || 5002;
       const base = `http://localhost:${backendPort}/api/prices`;
@@ -275,14 +275,14 @@ const createProduct = async (req, res) => {
         }
         if (!perGram || perGram <= 0) {
           // Fallback hardcoded per-gram to keep admin ops smooth
-          perGram = 6500;
+          perGram = 15600;
         }
         const purity = productData.karat === 24 ? 1.0 : productData.karat === 22 ? 22/24 : 18/24;
         productData.price = Math.round(perGram * productData.weight * purity);
       } catch (calcErr) {
         console.warn('Live price calc failed, using fallback:', calcErr && calcErr.message ? calcErr.message : calcErr);
         const purity = productData.karat === 24 ? 1.0 : productData.karat === 22 ? 22/24 : 18/24;
-        const perGramFallback = 6500; // INR fallback
+        const perGramFallback = 15600; // INR fallback
         productData.price = Math.round(perGramFallback * productData.weight * purity);
       }
     } else if (materialLower === 'silver') {
@@ -437,13 +437,13 @@ const updateProduct = async (req, res) => {
           if (latest && latest.data && latest.data.gold && latest.data.gold.price) {
             perGram = Number(latest.data.gold.price) || 0;
           }
-          if (!perGram || perGram <= 0) perGram = 6500;
+          if (!perGram || perGram <= 0) perGram = 15600;
           const purity = karatVal === 24 ? 1.0 : karatVal === 22 ? 22/24 : 18/24;
           updateData.price = Math.round(perGram * weightVal * purity);
           updateData.karat = karatVal; // ensure persisted
         } catch (e) {
           const purity = karatVal === 24 ? 1.0 : karatVal === 22 ? 22/24 : 18/24;
-          updateData.price = Math.round(6500 * weightVal * purity);
+          updateData.price = Math.round(15600 * weightVal * purity);;
           updateData.karat = karatVal;
         }
       }
@@ -494,8 +494,8 @@ const deleteProduct = async (req, res) => {
 const getFeaturedProducts = async (req, res) => {
   try {
     // Fetch live per-gram prices
-    let perGramGold = 6500;
-    let perGramSilver = 75;
+    let perGramGold = 15600;
+    let perGramSilver = 235;
     
     try {
       const backendPort = process.env.PORT || process.env.BACKEND_PORT || 5002;

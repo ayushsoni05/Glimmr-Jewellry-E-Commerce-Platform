@@ -13,7 +13,7 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [liveRates, setLiveRates] = useState({ gold: 15064, silver: 231 });
+  const [liveRates, setLiveRates] = useState({ gold: 15600, silver: 235 });
   const [isLiveRatesHovered, setIsLiveRatesHovered] = useState(false);
 
   useEffect(() => {
@@ -22,8 +22,8 @@ const Header = () => {
         .then(res => {
           if (res.data) {
             setLiveRates({
-              gold: res.data.gold?.price || 15064,
-              silver: res.data.silver?.price || 231
+              gold: res.data.gold?.price || 15600,
+              silver: res.data.silver?.price || 235
             });
           }
         })
@@ -128,7 +128,7 @@ const Header = () => {
               <span>Live Metal Rates:</span>
               <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold ₹{liveRates.gold.toLocaleString('en-IN')}/g • Silver ₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
             </Link>
-            <span>( +123 ) 456 7890</span>
+            <span>+91 (022) 6849 2000</span>
             <div className="hidden sm:flex items-center space-x-3 text-[#222222]">
               <a href="#" className="hover:text-black transition-colors font-medium">X</a>
               <a href="#" className="hover:text-black transition-colors font-medium">IG</a>

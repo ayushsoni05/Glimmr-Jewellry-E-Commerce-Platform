@@ -69,11 +69,11 @@ export const calculateProductLivePrice = (product, liveRates) => {
   // 1. Determine base rate per gram from live API rates
   const gold24kPerGram = liveRates?.gold?.price 
     ? Number(liveRates.gold.price) 
-    : (liveRates?.gold_10g_24k ? liveRates.gold_10g_24k / 10 : 15064);
+    : (liveRates?.gold_10g_24k ? liveRates.gold_10g_24k / 10 : 15600);
 
   const silverPerGram = liveRates?.silver?.price 
     ? Number(liveRates.silver.price) 
-    : 231.3;
+    : 235.0;
 
   let baseRatePerGram = material.includes('silver') ? silverPerGram : gold24kPerGram;
   

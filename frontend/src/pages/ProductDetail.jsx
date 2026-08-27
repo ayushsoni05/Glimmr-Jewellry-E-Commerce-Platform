@@ -52,7 +52,6 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [wishlist, setWishlist] = useState(JSON.parse(localStorage.getItem('wishlist') || '[]'));
-  const [perGramRates, setPerGramRates] = useState({ gold: 6500, silver: 80 });
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
   const [lightFilter, setLightFilter] = useState('daylight');

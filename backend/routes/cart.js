@@ -39,8 +39,8 @@ async function fetchPerGramRates(currency = 'INR') {
   try { goldPerGram = await tryEndpoint('XAU'); } catch {}
   try { silverPerGram = await tryEndpoint('XAG'); } catch {}
 
-  if (!goldPerGram) goldPerGram = currency.toUpperCase() === 'GBP' ? 60 : 6500; // fallback approx per gram
-  if (!silverPerGram) silverPerGram = currency.toUpperCase() === 'GBP' ? 0.7 : 75;
+  if (!goldPerGram || goldPerGram <= 0) goldPerGram = currency.toUpperCase() === 'GBP' ? 110.4 : 15600;
+  if (!silverPerGram || silverPerGram <= 0) silverPerGram = currency.toUpperCase() === 'GBP' ? 1.66 : 235.0;
 
   return { goldPerGram, silverPerGram };
 }
