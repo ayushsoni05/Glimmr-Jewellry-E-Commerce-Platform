@@ -57,7 +57,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
   const totalTax = itemDetails.reduce((sum, d) => sum + d.lineGst, 0);
   const cgst = Math.round(totalTax / 2);
   const sgst = totalTax - cgst;
-  const totalPayable = order.totalAmount > 0 ? order.totalAmount : (subtotal + totalTax);
+  const totalPayable = subtotal + totalTax;
 
   const invoiceNo = `INV-2026-${(order._id || '1000').slice(-6).toUpperCase()}`;
   const invoiceDate = new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {

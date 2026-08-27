@@ -11,80 +11,78 @@ const adminMiddleware = require('../middleware/admin');
 
 const router = express.Router();
 
-// Helper: fetch live per-gram rates for gold and silver
+// Helper: fetch live per-gram rates for gold and silver from metals.dev (IBJA)
 async function fetchPerGramRates(currency = 'INR') {
-  const goldApiToken = process.env.GOLDAPI_TOKEN || 'goldapi-pdixz26mhm8766q-io';
-  const OZ_TO_GRAM = 31.1034768;
-
-  const tryEndpoint = async (metal) => {
-    const base = `https://www.goldapi.io/api/${metal}/${currency.toUpperCase()}`;
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const dateStr = `${y}${m}${d}`;
-    const urls = [base, `${base}/${dateStr}`];
-    let lastErr;
-    for (const u of urls) {
-      try {
-        const resp = await axios.get(u, {
-          headers: { 'x-access-token': goldApiToken, 'Accept': 'application/json' },
-          timeout: 5000, // Reduced to 5 seconds
-        });
-        const data = resp.data || {};
-        const ounce = (data && !data.error) ? (data.price || data.close_price || data.open_price) : null;
-        if (ounce) return Number(ounce) / OZ_TO_GRAM; // per gram
-      } catch (e) {
-        lastErr = e;
-        console.warn(`[RATES] Failed to fetch ${metal} from ${u}:`, e.message);
-      }
-    }
-    throw lastErr || new Error(`Failed fetching ${metal}`);
-  };
+  const apiKey = process.env.METALS_DEV_API_KEY || 'RJ1XWLR1MA9FGVR0I41A488R0I41A';
+  const metalsDevUrl = `https://api.metals.dev/v1/metal/authority?api_key=${apiKey}&authority=ibja&currency=${currency.toUpperCase()}&unit=g`;
 
   let goldPerGram = 0, silverPerGram = 0;
-  
-  // Fetch rates with timeout protection
-  try { 
-    goldPerGram = await Promise.race([
-      tryEndpoint('XAU'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Gold rate timeout')), 5000))
-    ]);
-  } catch (e) {
-    console.warn('[RATES] Gold rate fetch failed, using fallback:', e.message);
-  }
-  
-  try { 
-    silverPerGram = await Promise.race([
-      tryEndpoint('XAG'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Silver rate timeout')), 5000))
-    ]);
-  } catch (e) {
-    console.warn('[RATES] Silver rate fetch failed, using fallback:', e.message);
+  try {
+    const resp = await axios.get(metalsDevUrl, {
+      headers: { 'Accept': 'application/json' },
+      timeout: 5000,
+    });
+    const apiData = resp.data || {};
+    if (apiData.status === 'success' && apiData.rates) {
+      goldPerGram = Number(apiData.rates.ibja_gold) || 0;
+      silverPerGram = Number(apiData.rates.ibja_silver) || 0;
+    }
+  } catch (err) {
+    console.warn('[ORDER RATES] Failed to fetch from metals.dev, using fallback rates:', err.message);
   }
 
-  // Use fallback rates if fetching failed
-  if (!goldPerGram) goldPerGram = currency.toUpperCase() === 'GBP' ? 60 : 6500;
-  if (!silverPerGram) silverPerGram = currency.toUpperCase() === 'GBP' ? 0.7 : 75;
+  // Exact IBJA fallback standards
+  if (!goldPerGram || goldPerGram <= 0) goldPerGram = currency.toUpperCase() === 'GBP' ? 116.8 : 15064;
+  if (!silverPerGram || silverPerGram <= 0) silverPerGram = currency.toUpperCase() === 'GBP' ? 1.8 : 231.3;
 
   return { goldPerGram, silverPerGram };
 }
 
-// Helper: compute live unit price for a product based on current rates
+// Helper: compute complete live breakdown for a product based on current rates
 function computeLivePrice(product, perGram) {
-  if (!product) return 0;
-  const weight = Number(product.weight || 0);
-  if (!weight || weight <= 0) return 0;
-  const material = String(product.material || '').toLowerCase();
-  if (material === 'gold') {
-    const karat = Number(product.karat || 24);
-    const purity = karat === 24 ? 1.0 : karat === 22 ? 22/24 : karat === 18 ? 18/24 : karat/24;
-    return Math.round(perGram.goldPerGram * weight * purity);
+  if (!product) return { totalLivePrice: 0, subtotal: 0, rawMetalCost: 0, makingCharges: 0, gstTax: 0 };
+  const weight = Number(product.metalWeight || product.weight || 5.0);
+  const material = String(product.material || 'gold').toLowerCase();
+  
+  let baseRate = material.includes('silver') ? perGram.silverPerGram : perGram.goldPerGram;
+  let karatNum = Number(product.karat) || (material.includes('silver') ? 925 : 22);
+  let purityMultiplier = karatNum === 24 ? 1.0 : karatNum === 22 ? 22 / 24 : karatNum === 18 ? 18 / 24 : karatNum === 14 ? 14 / 24 : (karatNum / 24);
+  if (material.includes('silver')) {
+    purityMultiplier = karatNum === 999 ? 1.0 : 0.925;
   }
-  if (material === 'silver') {
-    return Math.round(perGram.silverPerGram * weight);
+
+  const rawMetalCost = Math.round(weight * baseRate * purityMultiplier);
+  const makingChargeRate = Number(product.makingChargePerGram) || 450;
+  const makingCharges = Math.round(weight * makingChargeRate);
+
+  let gemstoneCost = 0;
+  const hasDiamond = Boolean(
+    product.diamond?.hasDiamond || 
+    product.diamondCarat || 
+    product.diamondWeight || 
+    String(product.category || '').toLowerCase().includes('diamond') ||
+    String(product.material || '').toLowerCase().includes('diamond') ||
+    String(product.name || '').toLowerCase().includes('diamond')
+  );
+
+  if (hasDiamond) {
+    const carat = Number(product.diamond?.carat) || Number(product.diamondCarat) || Number(product.diamondWeight) || 0.50;
+    const baseCaratRate = 65000;
+    gemstoneCost = Math.round(carat * baseCaratRate * 1.5);
   }
-  return Math.round(Number(product.price || 0));
+
+  const subtotal = rawMetalCost + makingCharges + gemstoneCost;
+  const gstTax = Math.round(subtotal * 0.03);
+  const totalLivePrice = subtotal + gstTax;
+
+  return {
+    rawMetalCost,
+    makingCharges,
+    gemstoneCost,
+    subtotal,
+    gstTax,
+    totalLivePrice
+  };
 }
 
 // POST /api/orders - create order from cart
@@ -128,10 +126,9 @@ router.post('/', async (req, res) => {
     }
 
     // Fetch live gold/silver rates at checkout time with timeout protection
-    let perGramRates = { goldPerGram: 6500, silverPerGram: 75 }; // defaults
+    let perGramRates = { goldPerGram: 15064, silverPerGram: 231.3 }; // defaults
     const startTime = Date.now();
     try {
-      // Reduce timeout to 3 seconds to ensure fast order processing
       perGramRates = await Promise.race([
         fetchPerGramRates('INR'),
         new Promise((_, reject) => 
@@ -141,25 +138,27 @@ router.post('/', async (req, res) => {
       console.log('[ORDER] Live rates fetched in', Date.now() - startTime, 'ms - Gold: ₹' + perGramRates.goldPerGram + '/g, Silver: ₹' + perGramRates.silverPerGram + '/g');
     } catch (err) {
       console.warn('[ORDER] Failed to fetch live rates, using fallback:', err.message);
-      // perGramRates already has fallback values
     }
 
-    // Calculate subtotal using LIVE prices at checkout time
+    // Calculate subtotal and tax using LIVE prices at checkout time
     let subtotal = 0;
+    let totalTax = 0;
     const itemsWithLivePrice = cart.items
       .map(item => {
         if (!item.product) {
           console.warn('[ORDER] Skipping cart item because product is missing');
           return null;
         }
-        const livePrice = computeLivePrice(item.product, perGramRates);
-        const itemSubtotal = livePrice * item.quantity;
+        const calc = computeLivePrice(item.product, perGramRates);
+        const itemSubtotal = calc.subtotal * item.quantity;
+        const itemGst = calc.gstTax * item.quantity;
         subtotal += itemSubtotal;
-        console.log(`[ORDER] Item: ${item.product.name}, Static: ₹${item.product.price}, Live: ₹${livePrice}, Qty: ${item.quantity}, Subtotal: ₹${itemSubtotal}`);
+        totalTax += itemGst;
+        console.log(`[ORDER] Item: ${item.product.name}, Unit: ₹${calc.totalLivePrice}, Qty: ${item.quantity}, Subtotal: ₹${itemSubtotal}`);
         return {
           product: item.product._id,
           quantity: item.quantity,
-          price: livePrice,
+          price: calc.totalLivePrice,
         };
       })
       .filter(Boolean);
@@ -168,13 +167,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'No valid cart items to place order. Please refresh your cart.' });
     }
     
-    // Calculate tax (3% on subtotal)
-    const taxAmount = subtotal * 0.03;
-    
-    // Total amount including tax - this is what the user actually pays
-    const totalAmount = subtotal + taxAmount;
+    // Total amount including tax - matches frontend live pricing
+    const totalAmount = subtotal + totalTax;
 
-    console.log('[ORDER] Subtotal: ₹' + subtotal + ', Tax: ₹' + taxAmount + ', Total: ₹' + totalAmount);
+    console.log('[ORDER] Subtotal: ₹' + subtotal + ', Tax: ₹' + totalTax + ', Total: ₹' + totalAmount);
 
     // Create order with LIVE prices
     const order = new Order({
