@@ -279,6 +279,7 @@ app.use('/api/prices', priceRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/custom-orders', customOrderRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
+app.use('/api/billing', require('./routes/billing'));
 
 // Root endpoint - Useful for Render and deployment platforms
 app.get('/', (req, res) => {

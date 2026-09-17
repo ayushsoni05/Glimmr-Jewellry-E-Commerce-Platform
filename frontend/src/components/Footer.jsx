@@ -89,6 +89,7 @@ const Footer = () => {
               <li><Link to="/live-rates" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Live Metal Rates</Link></li>
               <li><Link to="/about" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">BIS Hallmarking</Link></li>
               <li><Link to="/contact" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Patron Concierge</Link></li>
+              <li><Link to="/billing" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Atelier Billing (POS)</Link></li>
             </ul>
           </motion.div>
 
@@ -144,11 +145,14 @@ const Footer = () => {
           initial={{ opacity: 0 }} 
           whileInView={{ opacity: 1 }} 
           viewport={{ once: true }}
-          className="pt-8 border-t border-white/10 flex justify-center mt-12"
+          className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center mt-12 gap-3"
         >
           <p className="text-white/40 text-sm font-body">
             Copyright &copy; GLIMMR 2024
           </p>
+          <Link to="/billing" className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#B59A6C] hover:text-white uppercase tracking-widest transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" /> ATELIER POS
+          </Link>
         </motion.div>
 
       </div>

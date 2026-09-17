@@ -40,6 +40,7 @@ import AdminRoute from './components/AdminRoute';
 import CustomAtelier from './pages/CustomAtelier';
 import CertificateVerifier from './pages/CertificateVerifier';
 import GiftingSuite from './pages/GiftingSuite';
+import OfflineBilling from './pages/OfflineBilling';
 import GlimmrConcierge from './components/GlimmrConcierge';
 
 function App() {
@@ -92,6 +93,7 @@ function App() {
                   <Route path="/custom-atelier" element={<CustomAtelier />} />
                   <Route path="/verify-certificate" element={<CertificateVerifier />} />
                   <Route path="/gifting" element={<GiftingSuite />} />
+                  <Route path="/billing" element={<OfflineBilling />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatePresence>
