@@ -118,7 +118,12 @@ const OfflineBilling = () => {
       setProductsLoading(true);
       try {
         const res = await api.get('/products');
-        setProducts(res.data || []);
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.products)
+          ? res.data.products
+          : [];
+        setProducts(list);
       } catch {
         setProducts([]);
       } finally {
@@ -168,13 +173,19 @@ const OfflineBilling = () => {
   // Load saved bills history
   useEffect(() => {
     if (showHistory) {
-      setBillHistory(getSavedBills());
+      const saved = getSavedBills();
+      setBillHistory(Array.isArray(saved) ? saved : []);
     }
   }, [showHistory]);
 
   // Filter products by search and category
   const filteredProducts = useMemo(() => {
-    let list = products;
+    const rawList = Array.isArray(products)
+      ? products
+      : Array.isArray(products?.products)
+      ? products.products
+      : [];
+    let list = rawList;
     if (activeCategory !== 'all') {
       list = list.filter(p => (p.category || '').toLowerCase() === activeCategory.toLowerCase());
     }
@@ -186,7 +197,7 @@ const OfflineBilling = () => {
         (p.category || '').toLowerCase().includes(q)
       );
     }
-    return list;
+    return Array.isArray(list) ? list : [];
   }, [products, activeCategory, searchQuery]);
 
   // Rate override handler (Owner control)

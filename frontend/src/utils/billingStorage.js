@@ -18,9 +18,13 @@ export function saveBillLocally(billData) {
 }
 
 export function getSavedBills() {
-  const billsJson = localStorage.getItem('glimmr_bills');
-  const bills = billsJson ? JSON.parse(billsJson) : [];
-  return bills.sort((a, b) => new Date(b.date) - new Date(a.date));
+  try {
+    const billsJson = localStorage.getItem('glimmr_bills');
+    const bills = billsJson ? JSON.parse(billsJson) : [];
+    return Array.isArray(bills) ? bills.sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function getBillByNumber(billNumber) {
