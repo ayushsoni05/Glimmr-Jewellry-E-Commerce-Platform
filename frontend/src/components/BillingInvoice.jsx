@@ -31,12 +31,18 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     oldGoldDetails = {},
     notes = '',
     paymentReference = '',
-    gstRate = 3
+    gstRate = 3,
+    taxSplitMode = 'split',
+    totalGst = 0,
+    igst = 0
   } = billData;
 
   const safeItems = Array.isArray(items) ? items : [];
-  const cgstPercent = Number(((Number(gstRate) || 3) / 2).toFixed(2));
-  const sgstPercent = Number(((Number(gstRate) || 3) / 2).toFixed(2));
+  const rateNum = Number(gstRate) || 0;
+  const computedTotalGst = totalGst > 0 ? totalGst : (Number(cgst) + Number(sgst) + Number(igst)) || Math.round(subtotal * (rateNum / 100));
+  const isSingle = taxSplitMode === 'single' || (cgst === 0 && sgst === 0 && computedTotalGst > 0);
+  const cgstPercent = Number((rateNum / 2).toFixed(2));
+  const sgstPercent = Number((rateNum / 2).toFixed(2));
 
   const invoiceDate = new Date(date || Date.now()).toLocaleDateString('en-IN', {
     day: 'numeric',
@@ -246,20 +252,35 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
 
     doc.setFontSize(8.5);
     doc.setTextColor(80, 80, 80);
-    doc.text('Subtotal (Before Tax):', 140, y + 4);
+    doc.text('Subtotal (Before Tax):', 135, y + 4);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(17, 17, 17);
     doc.text(`Rs. ${subtotal.toLocaleString('en-IN')}`, 190, y + 4, { align: 'right' });
 
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    doc.text(`CGST (${cgstPercent}%):`, 140, y + 9);
-    doc.text(`Rs. ${cgst.toLocaleString('en-IN')}`, 190, y + 9, { align: 'right' });
+    let currentYOffset = y + 4;
+    if (computedTotalGst > 0) {
+      currentYOffset += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(17, 17, 17);
+      doc.text(`Total GST (${rateNum}%):`, 135, currentYOffset);
+      doc.text(`Rs. ${computedTotalGst.toLocaleString('en-IN')}`, 190, currentYOffset, { align: 'right' });
 
-    doc.text(`SGST (${sgstPercent}%):`, 140, y + 14);
-    doc.text(`Rs. ${sgst.toLocaleString('en-IN')}`, 190, y + 14, { align: 'right' });
-
-    let currentYOffset = y + 14;
+      if (!isSingle && (cgst > 0 || sgst > 0)) {
+        currentYOffset += 4;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.8);
+        doc.setTextColor(120, 120, 120);
+        doc.text(`CGST (${cgstPercent}%): Rs.${cgst.toLocaleString('en-IN')}  |  SGST (${sgstPercent}%): Rs.${sgst.toLocaleString('en-IN')}`, 135, currentYOffset);
+      }
+    } else {
+      currentYOffset += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`GST (0% Exempt):`, 135, currentYOffset);
+      doc.text(`Rs. 0`, 190, currentYOffset, { align: 'right' });
+    }
     if (discountAmount > 0) {
       currentYOffset += 5;
       doc.setFont('helvetica', 'normal');
@@ -329,7 +350,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     document.body.appendChild(printFrame);
     const frameDoc = printFrame.contentDocument || printFrame.contentWindow.document;
     frameDoc.open();
-    frameDoc.write(`<html><head><title>${billNumber} - Glimmr Atelier</title><style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;600;700&family=Fragment+Mono&display=swap');*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;color:#222;padding:20mm}.gold-bar{height:4px;background:#B59A6C;margin-bottom:20px}.header{display:flex;justify-content:space-between;margin-bottom:16px}.brand{font-family:'Playfair Display',serif;font-size:22px;font-weight:700}.sub{font-size:7.5px;color:#888;margin-top:4px}.bill-meta{text-align:right}.bill-meta .label{font-size:9px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em}.bill-meta .number{font-size:14px;font-weight:700;margin-top:4px}.bill-meta .date{font-size:8.5px;color:#888;margin-top:2px}.customer-box{background:#FAF9F7;border:1px solid #E5E2D9;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between}.customer-box .section-label{font-size:8px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}.customer-box .name{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.customer-box .detail{font-size:8px;color:#555;margin-top:2px}table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#111;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;text-align:left}th.right{text-align:right}th.center{text-align:center}td{padding:8px;font-size:9px;border-bottom:1px solid #eee;vertical-align:top}td.right{text-align:right;font-family:'Fragment Mono',monospace}td.center{text-align:center;font-family:'Fragment Mono',monospace;font-weight:700}td.bold{font-weight:700}.item-img{width:32px;height:32px;object-fit:cover;border:1px solid #eee;margin-right:8px;vertical-align:middle}.item-name{font-family:'Playfair Display',serif;font-weight:700;font-size:10px}.item-hsn{font-size:6.5px;color:#aaa;margin-top:2px}.item-breakdown{font-size:7px;color:#888;margin-top:3px}.summary{display:flex;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid #ddd}.declaration{max-width:240px;font-size:7.5px;color:#888}.declaration .title{font-size:8px;color:#111;font-weight:700;margin-bottom:4px}.totals{min-width:200px}.totals .row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:9px;color:#555}.totals .row .val{font-family:'Fragment Mono',monospace;font-weight:700;color:#111}.totals .grand{border-top:2px solid #111;padding-top:8px;margin-top:6px}.totals .grand .label{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.totals .grand .val{font-family:'Fragment Mono',monospace;font-size:14px;font-weight:700}.discount-row{color:#147a3b;background:#f0fdf4;padding:4px 6px;border:1px solid #bbf7d0;margin-bottom:4px}.footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:flex-end}.footer .cert{font-size:7.5px;color:#888}.footer .sig{text-align:right}.footer .sig .brand{font-family:'Playfair Display',serif;font-size:12px;color:#B59A6C;font-weight:700}.footer .sig .label{font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.15em;margin-top:2px}@media print{body{padding:10mm}}</style></head><body><div class="gold-bar"></div><div class="header"><div><div class="brand">GLIMMR ATELIER</div><div class="sub">HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY</div><div class="sub">GSTIN: 27AAAAA0000A1Z5 | HSN Code: 7113 | BIS License: HM-916-84920</div><div class="sub">Atelier Tower, Bandra Kurla Complex, Mumbai 400051</div></div><div class="bill-meta"><div class="label">Store Billing Invoice</div><div class="number">${billNumber}</div><div class="date">${invoiceDate} | ${invoiceTime}</div><div class="date" style="color:#147a3b;font-weight:700">Payment: ${paymentMethod.toUpperCase()}</div></div></div><div class="customer-box"><div><div class="section-label">Customer Details</div><div class="name">${customer.name || 'Walk-in Customer'}</div><div class="detail">Phone: ${customer.phone || 'N/A'}</div></div><div><div class="section-label">Metal Rates Applied</div><div class="detail">Gold: Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g</div><div class="detail">Silver: Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g | Operator: ${operator}</div></div></div><table><thead><tr><th>Item Description</th><th>Spec / Purity</th><th class="center">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>${safeItems.map(d => { const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1); return `<tr><td>${d.image ? `<img src="${d.image}" class="item-img" />` : ''}<div class="item-name">${d.name || 'Jewelry Piece'}</div><div class="item-hsn">HSN: 7113 | BIS Hallmarked</div>${d.weight > 0 ? `<div class="item-breakdown">Metal: Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')} | Making: Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}${d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</div>` : ''}</td><td>${mat} ${d.karat ? d.karat + 'K' : ''} ${d.weight ? d.weight + 'g' : ''}</td><td class="center">${d.quantity}</td><td class="right">Rs. ${Number(d.totalPrice).toLocaleString('en-IN')}</td><td class="right bold">Rs. ${(d.totalPrice * d.quantity).toLocaleString('en-IN')}</td></tr>`; }).join('')}</tbody></table><div class="summary"><div class="declaration"><div class="title">Declaration & Legal Terms:</div><div>We declare that this invoice shows the actual price of the goods described and all particulars are true and correct. All Gold and Silver jewelry is 100% BIS Hallmarked.</div></div><div class="totals"><div class="row"><span>Subtotal (Before Tax):</span><span class="val">Rs. ${subtotal.toLocaleString('en-IN')}</span></div><div class="row"><span>CGST (${cgstPercent}%):</span><span class="val">Rs. ${cgst.toLocaleString('en-IN')}</span></div><div class="row"><span>SGST (${sgstPercent}%):</span><span class="val">Rs. ${sgst.toLocaleString('en-IN')}</span></div>${discountAmount > 0 ? `<div class="row discount-row"><span>Voucher (${couponCode || 'Privilege'}):</span><span class="val">-Rs. ${discountAmount.toLocaleString('en-IN')}</span></div>` : ''}${oldGoldDeduction > 0 ? `<div class="row" style="color:#b45309;background:#fffbeb;padding:4px 6px;border:1px solid #fde68a;margin-bottom:4px;"><span>Old Gold Exchange:</span><span class="val">-Rs. ${oldGoldDeduction.toLocaleString('en-IN')}</span></div>` : ''}<div class="row grand"><span class="label">Total Payable:</span><span class="val">Rs. ${totalPayable.toLocaleString('en-IN')}</span></div>${paymentMethod === 'cash' && cashReceived > 0 ? `<div class="row" style="margin-top:6px"><span>Cash Received:</span><span class="val">Rs. ${cashReceived.toLocaleString('en-IN')}</span></div><div class="row"><span>Change Returned:</span><span class="val">Rs. ${changeReturned.toLocaleString('en-IN')}</span></div>` : ''}</div></div><div class="footer"><div class="cert">Computer Generated Certified GST Invoice</div><div class="sig"><div class="brand">Glimmr Atelier</div><div class="label">Authorized Signatory</div></div></div></body></html>`);
+    frameDoc.write(`<html><head><title>${billNumber} - Glimmr Atelier</title><style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;600;700&family=Fragment+Mono&display=swap');*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;color:#222;padding:20mm}.gold-bar{height:4px;background:#B59A6C;margin-bottom:20px}.header{display:flex;justify-content:space-between;margin-bottom:16px}.brand{font-family:'Playfair Display',serif;font-size:22px;font-weight:700}.sub{font-size:7.5px;color:#888;margin-top:4px}.bill-meta{text-align:right}.bill-meta .label{font-size:9px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em}.bill-meta .number{font-size:14px;font-weight:700;margin-top:4px}.bill-meta .date{font-size:8.5px;color:#888;margin-top:2px}.customer-box{background:#FAF9F7;border:1px solid #E5E2D9;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between}.customer-box .section-label{font-size:8px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}.customer-box .name{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.customer-box .detail{font-size:8px;color:#555;margin-top:2px}table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#111;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;text-align:left}th.right{text-align:right}th.center{text-align:center}td{padding:8px;font-size:9px;border-bottom:1px solid #eee;vertical-align:top}td.right{text-align:right;font-family:'Fragment Mono',monospace}td.center{text-align:center;font-family:'Fragment Mono',monospace;font-weight:700}td.bold{font-weight:700}.item-img{width:32px;height:32px;object-fit:cover;border:1px solid #eee;margin-right:8px;vertical-align:middle}.item-name{font-family:'Playfair Display',serif;font-weight:700;font-size:10px}.item-hsn{font-size:6.5px;color:#aaa;margin-top:2px}.item-breakdown{font-size:7px;color:#888;margin-top:3px}.summary{display:flex;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid #ddd}.declaration{max-width:240px;font-size:7.5px;color:#888}.declaration .title{font-size:8px;color:#111;font-weight:700;margin-bottom:4px}.totals{min-width:200px}.totals .row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:9px;color:#555}.totals .row .val{font-family:'Fragment Mono',monospace;font-weight:700;color:#111}.totals .grand{border-top:2px solid #111;padding-top:8px;margin-top:6px}.totals .grand .label{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.totals .grand .val{font-family:'Fragment Mono',monospace;font-size:14px;font-weight:700}.discount-row{color:#147a3b;background:#f0fdf4;padding:4px 6px;border:1px solid #bbf7d0;margin-bottom:4px}.footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:flex-end}.footer .cert{font-size:7.5px;color:#888}.footer .sig{text-align:right}.footer .sig .brand{font-family:'Playfair Display',serif;font-size:12px;color:#B59A6C;font-weight:700}.footer .sig .label{font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.15em;margin-top:2px}@media print{body{padding:10mm}}</style></head><body><div class="gold-bar"></div><div class="header"><div><div class="brand">GLIMMR ATELIER</div><div class="sub">HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY</div><div class="sub">GSTIN: 27AAAAA0000A1Z5 | HSN Code: 7113 | BIS License: HM-916-84920</div><div class="sub">Atelier Tower, Bandra Kurla Complex, Mumbai 400051</div></div><div class="bill-meta"><div class="label">Store Billing Invoice</div><div class="number">${billNumber}</div><div class="date">${invoiceDate} | ${invoiceTime}</div><div class="date" style="color:#147a3b;font-weight:700">Payment: ${paymentMethod.toUpperCase()}</div></div></div><div class="customer-box"><div><div class="section-label">Customer Details</div><div class="name">${customer.name || 'Walk-in Customer'}</div><div class="detail">Phone: ${customer.phone || 'N/A'}</div></div><div><div class="section-label">Metal Rates Applied</div><div class="detail">Gold: Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g</div><div class="detail">Silver: Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g | Operator: ${operator}</div></div></div><table><thead><tr><th>Item Description</th><th>Spec / Purity</th><th class="center">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>${safeItems.map(d => { const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1); return `<tr><td>${d.image ? `<img src="${d.image}" class="item-img" />` : ''}<div class="item-name">${d.name || 'Jewelry Piece'}</div><div class="item-hsn">HSN: 7113 | BIS Hallmarked</div>${d.weight > 0 ? `<div class="item-breakdown">Metal: Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')} | Making: Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}${d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</div>` : ''}</td><td>${mat} ${d.karat ? d.karat + 'K' : ''} ${d.weight ? d.weight + 'g' : ''}</td><td class="center">${d.quantity}</td><td class="right">Rs. ${Number(d.totalPrice).toLocaleString('en-IN')}</td><td class="right bold">Rs. ${(d.totalPrice * d.quantity).toLocaleString('en-IN')}</td></tr>`; }).join('')}</tbody></table><div class="summary"><div class="declaration"><div class="title">Declaration & Legal Terms:</div><div>We declare that this invoice shows the actual price of the goods described and all particulars are true and correct. All Gold and Silver jewelry is 100% BIS Hallmarked.</div></div><div class="totals"><div class="row"><span>Subtotal (Before Tax):</span><span class="val">Rs. ${subtotal.toLocaleString('en-IN')}</span></div>${computedTotalGst > 0 ? `<div class="row" style="font-weight:700"><span>Total GST (${rateNum}%):</span><span class="val">Rs. ${computedTotalGst.toLocaleString('en-IN')}</span></div>${!isSingle ? `<div class="row" style="font-size:7.5px;color:#777;padding-left:6px;margin-top:-2px"><span>CGST (${cgstPercent}%): Rs. ${cgst.toLocaleString('en-IN')} &nbsp;|&nbsp; SGST (${sgstPercent}%): Rs. ${sgst.toLocaleString('en-IN')}</span></div>` : ''}` : `<div class="row"><span>GST (0% Exempt):</span><span class="val">Rs. 0</span></div>`}${discountAmount > 0 ? `<div class="row discount-row"><span>Voucher (${couponCode || 'Privilege'}):</span><span class="val">-Rs. ${discountAmount.toLocaleString('en-IN')}</span></div>` : ''}${oldGoldDeduction > 0 ? `<div class="row" style="color:#b45309;background:#fffbeb;padding:4px 6px;border:1px solid #fde68a;margin-bottom:4px;"><span>Old Gold Exchange:</span><span class="val">-Rs. ${oldGoldDeduction.toLocaleString('en-IN')}</span></div>` : ''}<div class="row grand"><span class="label">Total Payable:</span><span class="val">Rs. ${totalPayable.toLocaleString('en-IN')}</span></div>${paymentMethod === 'cash' && cashReceived > 0 ? `<div class="row" style="margin-top:6px"><span>Cash Received:</span><span class="val">Rs. ${cashReceived.toLocaleString('en-IN')}</span></div><div class="row"><span>Change Returned:</span><span class="val">Rs. ${changeReturned.toLocaleString('en-IN')}</span></div>` : ''}</div></div><div class="footer"><div class="cert">Computer Generated Certified GST Invoice</div><div class="sig"><div class="brand">Glimmr Atelier</div><div class="label">Authorized Signatory</div></div></div></body></html>`);
     frameDoc.close();
     setTimeout(() => { printFrame.contentWindow.print(); setTimeout(() => document.body.removeChild(printFrame), 1000); }, 500);
   };
@@ -439,14 +460,25 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                   <span>Subtotal (Before Tax):</span>
                   <span className="font-mono font-bold text-[#111111] whitespace-nowrap">Rs.{subtotal.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span>CGST ({cgstPercent}%):</span>
-                  <span className="font-mono text-gray-700 whitespace-nowrap">Rs.{cgst.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>SGST ({sgstPercent}%):</span>
-                  <span className="font-mono text-gray-700 whitespace-nowrap">Rs.{sgst.toLocaleString('en-IN')}</span>
-                </div>
+                {computedTotalGst > 0 ? (
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between items-center font-bold text-[#111111]">
+                      <span>Total GST ({rateNum}%):</span>
+                      <span className="font-mono whitespace-nowrap">Rs.{computedTotalGst.toLocaleString('en-IN')}</span>
+                    </div>
+                    {!isSingle && (
+                      <div className="flex justify-between items-center text-[10px] text-gray-500 pl-2">
+                        <span>CGST ({cgstPercent}%): Rs.{cgst.toLocaleString('en-IN')}</span>
+                        <span>SGST ({sgstPercent}%): Rs.{sgst.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center text-gray-500">
+                    <span>GST (0% Exempt):</span>
+                    <span className="font-mono">Rs.0</span>
+                  </div>
+                )}
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200">
                     <span className="font-bold uppercase text-[10px]">Voucher ({couponCode || 'Privilege'}):</span>

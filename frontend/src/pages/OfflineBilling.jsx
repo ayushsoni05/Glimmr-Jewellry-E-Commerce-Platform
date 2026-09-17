@@ -68,6 +68,7 @@ const OfflineBilling = () => {
   const [gstRate, setGstRate] = useState(3); // Default 3% for fine jewelry (1.5% CGST + 1.5% SGST)
   const [isCustomGst, setIsCustomGst] = useState(false);
   const [customGstInput, setCustomGstInput] = useState('3');
+  const [taxSplitMode, setTaxSplitMode] = useState('split'); // 'split' = CGST+SGST, 'single' = Unified GST / IGST
 
   // Dynamic Making Charges Controls (Owner Configurable)
   const [defaultMakingRate, setDefaultMakingRate] = useState(450);
@@ -274,8 +275,9 @@ const OfflineBilling = () => {
     }));
   };
 
-  const handleApplyCustomGst = () => {
-    const r = Math.max(0, parseFloat(customGstInput) || 0);
+  const handleApplyCustomGst = (val) => {
+    const target = val !== undefined ? val : customGstInput;
+    const r = Math.max(0, parseFloat(target) || 0);
     setGstRate(r);
     setBillItems(prevItems => prevItems.map(item => {
       const gstTax = Math.round(item.subtotal * (r / 100));
@@ -583,8 +585,9 @@ const OfflineBilling = () => {
 
     const subtotal = totalMetal + totalMaking + totalDiamond;
     const totalGst = Math.round(subtotal * (gstRate / 100));
-    const cgst = Math.round(totalGst / 2);
-    const sgst = totalGst - cgst;
+    const cgst = taxSplitMode === 'single' ? 0 : Math.round(totalGst / 2);
+    const sgst = taxSplitMode === 'single' ? 0 : (totalGst - cgst);
+    const igst = taxSplitMode === 'single' ? totalGst : 0;
     const totalGrand = subtotal + totalGst;
 
     let voucherDiscount = 0;
@@ -605,7 +608,9 @@ const OfflineBilling = () => {
       subtotal,
       cgst,
       sgst,
+      igst,
       totalGst,
+      taxSplitMode,
       voucherDiscount,
       directDiscount,
       totalDiscount,
@@ -613,7 +618,7 @@ const OfflineBilling = () => {
       totalGrand,
       oldGoldDeduction
     };
-  }, [billItems, appliedVoucher, appliedCashDiscount, oldGoldDeduction, gstRate, makingConcessionPercent]);
+  }, [billItems, appliedVoucher, appliedCashDiscount, oldGoldDeduction, gstRate, taxSplitMode, makingConcessionPercent]);
 
   // Cash change calculation
   const changeToReturn = useMemo(() => {
@@ -713,8 +718,11 @@ const OfflineBilling = () => {
       totalDiamond: billTotals.totalDiamond,
       subtotal: billTotals.subtotal,
       gstRate,
+      taxSplitMode,
+      totalGst: billTotals.totalGst,
       cgst: billTotals.cgst,
       sgst: billTotals.sgst,
+      igst: billTotals.igst,
       discountAmount: billTotals.totalDiscount,
       couponCode: appliedVoucher?.code || (billTotals.directDiscount > 0 ? 'STORE_DISCOUNT' : ''),
       oldGoldDeduction: billTotals.oldGoldDeduction,
@@ -746,7 +754,7 @@ const OfflineBilling = () => {
   }, [
     billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin,
     operatorName, billNotes, paymentMethod, paymentReference, cashReceived, changeToReturn,
-    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate
+    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate, taxSplitMode
   ]);
 
   const handleClearBill = useCallback(() => {
@@ -1754,11 +1762,17 @@ const OfflineBilling = () => {
                           <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.subtotal.toLocaleString('en-IN')}</span>
                         </div>
 
+                        {/* Explicit Total GST line */}
+                        <div className="flex justify-between items-center text-xs font-bold text-[#111111]">
+                          <span>Total GST ({gstRate}%)</span>
+                          <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.totalGst.toLocaleString('en-IN')}</span>
+                        </div>
+
                         {/* DYNAMIC GST SELECTOR & CGST / SGST BREAKDOWN */}
                         <div className="bg-white p-2.5 border border-gray-200 space-y-2 mt-1">
                           <div className="flex justify-between items-center">
                             <span className="text-[9px] font-body font-bold uppercase tracking-wider text-gray-600">
-                              GST Configuration (Current: {gstRate}%)
+                              GST Tax Rate (Applied: {gstRate}%)
                             </span>
                             <div className="flex items-center gap-1">
                               {GST_PRESETS.map((p) => (
@@ -1777,7 +1791,10 @@ const OfflineBilling = () => {
                               ))}
                               <button
                                 type="button"
-                                onClick={() => setIsCustomGst(!isCustomGst)}
+                                onClick={() => {
+                                  setIsCustomGst(!isCustomGst);
+                                  if (!isCustomGst) setCustomGstInput(String(gstRate));
+                                }}
                                 className={`px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase border cursor-pointer ${
                                   isCustomGst ? 'bg-[#B59A6C] text-black border-[#B59A6C]' : 'bg-[#FAF9F7] text-gray-600 border-gray-200'
                                 }`}
@@ -1788,36 +1805,86 @@ const OfflineBilling = () => {
                           </div>
 
                           {isCustomGst && (
-                            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                            <div className="flex items-center gap-2 pt-1 border-t border-gray-100 flex-wrap">
                               <span className="text-[9px] text-gray-500 font-mono">Custom Tax Rate (%):</span>
                               <input
                                 type="number"
                                 step="0.1"
                                 min="0"
+                                max="100"
                                 value={customGstInput}
-                                onChange={(e) => setCustomGstInput(e.target.value)}
+                                onChange={(e) => {
+                                  setCustomGstInput(e.target.value);
+                                  handleApplyCustomGst(e.target.value);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleApplyCustomGst(customGstInput);
+                                  }
+                                }}
+                                onBlur={() => handleApplyCustomGst(customGstInput)}
                                 className="w-16 px-2 py-0.5 border border-gray-300 font-mono text-xs font-bold text-center"
                               />
                               <button
                                 type="button"
-                                onClick={handleApplyCustomGst}
+                                onClick={() => handleApplyCustomGst(customGstInput)}
                                 className="px-2.5 py-0.5 bg-[#222222] text-white text-[9px] font-bold uppercase hover:bg-[#B59A6C] hover:text-black cursor-pointer"
                               >
-                                Apply Tax %
+                                Apply {customGstInput || 0}%
                               </button>
+                              {gstRate === (parseFloat(customGstInput) || 0) && (
+                                <span className="text-[8px] text-emerald-700 font-mono font-bold">Active: {gstRate}%</span>
+                              )}
                             </div>
                           )}
 
-                          <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-600 pt-1 border-t border-gray-100">
-                            <div className="flex justify-between">
-                              <span>CGST ({(gstRate / 2).toFixed(2)}%):</span>
-                              <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.cgst.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>SGST ({(gstRate / 2).toFixed(2)}%):</span>
-                              <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.sgst.toLocaleString('en-IN')}</span>
+                          {/* Tax Split Mode Selector: Intra-State vs Single GST / IGST */}
+                          <div className="flex items-center justify-between pt-1 border-t border-gray-100 text-[8px]">
+                            <span className="text-gray-500 uppercase tracking-wider font-mono">Tax Mode:</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setTaxSplitMode('split')}
+                                className={`px-1.5 py-0.5 border cursor-pointer uppercase font-mono ${
+                                  taxSplitMode === 'split'
+                                    ? 'bg-[#222222] text-white border-[#222222]'
+                                    : 'bg-[#FAF9F7] text-gray-500 border-gray-200 hover:border-gray-400'
+                                }`}
+                              >
+                                Intra-State (CGST + SGST)
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setTaxSplitMode('single')}
+                                className={`px-1.5 py-0.5 border cursor-pointer uppercase font-mono ${
+                                  taxSplitMode === 'single'
+                                    ? 'bg-[#222222] text-white border-[#222222]'
+                                    : 'bg-[#FAF9F7] text-gray-500 border-gray-200 hover:border-gray-400'
+                                }`}
+                              >
+                                Single GST / IGST
+                              </button>
                             </div>
                           </div>
+
+                          {taxSplitMode === 'split' ? (
+                            <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-600 pt-1 border-t border-gray-100">
+                              <div className="flex justify-between">
+                                <span>CGST ({(gstRate / 2).toFixed(2)}%):</span>
+                                <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.cgst.toLocaleString('en-IN')}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>SGST ({(gstRate / 2).toFixed(2)}%):</span>
+                                <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.sgst.toLocaleString('en-IN')}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between text-[10px] text-gray-600 pt-1 border-t border-gray-100">
+                              <span>Unified GST ({gstRate}%):</span>
+                              <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.totalGst.toLocaleString('en-IN')}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Deductions: Vouchers & Owner Discounts */}
