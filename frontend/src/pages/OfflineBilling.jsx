@@ -39,6 +39,13 @@ const IMAGE_PRESETS = [
   { id: 'heart', label: 'Pendant', url: 'https://framerusercontent.com/images/ObqkR0R5JsxlwfTh6qRzuVS0Kc.png' }
 ];
 
+const GST_PRESETS = [
+  { label: '0% (Exempt)', value: 0 },
+  { label: '1.5%', value: 1.5 },
+  { label: '3% (Standard)', value: 3 },
+  { label: '5%', value: 5 }
+];
+
 const OfflineBilling = () => {
   // Products & Search
   const [products, setProducts] = useState([]);
@@ -57,17 +64,28 @@ const OfflineBilling = () => {
   const [customGoldRate, setCustomGoldRate] = useState('15600');
   const [customSilverRate, setCustomSilverRate] = useState('235');
 
+  // Dynamic GST Controls (Owner Configurable)
+  const [gstRate, setGstRate] = useState(3); // Default 3% for fine jewelry (1.5% CGST + 1.5% SGST)
+  const [isCustomGst, setIsCustomGst] = useState(false);
+  const [customGstInput, setCustomGstInput] = useState('3');
+
+  // Dynamic Making Charges Controls (Owner Configurable)
+  const [defaultMakingRate, setDefaultMakingRate] = useState(450);
+  const [bulkMakingRateInput, setBulkMakingRateInput] = useState('450');
+  const [makingConcessionPercent, setMakingConcessionPercent] = useState(0); // 0, 25, 50, 100
+  const [showMakingTools, setShowMakingTools] = useState(false);
+
   // Bill Line Items
   const [billItems, setBillItems] = useState([]);
   const [editingItemId, setEditingItemId] = useState(null);
   const [editItemForm, setEditItemForm] = useState({});
 
-  // Owner & Store Settings (Filled by Owner)
+  // Owner & Customer Info (Filled by Owner)
   const [operatorName, setOperatorName] = useState('Owner');
   const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerPhone, setCustomerPhone] = useState(''); // Strict 10-digit limit
   const [customerAddress, setCustomerAddress] = useState('');
-  const [customerGstin, setCustomerGstin] = useState('');
+  const [customerGstin, setCustomerGstin] = useState(''); // Strict 15-char limit
   const [billNotes, setBillNotes] = useState('');
 
   // Payment Method & Tracking
@@ -81,11 +99,13 @@ const OfflineBilling = () => {
   const [oldGoldKarat, setOldGoldKarat] = useState('22');
   const [oldGoldRate, setOldGoldRate] = useState('');
 
-  // Discounts
-  const [ownerDiscount, setOwnerDiscount] = useState('');
+  // Discounts & Vouchers
+  const [cashDiscountInput, setCashDiscountInput] = useState('');
+  const [appliedCashDiscount, setAppliedCashDiscount] = useState(0);
   const [voucherInput, setVoucherInput] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [voucherError, setVoucherError] = useState('');
+  const [voucherSuccess, setVoucherSuccess] = useState('');
 
   // Custom Item Drawer (Owner Filled)
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -178,7 +198,7 @@ const OfflineBilling = () => {
     }
   }, [showHistory]);
 
-  // Filter products by search and category
+  // Filter products safely
   const filteredProducts = useMemo(() => {
     const rawList = Array.isArray(products)
       ? products
@@ -200,7 +220,7 @@ const OfflineBilling = () => {
     return Array.isArray(list) ? list : [];
   }, [products, activeCategory, searchQuery]);
 
-  // Rate override handler (Owner control)
+  // Rate override handler
   const handleApplyCustomRates = () => {
     const gRate = parseFloat(customGoldRate) || liveRates.gold;
     const sRate = parseFloat(customSilverRate) || liveRates.silver;
@@ -209,14 +229,14 @@ const OfflineBilling = () => {
     setRateStatus('custom');
     setIsEditingRates(false);
 
-    // Recalculate any existing items on the bill with the owner's new rates
+    // Recalculate existing items with new rates and current GST rate
     setBillItems(prevItems => prevItems.map(item => {
       const rate = item.material === 'silver' ? sRate : gRate;
       const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
       const rawMetalCost = Math.round(item.weight * rate * purityMult);
-      const makingCharges = Math.round(item.weight * (item.makingChargeRate || 450));
+      const makingCharges = Math.round(item.weight * (item.makingChargeRate || defaultMakingRate));
       const subtotal = rawMetalCost + makingCharges + (item.gemstoneCost || 0);
-      const gstTax = Math.round(subtotal * 0.03);
+      const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
         metalCost: rawMetalCost,
@@ -236,21 +256,107 @@ const OfflineBilling = () => {
     setIsEditingRates(false);
   };
 
-  // Calculate live price for a catalog product
+  // GST Rate Change Handler
+  const handleSelectGstRate = (newRate) => {
+    const r = Math.max(0, parseFloat(newRate) || 0);
+    setGstRate(r);
+    setIsCustomGst(false);
+    setCustomGstInput(String(r));
+
+    // Recalculate taxes for all line items
+    setBillItems(prevItems => prevItems.map(item => {
+      const gstTax = Math.round(item.subtotal * (r / 100));
+      return {
+        ...item,
+        gstTax,
+        totalPrice: item.subtotal + gstTax
+      };
+    }));
+  };
+
+  const handleApplyCustomGst = () => {
+    const r = Math.max(0, parseFloat(customGstInput) || 0);
+    setGstRate(r);
+    setBillItems(prevItems => prevItems.map(item => {
+      const gstTax = Math.round(item.subtotal * (r / 100));
+      return {
+        ...item,
+        gstTax,
+        totalPrice: item.subtotal + gstTax
+      };
+    }));
+  };
+
+  // Making Charges Handlers
+  const handleUpdateItemMakingRate = (itemId, newRate) => {
+    const rateNum = Math.max(0, parseFloat(newRate) || 0);
+    setBillItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item;
+      const baseMetalRate = item.material === 'silver' ? liveRates.silver : liveRates.gold;
+      const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
+      const metalCost = Math.round((item.netWeight || item.weight) * baseMetalRate * purityMult);
+      const makingCharges = Math.round(item.weight * rateNum);
+      const subtotal = metalCost + makingCharges + (item.gemstoneCost || 0);
+      const gstTax = Math.round(subtotal * (gstRate / 100));
+      return {
+        ...item,
+        makingChargeRate: rateNum,
+        metalCost,
+        makingCharges,
+        subtotal,
+        gstTax,
+        totalPrice: subtotal + gstTax
+      };
+    }));
+  };
+
+  const handleApplyGlobalMakingRate = () => {
+    const rateNum = Math.max(0, parseFloat(bulkMakingRateInput) || 0);
+    setDefaultMakingRate(rateNum);
+    setBillItems(prev => prev.map(item => {
+      const baseMetalRate = item.material === 'silver' ? liveRates.silver : liveRates.gold;
+      const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
+      const metalCost = Math.round((item.netWeight || item.weight) * baseMetalRate * purityMult);
+      const makingCharges = Math.round(item.weight * rateNum);
+      const subtotal = metalCost + makingCharges + (item.gemstoneCost || 0);
+      const gstTax = Math.round(subtotal * (gstRate / 100));
+      return {
+        ...item,
+        makingChargeRate: rateNum,
+        metalCost,
+        makingCharges,
+        subtotal,
+        gstTax,
+        totalPrice: subtotal + gstTax
+      };
+    }));
+    setShowMakingTools(false);
+  };
+
+  // Calculate live price for catalog product
   const getLivePrice = useCallback((product) => {
     const rates = {
       gold: { price: liveRates.gold },
       silver: { price: liveRates.silver }
     };
-    return calculateProductLivePrice(product, rates);
-  }, [liveRates]);
+    const res = calculateProductLivePrice(product, rates);
+    // Adjust for current gstRate
+    const subtotal = res.rawMetalCost + res.makingCharges + (res.gemstoneCost || 0);
+    const gstTax = Math.round(subtotal * (gstRate / 100));
+    return {
+      ...res,
+      subtotal,
+      gstTax,
+      totalLivePrice: subtotal + gstTax
+    };
+  }, [liveRates, gstRate]);
 
   // Calculate custom item price
   const calculateCustomItemPrice = useCallback((item) => {
     const grossWeight = parseFloat(item.weight) || 0;
     const stoneWeight = parseFloat(item.stoneWeight) || 0;
     const netWeight = Math.max(0, grossWeight - stoneWeight);
-    const makingRate = parseFloat(item.makingChargeRate) || 450;
+    const makingRate = parseFloat(item.makingChargeRate) || defaultMakingRate;
     const material = item.material;
     const karat = Number(item.karat);
 
@@ -272,7 +378,7 @@ const OfflineBilling = () => {
     }
 
     const subtotal = rawMetalCost + makingCharges + gemstoneCost;
-    const gstTax = Math.round(subtotal * 0.03);
+    const gstTax = Math.round(subtotal * (gstRate / 100));
     const totalLivePrice = subtotal + gstTax;
 
     return {
@@ -287,7 +393,7 @@ const OfflineBilling = () => {
       karat,
       material
     };
-  }, [liveRates]);
+  }, [liveRates, defaultMakingRate, gstRate]);
 
   // Add catalog product to bill
   const addProductToBill = useCallback((product) => {
@@ -312,7 +418,7 @@ const OfflineBilling = () => {
       karat: Number(product.karat) || 22,
       weight: Number(product.metalWeight || product.weight) || 0,
       netWeight: Number(product.metalWeight || product.weight) || 0,
-      makingChargeRate: 450,
+      makingChargeRate: defaultMakingRate,
       metalCost: bd.rawMetalCost,
       makingCharges: bd.makingCharges,
       gemstoneCost: bd.gemstoneCost || 0,
@@ -323,9 +429,9 @@ const OfflineBilling = () => {
       image: imgSrc,
       isCustomItem: false
     }]);
-  }, [billItems, getLivePrice]);
+  }, [billItems, getLivePrice, defaultMakingRate]);
 
-  // Add custom item created by owner
+  // Add bespoke custom item
   const addCustomItemToBill = useCallback(() => {
     if (!customItem.weight || parseFloat(customItem.weight) <= 0) return;
 
@@ -340,7 +446,7 @@ const OfflineBilling = () => {
       karat: Number(customItem.karat),
       weight: parseFloat(customItem.weight),
       netWeight: bd.netWeight,
-      makingChargeRate: parseFloat(customItem.makingChargeRate) || 450,
+      makingChargeRate: parseFloat(customItem.makingChargeRate) || defaultMakingRate,
       metalCost: bd.rawMetalCost,
       makingCharges: bd.makingCharges,
       gemstoneCost: bd.gemstoneCost,
@@ -358,7 +464,7 @@ const OfflineBilling = () => {
       karat: 22,
       weight: '',
       stoneWeight: '',
-      makingChargeRate: 450,
+      makingChargeRate: defaultMakingRate,
       hasDiamond: false,
       diamondCarat: '',
       diamondCut: 'excellent',
@@ -368,9 +474,9 @@ const OfflineBilling = () => {
       image: IMAGE_PRESETS[0].url
     });
     setShowCustomForm(false);
-  }, [customItem, calculateCustomItemPrice]);
+  }, [customItem, calculateCustomItemPrice, defaultMakingRate]);
 
-  // Edit line item inline (Owner full control)
+  // Edit line item modal/drawer
   const handleStartEditItem = (item) => {
     setEditingItemId(item.id);
     setEditItemForm({
@@ -378,7 +484,7 @@ const OfflineBilling = () => {
       weight: item.weight,
       karat: item.karat,
       material: item.material,
-      makingChargeRate: item.makingChargeRate || 450,
+      makingChargeRate: item.makingChargeRate || defaultMakingRate,
       gemstoneCost: item.gemstoneCost || 0,
       image: item.image
     });
@@ -389,7 +495,7 @@ const OfflineBilling = () => {
       if (item.id !== itemId) return item;
 
       const weight = parseFloat(editItemForm.weight) || item.weight;
-      const makingRate = parseFloat(editItemForm.makingChargeRate) || 450;
+      const makingRate = parseFloat(editItemForm.makingChargeRate) || defaultMakingRate;
       const karat = Number(editItemForm.karat) || item.karat;
       const material = editItemForm.material || item.material;
       const gemstoneCost = parseFloat(editItemForm.gemstoneCost) || 0;
@@ -399,7 +505,7 @@ const OfflineBilling = () => {
       const rawMetalCost = Math.round(weight * baseRate * purityMult);
       const makingCharges = Math.round(weight * makingRate);
       const subtotal = rawMetalCost + makingCharges + gemstoneCost;
-      const gstTax = Math.round(subtotal * 0.03);
+      const gstTax = Math.round(subtotal * (gstRate / 100));
 
       return {
         ...item,
@@ -436,7 +542,19 @@ const OfflineBilling = () => {
     setBillItems(prev => prev.filter(bi => bi.id !== itemId));
   }, []);
 
-  // Old Gold Exchange Deduction Calculation
+  // Customer Phone Input Handler (Strict 10 Digits)
+  const handleCustomerPhoneChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setCustomerPhone(digitsOnly);
+  };
+
+  // Customer GSTIN Input Handler (Strict 15 Chars, Uppercase Alphanumeric)
+  const handleCustomerGstinChange = (e) => {
+    const alphanumeric = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+    setCustomerGstin(alphanumeric);
+  };
+
+  // Old Gold Exchange Deduction
   const oldGoldDeduction = useMemo(() => {
     if (!hasOldGold) return 0;
     const wt = parseFloat(oldGoldWeight) || 0;
@@ -449,34 +567,42 @@ const OfflineBilling = () => {
 
   // Grand Totals Calculation
   const billTotals = useMemo(() => {
-    let totalMetal = 0, totalMaking = 0, totalDiamond = 0, totalSub = 0, totalGst = 0, totalGrand = 0;
+    let totalMetal = 0, rawTotalMaking = 0, totalDiamond = 0, baseSubtotal = 0;
     billItems.forEach(bi => {
       totalMetal += bi.metalCost * bi.quantity;
-      totalMaking += bi.makingCharges * bi.quantity;
+      rawTotalMaking += bi.makingCharges * bi.quantity;
       totalDiamond += bi.gemstoneCost * bi.quantity;
-      totalSub += bi.subtotal * bi.quantity;
-      totalGst += bi.gstTax * bi.quantity;
-      totalGrand += bi.totalPrice * bi.quantity;
+      baseSubtotal += bi.subtotal * bi.quantity;
     });
 
+    // Making charge concession discount
+    const makingConcessionDiscount = makingConcessionPercent > 0
+      ? Math.round((rawTotalMaking * makingConcessionPercent) / 100)
+      : 0;
+    const totalMaking = Math.max(0, rawTotalMaking - makingConcessionDiscount);
+
+    const subtotal = totalMetal + totalMaking + totalDiamond;
+    const totalGst = Math.round(subtotal * (gstRate / 100));
     const cgst = Math.round(totalGst / 2);
     const sgst = totalGst - cgst;
+    const totalGrand = subtotal + totalGst;
 
     let voucherDiscount = 0;
     if (appliedVoucher) {
       voucherDiscount = appliedVoucher.calculatedDiscount || 0;
     }
 
-    const directDiscount = parseFloat(ownerDiscount) || 0;
+    const directDiscount = appliedCashDiscount || 0;
     const totalDiscount = voucherDiscount + directDiscount;
-
     const totalPayable = Math.max(0, totalGrand - totalDiscount - oldGoldDeduction);
 
     return {
       totalMetal,
+      rawTotalMaking,
+      makingConcessionDiscount,
       totalMaking,
       totalDiamond,
-      subtotal: totalSub,
+      subtotal,
       cgst,
       sgst,
       totalGst,
@@ -487,7 +613,7 @@ const OfflineBilling = () => {
       totalGrand,
       oldGoldDeduction
     };
-  }, [billItems, appliedVoucher, ownerDiscount, oldGoldDeduction]);
+  }, [billItems, appliedVoucher, appliedCashDiscount, oldGoldDeduction, gstRate, makingConcessionPercent]);
 
   // Cash change calculation
   const changeToReturn = useMemo(() => {
@@ -496,34 +622,72 @@ const OfflineBilling = () => {
     return received - billTotals.totalPayable;
   }, [cashReceived, billTotals.totalPayable]);
 
+  // Cash Discount Handlers
+  const handleApplyCashDiscount = () => {
+    const val = parseFloat(cashDiscountInput) || 0;
+    if (val > 0) {
+      setAppliedCashDiscount(val);
+      setVoucherSuccess(`Cash Discount of Rs.${val.toLocaleString('en-IN')} applied.`);
+      setTimeout(() => setVoucherSuccess(''), 4000);
+    }
+  };
+
+  const handleRemoveCashDiscount = () => {
+    setAppliedCashDiscount(0);
+    setCashDiscountInput('');
+  };
+
   // Round-off helper
   const handleQuickRoundOff = () => {
     const remainder = billTotals.totalPayable % 100;
     if (remainder > 0) {
-      const current = parseFloat(ownerDiscount) || 0;
-      setOwnerDiscount(String(current + remainder));
+      const newTotal = appliedCashDiscount + remainder;
+      setAppliedCashDiscount(newTotal);
+      setCashDiscountInput(String(newTotal));
     }
   };
 
-  // Voucher apply & remove
-  const handleApplyVoucher = useCallback((e, directCode) => {
-    if (e) e.preventDefault();
-    const code = directCode || voucherInput;
-    if (!code.trim()) return;
+  // Voucher apply & remove (Supports standard vouchers AND percentage codes like 10%)
+  const handleApplyVoucher = useCallback((codeToUse) => {
+    const rawCode = (codeToUse || voucherInput || '').trim();
+    if (!rawCode) return;
     setVoucherError('');
+    setVoucherSuccess('');
 
-    const result = validateVoucher(code, billTotals.subtotal + billTotals.totalGst);
+    // Check if code is a percentage discount (e.g. "10%" or "5%" or "20%")
+    const percentMatch = rawCode.match(/^(\d{1,2})%?$/);
+    if (percentMatch && rawCode.includes('%')) {
+      const pct = parseInt(percentMatch[1], 10);
+      if (pct > 0 && pct <= 90) {
+        const discountVal = Math.round((billTotals.subtotal * pct) / 100);
+        setAppliedVoucher({
+          code: `${pct}% OFF`,
+          discountPercent: pct,
+          calculatedDiscount: discountVal,
+          name: `${pct}% Concession Privilege`
+        });
+        setVoucherInput('');
+        setVoucherSuccess(`${pct}% Concession applied (-Rs.${discountVal.toLocaleString('en-IN')})`);
+        setTimeout(() => setVoucherSuccess(''), 4000);
+        return;
+      }
+    }
+
+    const result = validateVoucher(rawCode, billTotals.subtotal);
     if (result.valid) {
       setAppliedVoucher(result.voucher);
       setVoucherInput('');
+      setVoucherSuccess(`Voucher ${result.voucher.code} applied (-Rs.${result.voucher.calculatedDiscount.toLocaleString('en-IN')})`);
+      setTimeout(() => setVoucherSuccess(''), 4000);
     } else {
-      setVoucherError(result.message || 'Invalid voucher code');
+      setVoucherError(result.message || 'Invalid or expired voucher code');
     }
-  }, [voucherInput, billTotals]);
+  }, [voucherInput, billTotals.subtotal]);
 
   const handleRemoveVoucher = useCallback(() => {
     setAppliedVoucher(null);
     setVoucherError('');
+    setVoucherSuccess('');
   }, []);
 
   // Generate and save invoice
@@ -548,6 +712,7 @@ const OfflineBilling = () => {
       totalMaking: billTotals.totalMaking,
       totalDiamond: billTotals.totalDiamond,
       subtotal: billTotals.subtotal,
+      gstRate,
       cgst: billTotals.cgst,
       sgst: billTotals.sgst,
       discountAmount: billTotals.totalDiscount,
@@ -581,7 +746,7 @@ const OfflineBilling = () => {
   }, [
     billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin,
     operatorName, billNotes, paymentMethod, paymentReference, cashReceived, changeToReturn,
-    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate
+    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate
   ]);
 
   const handleClearBill = useCallback(() => {
@@ -592,13 +757,16 @@ const OfflineBilling = () => {
     setCustomerGstin('');
     setCashReceived('');
     setPaymentReference('');
-    setOwnerDiscount('');
+    setCashDiscountInput('');
+    setAppliedCashDiscount(0);
     setAppliedVoucher(null);
     setVoucherInput('');
     setVoucherError('');
+    setVoucherSuccess('');
     setHasOldGold(false);
     setOldGoldWeight('');
     setBillNotes('');
+    setMakingConcessionPercent(0);
     setShowClearConfirm(false);
   }, []);
 
@@ -631,7 +799,7 @@ const OfflineBilling = () => {
             </span>
           </div>
 
-          {/* Metal Rates Toolbar */}
+          {/* Metal Rates & Making Toolbar */}
           <div className="flex flex-wrap items-center gap-3 text-xs font-body">
             <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5">
               <span className={`w-2 h-2 rounded-full ${rateStatus === 'live' ? 'bg-emerald-400' : rateStatus === 'custom' ? 'bg-[#B59A6C]' : 'bg-amber-400'}`} />
@@ -650,6 +818,13 @@ const OfflineBilling = () => {
               className="px-2.5 py-1.5 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-[#A38B5F] transition-colors cursor-pointer"
             >
               {isEditingRates ? 'Close Rates' : 'Edit Metal Rates'}
+            </button>
+
+            <button
+              onClick={() => setShowMakingTools(!showMakingTools)}
+              className="px-2.5 py-1.5 bg-white/10 text-white border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              {showMakingTools ? 'Close Making' : 'Making Charges'}
             </button>
 
             <span className="text-white/40 hidden xl:inline">{currentDateTime}</span>
@@ -674,7 +849,7 @@ const OfflineBilling = () => {
             >
               <div className="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center gap-4 py-2">
                 <span className="text-xs text-[#B59A6C] font-bold uppercase tracking-widest whitespace-nowrap">
-                  Set Custom Rates for this Store Session:
+                  Custom Rates for this Billing Session:
                 </span>
                 <div className="flex items-center gap-2">
                   <label className="text-[10px] text-white/60 uppercase">Gold (Rs./g):</label>
@@ -707,6 +882,64 @@ const OfflineBilling = () => {
                   >
                     Reset to Market
                   </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Global Making Charges Tool Drawer */}
+        <AnimatePresence>
+          {showMakingTools && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-white/10 mt-3 pt-3"
+            >
+              <div className="max-w-[1520px] mx-auto flex flex-wrap items-center justify-between gap-4 py-2 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="text-[#B59A6C] font-bold uppercase tracking-wider text-[10px]">
+                    Store-wide Making Charge:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white/60 text-[10px]">Rs.</span>
+                    <input
+                      type="number"
+                      value={bulkMakingRateInput}
+                      onChange={(e) => setBulkMakingRateInput(e.target.value)}
+                      className="w-20 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
+                    />
+                    <span className="text-white/60 text-[10px]">/g</span>
+                    <button
+                      onClick={handleApplyGlobalMakingRate}
+                      className="px-3 py-1 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors ml-1 cursor-pointer"
+                    >
+                      Update All Items
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-white/60 text-[10px] uppercase">Quick Making Discount:</span>
+                  {[
+                    { label: 'Standard (0%)', val: 0 },
+                    { label: '25% Off', val: 25 },
+                    { label: '50% Off', val: 50 },
+                    { label: 'Free Making', val: 100 }
+                  ].map((m) => (
+                    <button
+                      key={m.val}
+                      onClick={() => setMakingConcessionPercent(m.val)}
+                      className={`px-2 py-1 text-[9px] font-mono font-bold uppercase border transition-all cursor-pointer ${
+                        makingConcessionPercent === m.val
+                          ? 'bg-[#B59A6C] text-black border-[#B59A6C]'
+                          : 'bg-black/40 text-white/80 border-white/20 hover:border-white'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -1051,7 +1284,7 @@ const OfflineBilling = () => {
                       {parseFloat(customItem.weight) > 0 && (
                         <div className="flex items-center justify-between bg-[#FAF9F7] border border-gray-200 p-3 pt-4">
                           <div>
-                            <span className="text-[10px] font-body uppercase tracking-wider text-gray-500 block">Calculated Item Total (incl. 3% GST):</span>
+                            <span className="text-[10px] font-body uppercase tracking-wider text-gray-500 block">Calculated Item Total (incl. {gstRate}% GST):</span>
                             <span className="font-mono text-lg font-extrabold text-[#111111]">
                               Rs.{calculateCustomItemPrice(customItem).totalLivePrice.toLocaleString('en-IN')}
                             </span>
@@ -1149,13 +1382,13 @@ const OfflineBilling = () => {
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] font-mono text-[#B59A6C] font-bold block">{billItems.length} Piece{billItems.length !== 1 ? 's' : ''}</span>
-                    <span className="text-[9px] font-mono text-white/50">Tax Inclusive (GST 3%)</span>
+                    <span className="text-[9px] font-mono text-white/50">GST {gstRate}% Included</span>
                   </div>
                 </div>
 
                 <div className="p-4 sm:p-5 space-y-4 max-h-[calc(100vh-180px)] overflow-y-auto">
 
-                  {/* Operator & Customer Details (Owner Filled) */}
+                  {/* Operator & Customer Details (Owner Filled with Strict Limits) */}
                   <div className="bg-[#FAF9F7] border border-gray-200 p-3.5 space-y-2.5">
                     <div className="flex justify-between items-center border-b border-gray-200 pb-1.5">
                       <span className="text-[9px] font-body font-bold uppercase tracking-widest text-[#B59A6C]">Customer & Staff Metadata</span>
@@ -1182,14 +1415,27 @@ const OfflineBilling = () => {
                           className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-body text-[#222222] focus:outline-none focus:border-[#222222]"
                         />
                       </div>
+
+                      {/* STRICT 10-DIGIT MOBILE NUMBER */}
                       <div>
-                        <label className="block text-[8px] font-body font-bold uppercase tracking-wider text-gray-500 mb-0.5">Mobile Number</label>
+                        <div className="flex justify-between items-center mb-0.5">
+                          <label className="text-[8px] font-body font-bold uppercase tracking-wider text-gray-500">Mobile Number</label>
+                          <span className={`text-[8px] font-mono font-bold ${customerPhone.length === 10 ? 'text-emerald-700' : 'text-gray-400'}`}>
+                            [{customerPhone.length}/10]
+                          </span>
+                        </div>
                         <input
-                          type="tel"
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={10}
                           value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
-                          placeholder="9876543210"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                          onChange={handleCustomerPhoneChange}
+                          placeholder="10-digit mobile"
+                          className={`w-full px-2.5 py-1.5 bg-white border text-xs font-mono font-bold text-[#222222] focus:outline-none transition-all ${
+                            customerPhone.length === 10
+                              ? 'border-emerald-500 ring-1 ring-emerald-400/40'
+                              : 'border-gray-200 focus:border-[#222222]'
+                          }`}
                         />
                       </div>
                     </div>
@@ -1205,20 +1451,32 @@ const OfflineBilling = () => {
                           className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-body text-[#222222] focus:outline-none focus:border-[#222222]"
                         />
                       </div>
+
+                      {/* STRICT 15-CHAR GSTIN */}
                       <div>
-                        <label className="block text-[8px] font-body font-bold uppercase tracking-wider text-gray-500 mb-0.5">Customer GSTIN (B2B)</label>
+                        <div className="flex justify-between items-center mb-0.5">
+                          <label className="text-[8px] font-body font-bold uppercase tracking-wider text-gray-500">Customer GSTIN (B2B)</label>
+                          <span className={`text-[8px] font-mono font-bold ${customerGstin.length === 15 ? 'text-emerald-700' : 'text-gray-400'}`}>
+                            [{customerGstin.length}/15]
+                          </span>
+                        </div>
                         <input
                           type="text"
+                          maxLength={15}
                           value={customerGstin}
-                          onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())}
-                          placeholder="27AAAAA0000A1Z5"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono text-[#222222] focus:outline-none focus:border-[#222222]"
+                          onChange={handleCustomerGstinChange}
+                          placeholder="15-char GSTIN"
+                          className={`w-full px-2.5 py-1.5 bg-white border text-xs font-mono text-[#222222] focus:outline-none transition-all ${
+                            customerGstin.length === 15
+                              ? 'border-emerald-500 ring-1 ring-emerald-400/40 font-bold'
+                              : 'border-gray-200 focus:border-[#222222]'
+                          }`}
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* LINE ITEMS LIST */}
+                  {/* LINE ITEMS LIST WITH INLINE EDITABLE MAKING CHARGES */}
                   {billItems.length === 0 ? (
                     <div className="py-12 text-center text-gray-300 font-body text-xs border border-dashed border-gray-200 bg-[#FAF9F7]/50">
                       Select items from the catalog or add a custom item above.
@@ -1255,7 +1513,7 @@ const OfflineBilling = () => {
                                       onClick={() => isEditing ? setEditingItemId(null) : handleStartEditItem(bi)}
                                       className="text-[9px] font-mono font-bold text-[#B59A6C] hover:underline uppercase cursor-pointer"
                                     >
-                                      {isEditing ? 'Cancel' : 'Edit'}
+                                      {isEditing ? 'Cancel' : 'Full Edit'}
                                     </button>
                                     <button
                                       onClick={() => removeItem(bi.id)}
@@ -1281,7 +1539,7 @@ const OfflineBilling = () => {
                                   )}
                                 </div>
 
-                                {/* INLINE ITEM EDITOR (Owner Overrides) */}
+                                {/* FULL INLINE ITEM OVERRIDE MODAL */}
                                 {isEditing && (
                                   <div className="mt-2.5 p-2.5 bg-white border border-[#B59A6C]/40 space-y-2 text-xs">
                                     <span className="text-[8px] font-mono text-[#B59A6C] font-bold uppercase block">Owner Precision Override</span>
@@ -1324,25 +1582,44 @@ const OfflineBilling = () => {
                                   </div>
                                 )}
 
-                                {/* Mathematical Breakdown */}
+                                {/* Mathematical Breakdown with Direct Making Charge Adjuster */}
                                 {!isEditing && (
-                                  <div className="mt-1.5 space-y-0.5 text-[9px] text-gray-500">
+                                  <div className="mt-1.5 space-y-1 text-[9px] text-gray-500">
                                     <div className="flex justify-between">
                                       <span>Metal Value ({bi.weight}g)</span>
                                       <span className="font-mono text-gray-700">Rs.{(bi.metalCost * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span>Making Charges</span>
-                                      <span className="font-mono text-gray-700">Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}</span>
+
+                                    {/* INLINE EDITABLE MAKING CHARGE FIELD */}
+                                    <div className="flex items-center justify-between bg-white/70 p-1 border border-gray-200/60">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-medium text-gray-600">Making:</span>
+                                        <div className="flex items-center border border-gray-300 px-1 py-0.5 bg-white">
+                                          <span className="text-[8px] font-mono text-gray-400 mr-0.5">Rs.</span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            value={bi.makingChargeRate ?? defaultMakingRate}
+                                            onChange={(e) => handleUpdateItemMakingRate(bi.id, e.target.value)}
+                                            className="w-12 text-[9px] font-mono font-bold text-[#111111] focus:outline-none"
+                                          />
+                                          <span className="text-[8px] font-mono text-gray-400">/g</span>
+                                        </div>
+                                      </div>
+                                      <span className="font-mono font-bold text-gray-800">
+                                        Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}
+                                      </span>
                                     </div>
+
                                     {bi.gemstoneCost > 0 && (
                                       <div className="flex justify-between">
                                         <span>Diamond / Gemstones</span>
                                         <span className="font-mono text-gray-700">Rs.{(bi.gemstoneCost * bi.quantity).toLocaleString('en-IN')}</span>
                                       </div>
                                     )}
+
                                     <div className="flex justify-between font-medium">
-                                      <span>GST (3%)</span>
+                                      <span>GST ({gstRate}%)</span>
                                       <span className="font-mono text-gray-700">Rs.{(bi.gstTax * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
                                   </div>
@@ -1451,33 +1728,102 @@ const OfflineBilling = () => {
                           <span>Total Metal Value</span>
                           <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.totalMetal.toLocaleString('en-IN')}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Total Making Charges</span>
+
+                        {/* Making Charges with Concession */}
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-1.5">
+                            <span>Making Charges</span>
+                            {makingConcessionPercent > 0 && (
+                              <span className="text-[9px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1 border border-emerald-200">
+                                {makingConcessionPercent}% OFF
+                              </span>
+                            )}
+                          </div>
                           <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.totalMaking.toLocaleString('en-IN')}</span>
                         </div>
+
                         {billTotals.totalDiamond > 0 && (
                           <div className="flex justify-between">
                             <span>Total Diamond / Gemstones</span>
                             <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.totalDiamond.toLocaleString('en-IN')}</span>
                           </div>
                         )}
-                        <div className="flex justify-between border-t border-gray-100 pt-1">
+
+                        <div className="flex justify-between border-t border-gray-100 pt-1 font-semibold text-gray-800">
                           <span>Subtotal (Taxable Amount)</span>
                           <span className="font-mono font-bold text-[#111111]">Rs.{billTotals.subtotal.toLocaleString('en-IN')}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>CGST (1.5%)</span>
-                          <span className="font-mono text-gray-700">Rs.{billTotals.cgst.toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>SGST (1.5%)</span>
-                          <span className="font-mono text-gray-700">Rs.{billTotals.sgst.toLocaleString('en-IN')}</span>
+
+                        {/* DYNAMIC GST SELECTOR & CGST / SGST BREAKDOWN */}
+                        <div className="bg-white p-2.5 border border-gray-200 space-y-2 mt-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[9px] font-body font-bold uppercase tracking-wider text-gray-600">
+                              GST Configuration (Current: {gstRate}%)
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {GST_PRESETS.map((p) => (
+                                <button
+                                  key={p.value}
+                                  type="button"
+                                  onClick={() => handleSelectGstRate(p.value)}
+                                  className={`px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase border cursor-pointer transition-all ${
+                                    gstRate === p.value && !isCustomGst
+                                      ? 'bg-[#222222] text-white border-[#222222]'
+                                      : 'bg-[#FAF9F7] text-gray-600 border-gray-200 hover:border-gray-400'
+                                  }`}
+                                >
+                                  {p.label}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => setIsCustomGst(!isCustomGst)}
+                                className={`px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase border cursor-pointer ${
+                                  isCustomGst ? 'bg-[#B59A6C] text-black border-[#B59A6C]' : 'bg-[#FAF9F7] text-gray-600 border-gray-200'
+                                }`}
+                              >
+                                Custom %
+                              </button>
+                            </div>
+                          </div>
+
+                          {isCustomGst && (
+                            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                              <span className="text-[9px] text-gray-500 font-mono">Custom Tax Rate (%):</span>
+                              <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={customGstInput}
+                                onChange={(e) => setCustomGstInput(e.target.value)}
+                                className="w-16 px-2 py-0.5 border border-gray-300 font-mono text-xs font-bold text-center"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyCustomGst}
+                                className="px-2.5 py-0.5 bg-[#222222] text-white text-[9px] font-bold uppercase hover:bg-[#B59A6C] hover:text-black cursor-pointer"
+                              >
+                                Apply Tax %
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-600 pt-1 border-t border-gray-100">
+                            <div className="flex justify-between">
+                              <span>CGST ({(gstRate / 2).toFixed(2)}%):</span>
+                              <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.cgst.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>SGST ({(gstRate / 2).toFixed(2)}%):</span>
+                              <span className="font-mono text-gray-800 font-medium">Rs.{billTotals.sgst.toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Deductions: Vouchers & Owner Discounts */}
                         {billTotals.voucherDiscount > 0 && (
-                          <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200">
-                            <span className="font-bold uppercase text-[10px]">Voucher ({appliedVoucher?.code})</span>
+                          <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1.5 border border-emerald-200 mt-2">
+                            <span className="font-bold uppercase text-[10px]">Voucher Concession ({appliedVoucher?.code})</span>
                             <div className="flex items-center gap-2">
                               <span className="font-mono font-bold">-Rs.{billTotals.voucherDiscount.toLocaleString('en-IN')}</span>
                               <button onClick={handleRemoveVoucher} className="text-[9px] text-rose-600 underline font-bold cursor-pointer">Remove</button>
@@ -1486,14 +1832,17 @@ const OfflineBilling = () => {
                         )}
 
                         {billTotals.directDiscount > 0 && (
-                          <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2 py-1 border border-emerald-200">
-                            <span className="font-bold uppercase text-[10px]">Owner Special Discount</span>
-                            <span className="font-mono font-bold">-Rs.{billTotals.directDiscount.toLocaleString('en-IN')}</span>
+                          <div className="flex justify-between items-center text-emerald-800 bg-emerald-50 px-2.5 py-1.5 border border-emerald-200">
+                            <span className="font-bold uppercase text-[10px]">Owner Cash Discount</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold">-Rs.{billTotals.directDiscount.toLocaleString('en-IN')}</span>
+                              <button onClick={handleRemoveCashDiscount} className="text-[9px] text-rose-600 underline font-bold cursor-pointer">Remove</button>
+                            </div>
                           </div>
                         )}
 
                         {billTotals.oldGoldDeduction > 0 && (
-                          <div className="flex justify-between items-center text-amber-900 bg-amber-50 px-2 py-1 border border-amber-200">
+                          <div className="flex justify-between items-center text-amber-900 bg-amber-50 px-2.5 py-1.5 border border-amber-200">
                             <span className="font-bold uppercase text-[10px]">Old Gold Exchange Credit</span>
                             <span className="font-mono font-bold">-Rs.{billTotals.oldGoldDeduction.toLocaleString('en-IN')}</span>
                           </div>
@@ -1511,10 +1860,12 @@ const OfflineBilling = () => {
                         </div>
                       </div>
 
-                      {/* DISCOUNTS & VOUCHER CONTROLS (Owner Filled) */}
-                      <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[9px] font-body font-bold uppercase tracking-widest text-gray-500">Owner Discount & Vouchers</span>
+                      {/* DISCOUNTS & VOUCHER CONTROLS (SEPARATED & FIXED APPLY BUTTONS) */}
+                      <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-3">
+                        <div className="flex justify-between items-center border-b border-gray-200/60 pb-1.5">
+                          <span className="text-[9px] font-body font-bold uppercase tracking-widest text-gray-700">
+                            Owner Concessions & Privilege Codes
+                          </span>
                           <button
                             type="button"
                             onClick={handleQuickRoundOff}
@@ -1524,51 +1875,99 @@ const OfflineBilling = () => {
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
+                        {/* ROW 1: Cash Discount with Direct Apply */}
+                        <div>
+                          <label className="block text-[8px] font-mono text-gray-500 uppercase mb-1">
+                            Direct Cash Concession (Rs.)
+                          </label>
+                          <div className="flex gap-2">
                             <input
                               type="number"
                               min="0"
-                              value={ownerDiscount}
-                              onChange={(e) => setOwnerDiscount(e.target.value)}
-                              placeholder="Cash Discount (Rs.)"
-                              className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222]"
+                              value={cashDiscountInput}
+                              onChange={(e) => setCashDiscountInput(e.target.value)}
+                              placeholder="e.g. 500 or 1000"
+                              className="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
                             />
+                            <button
+                              type="button"
+                              onClick={handleApplyCashDiscount}
+                              className="px-4 py-1.5 bg-[#222222] text-white text-[10px] font-bold uppercase hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer shrink-0"
+                            >
+                              Apply Discount
+                            </button>
                           </div>
-                          <form onSubmit={handleApplyVoucher} className="flex gap-1">
+                        </div>
+
+                        {/* ROW 2: Voucher Code with Dedicated Apply */}
+                        <div>
+                          <label className="block text-[8px] font-mono text-gray-500 uppercase mb-1">
+                            Voucher Code or Percentage (e.g. WELCOME10 or 10%)
+                          </label>
+                          <div className="flex gap-2">
                             <input
                               type="text"
                               value={voucherInput}
-                              onChange={(e) => setVoucherInput(e.target.value)}
-                              placeholder="Voucher Code"
-                              className="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold uppercase text-[#222222]"
+                              onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                              placeholder="VOUCHER CODE OR %"
+                              className="flex-1 px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold uppercase text-[#222222] focus:outline-none focus:border-[#222222]"
                             />
                             <button
-                              type="submit"
-                              className="px-2.5 py-1.5 bg-[#222222] text-white text-[10px] font-bold uppercase hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer"
+                              type="button"
+                              onClick={() => handleApplyVoucher()}
+                              className="px-4 py-1.5 bg-[#B59A6C] text-black text-[10px] font-bold uppercase hover:bg-[#222222] hover:text-white transition-colors cursor-pointer shrink-0"
                             >
-                              Apply
+                              Apply Code
                             </button>
-                          </form>
+                          </div>
                         </div>
 
-                        {voucherError && <p className="text-[10px] text-rose-600 font-bold">{voucherError}</p>}
+                        {/* Status Feedback */}
+                        {voucherError && (
+                          <div className="text-[10px] text-rose-700 bg-rose-50 p-2 border border-rose-200 font-medium">
+                            {voucherError}
+                          </div>
+                        )}
+                        {voucherSuccess && (
+                          <div className="text-[10px] text-emerald-800 bg-emerald-50 p-2 border border-emerald-200 font-bold flex items-center gap-1.5">
+                            <CheckCircleIcon size={12} className="text-emerald-700 shrink-0" />
+                            <span>{voucherSuccess}</span>
+                          </div>
+                        )}
 
-                        <div className="flex flex-wrap gap-1">
-                          {AVAILABLE_VOUCHERS.slice(0, 3).map(v => (
+                        {/* Quick-Apply Chips */}
+                        <div className="pt-1">
+                          <span className="text-[8px] font-mono text-gray-400 uppercase block mb-1">Quick Select Codes:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {AVAILABLE_VOUCHERS.map(v => (
+                              <button
+                                key={v.code}
+                                type="button"
+                                onClick={() => handleApplyVoucher(v.code)}
+                                className={`px-2 py-0.5 border text-[8px] font-mono font-bold uppercase cursor-pointer transition-all ${
+                                  appliedVoucher?.code === v.code
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                                    : 'bg-white border-gray-200 text-gray-700 hover:border-[#222222]'
+                                }`}
+                              >
+                                {v.code} ({v.discountPercent ? `${v.discountPercent}%` : `Rs.${v.discountAmount}`})
+                              </button>
+                            ))}
                             <button
-                              key={v.code}
                               type="button"
-                              onClick={() => handleApplyVoucher(null, v.code)}
-                              className={`px-1.5 py-0.5 border text-[8px] font-mono font-bold uppercase cursor-pointer transition-all ${
-                                appliedVoucher?.code === v.code
-                                  ? 'bg-emerald-600 border-emerald-600 text-white'
-                                  : 'bg-white border-gray-200 text-gray-700 hover:border-[#222222]'
-                              }`}
+                              onClick={() => handleApplyVoucher('5%')}
+                              className="px-2 py-0.5 border text-[8px] font-mono font-bold uppercase bg-white border-gray-200 text-[#B59A6C] hover:border-[#B59A6C] cursor-pointer"
                             >
-                              {v.code}
+                              5% OFF
                             </button>
-                          ))}
+                            <button
+                              type="button"
+                              onClick={() => handleApplyVoucher('10%')}
+                              className="px-2 py-0.5 border text-[8px] font-mono font-bold uppercase bg-white border-gray-200 text-[#B59A6C] hover:border-[#B59A6C] cursor-pointer"
+                            >
+                              10% OFF
+                            </button>
+                          </div>
                         </div>
                       </div>
 

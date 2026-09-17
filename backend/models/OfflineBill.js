@@ -32,6 +32,7 @@ const offlineBillSchema = new mongoose.Schema({
   subtotal:       { type: Number, default: 0 },
   cgst:           { type: Number, default: 0 },
   sgst:           { type: Number, default: 0 },
+  gstRate:        { type: Number, default: 3 },
   discountAmount: { type: Number, default: 0 },
   couponCode:     { type: String, default: '' },
   oldGoldDeduction: { type: Number, default: 0 },

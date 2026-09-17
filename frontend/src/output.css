@@ -1425,6 +1425,10 @@ img {
   margin-left: 2rem;
 }
 
+.mr-0\.5{
+  margin-right: 0.125rem;
+}
+
 .mr-2{
   margin-right: 0.5rem;
 }
@@ -1513,10 +1517,6 @@ img {
 
 .inline-block{
   display: inline-block;
-}
-
-.inline{
-  display: inline;
 }
 
 .flex{
@@ -2994,6 +2994,11 @@ img {
 
 .border-emerald-300\/80{
   border-color: rgb(110 231 183 / 0.8);
+}
+
+.border-emerald-500{
+  --tw-border-opacity: 1;
+  border-color: rgb(16 185 129 / var(--tw-border-opacity, 1));
 }
 
 .border-emerald-600{
@@ -5689,6 +5694,10 @@ img {
   --tw-ring-color: rgb(0 0 0 / var(--tw-ring-opacity, 1));
 }
 
+.ring-emerald-400\/40{
+  --tw-ring-color: rgb(52 211 153 / 0.4);
+}
+
 .ring-opacity-10{
   --tw-ring-opacity: 0.1;
 }
@@ -6122,6 +6131,11 @@ img {
   border-color: rgb(220 38 38 / var(--tw-border-opacity, 1));
 }
 
+.hover\:border-white:hover{
+  --tw-border-opacity: 1;
+  border-color: rgb(255 255 255 / var(--tw-border-opacity, 1));
+}
+
 .hover\:bg-\[\#111111\]:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(17 17 17 / var(--tw-bg-opacity, 1));
@@ -6287,6 +6301,10 @@ img {
 
 .hover\:bg-white\/15:hover{
   background-color: rgb(255 255 255 / 0.15);
+}
+
+.hover\:bg-white\/20:hover{
+  background-color: rgb(255 255 255 / 0.2);
 }
 
 .hover\:bg-white\/30:hover{
