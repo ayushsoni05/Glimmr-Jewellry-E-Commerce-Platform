@@ -27,7 +27,7 @@ const BackButton = () => {
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 350, damping: 22 }}
         onClick={handleBack}
-        className="fixed top-28 left-3 sm:left-6 z-[60] flex items-center gap-2 px-3.5 py-1.5 bg-[#111111]/90 hover:bg-[#111111] text-[#FAF9F7] shadow-lg backdrop-blur-md border border-white/20 transition-all font-body text-[11px] font-bold uppercase tracking-[0.15em] cursor-pointer group"
+        className="fixed top-20 sm:top-24 left-3 sm:left-6 z-[60] flex items-center gap-2 px-3 sm:px-3.5 py-1.5 bg-[#111111]/90 hover:bg-[#111111] text-[#FAF9F7] shadow-lg backdrop-blur-md border border-white/20 transition-all font-body text-[11px] font-bold uppercase tracking-[0.15em] cursor-pointer group"
         aria-label="Go Back"
         title="Go back to previous page"
       >

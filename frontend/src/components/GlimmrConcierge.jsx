@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const OCCASIONS = [
-  { id: 'wedding', label: 'Bridal & Wedding', icon: '💍', desc: 'Heavy Kundan, Polki & VVS Solitaire sets' },
-  { id: 'gala', label: 'Royal Gala & Evening', icon: '✨', desc: 'High Jewelry statement drops & emeralds' },
-  { id: 'daily', label: 'Everyday Minimalist', icon: '🌿', desc: 'Sleek 18K gold bands & dainty pendants' },
-  { id: 'gifting', label: 'Anniversary & Gifting', icon: '🎁', desc: 'Timeless solitaire rings & hallmark gold' }
+  { id: 'wedding', label: 'Bridal & Wedding', code: 'BRD', desc: 'Heavy Kundan, Polki & VVS Solitaire sets' },
+  { id: 'gala', label: 'Royal Gala & Evening', code: 'GLA', desc: 'High Jewelry statement drops & emeralds' },
+  { id: 'daily', label: 'Everyday Minimalist', code: 'MIN', desc: 'Sleek 18K gold bands & dainty pendants' },
+  { id: 'gifting', label: 'Anniversary & Gifting', code: 'GFT', desc: 'Timeless solitaire rings & hallmark gold' }
 ];
 
 const OUTFIT_COLORS = [
@@ -28,12 +28,16 @@ const GlimmrConcierge = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-[#111111] text-[#B59A6C] border-2 border-[#B59A6C] px-4 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex items-center gap-2.5 group"
+        aria-label="Open VIP Atelier Concierge"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 bg-[#111111] text-[#B59A6C] border-2 border-[#B59A6C] w-12 h-12 sm:w-auto sm:h-auto sm:px-4 sm:py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex items-center justify-center gap-2.5 group"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-[#B59A6C] animate-ping" />
-        <span className="font-mono text-xs font-bold uppercase tracking-widest text-white group-hover:text-[#B59A6C] transition-colors">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#B59A6C] animate-ping flex-shrink-0" />
+        <span className="hidden sm:inline font-mono text-xs font-bold uppercase tracking-widest text-white group-hover:text-[#B59A6C] transition-colors whitespace-nowrap">
           VIP ATELIER CONCIERGE
         </span>
+        <svg className="w-4 h-4 sm:hidden text-[#B59A6C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+        </svg>
       </motion.button>
 
       {/* Concierge Modal Drawer */}
@@ -81,7 +85,7 @@ const GlimmrConcierge = () => {
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <span className="text-lg block mb-1">{occ.icon}</span>
+                        <span className="font-mono text-[10px] font-bold text-[#B59A6C] px-1.5 py-0.5 bg-white border border-[#E5E2D9] rounded inline-block mb-1.5">{occ.code}</span>
                         <span className="font-bold text-xs text-[#111111] block">{occ.label}</span>
                         <span className="text-[10px] text-gray-500 block leading-tight">{occ.desc}</span>
                       </button>

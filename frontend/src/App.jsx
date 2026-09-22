@@ -52,7 +52,7 @@ function App() {
           <Router>
           <ScrollToTop />
           <BackButton />
-          <div className="min-h-screen flex flex-col bg-white">
+          <div className="min-h-screen flex flex-col bg-white overflow-x-hidden w-full relative">
             <Header />
             <main className="flex-grow">
               <AnimatePresence mode="wait">

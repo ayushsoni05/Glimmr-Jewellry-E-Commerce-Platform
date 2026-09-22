@@ -297,19 +297,19 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF9F7] py-6 sm:py-12 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
         {/* Luxury Breadcrumb & Header */}
-        <div className="mb-10 text-center md:text-left border-b border-[#E5E2D9] pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-6 sm:mb-10 text-center md:text-left border-b border-[#E5E2D9] pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
             <nav className="flex justify-center md:justify-start items-center gap-2 text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] mb-2">
               <Link to="/" className="hover:text-[#111111] transition-colors">Atelier Home</Link>
               <span>/</span>
               <span className="text-[#111111]">Shopping Cart</span>
             </nav>
-            <h1 className="text-3xl md:text-5xl font-heading font-extrabold text-[#111111] tracking-tight">
-              Your Acquisitions <span className="text-[#B59A6C] font-normal text-2xl md:text-3xl">({calculateTotalItems()})</span>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-[#111111] tracking-tight">
+              Your Acquisitions <span className="text-[#B59A6C] font-normal text-xl sm:text-2xl md:text-3xl">({calculateTotalItems()})</span>
             </h1>
           </div>
 
@@ -506,7 +506,7 @@ const Cart = () => {
                 {/* Gold Top Accent Bar */}
                 <div className="h-1 w-full bg-gradient-to-r from-[#B59A6C] via-[#111111] to-[#B59A6C]" />
 
-                <div className="p-8 space-y-6">
+                <div className="p-4 sm:p-8 space-y-5 sm:space-y-6">
                   <div className="border-b border-gray-200 pb-4">
                     <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block mb-1">
                       PORTFOLIO VALUATION

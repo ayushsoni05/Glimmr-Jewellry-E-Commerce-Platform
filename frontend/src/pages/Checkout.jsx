@@ -388,11 +388,11 @@ const Checkout = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF9F7] py-6 sm:py-12 px-3 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
         {/* Luxury Breadcrumb & Header */}
-        <div className="mb-10 text-center md:text-left border-b border-[#E5E2D9] pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-6 sm:mb-10 text-center md:text-left border-b border-[#E5E2D9] pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
             <nav className="flex justify-center md:justify-start items-center gap-2 text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] mb-2">
               <Link to="/" className="hover:text-[#111111] transition-colors">Atelier Home</Link>
@@ -401,13 +401,13 @@ const Checkout = () => {
               <span>/</span>
               <span className="text-[#111111]">Secure Checkout</span>
             </nav>
-            <h1 className="text-3xl md:text-5xl font-heading font-extrabold text-[#111111] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-heading font-extrabold text-[#111111] tracking-tight">
               Atelier Checkout
             </h1>
           </div>
 
-          <div className="flex items-center justify-center md:justify-end gap-3 text-xs font-body text-gray-500 uppercase tracking-widest font-bold">
-            <LockIcon size={18} className="text-[#B59A6C]" />
+          <div className="flex items-center justify-center md:justify-end gap-2 sm:gap-3 text-[11px] sm:text-xs font-body text-gray-500 uppercase tracking-widest font-bold">
+            <LockIcon size={16} className="text-[#B59A6C]" />
             <span>256-bit SSL Encrypted Guarantee</span>
           </div>
         </div>
@@ -416,14 +416,14 @@ const Checkout = () => {
         <motion.div 
           initial={{ opacity: 0, y: 15 }} 
           animate={{ opacity: 1, y: 0 }} 
-          className="mb-12 max-w-4xl mx-auto"
+          className="mb-8 sm:mb-12 max-w-4xl mx-auto"
         >
-          <div className="flex items-center justify-between relative px-4">
+          <div className="flex items-center justify-between relative px-2 sm:px-4">
             
             {/* Background Stepper Track Line */}
-            <div className="absolute top-1/2 left-10 right-10 h-[2px] bg-gray-200 -translate-y-1/2 z-0" />
+            <div className="absolute top-1/2 left-6 right-6 sm:left-10 sm:right-10 h-[2px] bg-gray-200 -translate-y-1/2 z-0" />
             <motion.div 
-              className="absolute top-1/2 left-10 h-[2.5px] bg-[#111111] -translate-y-1/2 z-0 transition-all duration-500"
+              className="absolute top-1/2 left-6 sm:left-10 h-[2.5px] bg-[#111111] -translate-y-1/2 z-0 transition-all duration-500"
               style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
             />
 
@@ -437,7 +437,7 @@ const Checkout = () => {
               const StepIcon = s.icon;
 
               return (
-                <div key={s.num} className="relative z-10 flex flex-col items-center gap-2">
+                <div key={s.num} className="relative z-10 flex flex-col items-center gap-1.5 sm:gap-2">
                   <motion.button
                     type="button"
                     whileHover={{ scale: 1.08 }}
@@ -445,7 +445,7 @@ const Checkout = () => {
                     onClick={() => {
                       if (s.num < step) setStep(s.num);
                     }}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center font-mono font-bold text-xs transition-all duration-300 shadow-sm ${
+                    className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-mono font-bold text-xs transition-all duration-300 shadow-sm ${
                       isCompleted
                         ? 'bg-[#FDF2F0] text-[#B59A6C] border-2 border-[#E8C8C1] cursor-pointer'
                         : isActive
@@ -453,9 +453,9 @@ const Checkout = () => {
                         : 'bg-white text-gray-400 border-2 border-gray-200 cursor-not-allowed'
                     }`}
                   >
-                    {isCompleted ? <CheckCircleIcon size={18} className="text-[#B59A6C]" /> : <StepIcon size={18} />}
+                    {isCompleted ? <CheckCircleIcon size={16} className="text-[#B59A6C]" /> : <StepIcon size={16} />}
                   </motion.button>
-                  <span className={`text-[10px] font-body font-bold uppercase tracking-[0.18em] hidden sm:block ${
+                  <span className={`text-[9px] sm:text-[10px] font-body font-bold uppercase tracking-[0.15em] sm:tracking-[0.18em] hidden sm:block ${
                     isActive ? 'text-[#111111]' : isCompleted ? 'text-[#B59A6C]' : 'text-gray-400'
                   }`}>
                     {s.label}
@@ -467,7 +467,7 @@ const Checkout = () => {
         </motion.div>
 
         {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
           {/* Left Column: Multi-Step Interactive Form */}
           <div className="lg:col-span-7 xl:col-span-8 min-w-0">
@@ -481,7 +481,7 @@ const Checkout = () => {
                   animate={{ opacity: 1, x: 0 }} 
                   exit={{ opacity: 0, x: 20 }} 
                   transition={{ duration: 0.3 }}
-                  className="bg-white border border-[#E5E2D9] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-6"
+                  className="bg-white border border-[#E5E2D9] p-4 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6"
                 >
                   <div className="flex items-center gap-4 border-b border-gray-200 pb-4">
                     <div className="w-10 h-10 rounded-full bg-[#FDF2F0] border border-[#E8C8C1] flex items-center justify-center text-[#B59A6C] shadow-sm flex-shrink-0">
@@ -564,7 +564,7 @@ const Checkout = () => {
                   animate={{ opacity: 1, x: 0 }} 
                   exit={{ opacity: 0, x: 20 }} 
                   transition={{ duration: 0.3 }}
-                  className="bg-white border border-[#E5E2D9] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-6"
+                  className="bg-white border border-[#E5E2D9] p-4 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6"
                 >
                   <div className="flex items-center gap-4 border-b border-gray-200 pb-4">
                     <div className="w-10 h-10 rounded-full bg-[#FDF2F0] border border-[#E8C8C1] flex items-center justify-center text-[#B59A6C] shadow-sm flex-shrink-0">
@@ -805,7 +805,7 @@ const Checkout = () => {
                   animate={{ opacity: 1, x: 0 }} 
                   exit={{ opacity: 0, x: 20 }} 
                   transition={{ duration: 0.3 }}
-                  className="bg-white border border-[#E5E2D9] p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-6"
+                  className="bg-white border border-[#E5E2D9] p-4 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.03)] space-y-5 sm:space-y-6"
                 >
                   <div className="flex items-center gap-4 border-b border-gray-200 pb-4">
                     <div className="w-10 h-10 rounded-full bg-[#FDF2F0] border border-[#E8C8C1] flex items-center justify-center text-[#B59A6C] shadow-sm flex-shrink-0">
@@ -882,7 +882,7 @@ const Checkout = () => {
               {/* Gold Top Accent Bar */}
               <div className="h-1 w-full bg-gradient-to-r from-[#B59A6C] via-[#111111] to-[#B59A6C]" />
 
-              <div className="p-8 space-y-6">
+              <div className="p-4 sm:p-8 space-y-5 sm:space-y-6">
                 <div className="border-b border-gray-200 pb-4">
                   <span className="text-[10px] font-body font-bold uppercase tracking-[0.25em] text-[#B59A6C] block mb-1">
                     VALUATION BREAKDOWN

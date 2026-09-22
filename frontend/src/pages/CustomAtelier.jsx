@@ -868,7 +868,7 @@ const CustomAtelier = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+      <div className="max-w-[1540px] mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-12 lg:py-20">
         
         {/* Top Header Hero */}
         <motion.div {...fadeUp} className="text-center mb-10 lg:mb-14">
@@ -1252,7 +1252,7 @@ const CustomAtelier = () => {
           
           {/* Left Column: 3D Interactive WebGL Ring Visualizer */}
           <motion.div {...fadeUp} className="lg:col-span-6 lg:sticky lg:top-24">
-            <div className="bg-[#FAF9F7] rounded-[24px] p-4 sm:p-6 aspect-square flex flex-col items-center justify-center relative overflow-hidden group border border-gray-200/70 shadow-xs">
+            <div className="bg-[#FAF9F7] rounded-[20px] sm:rounded-[24px] p-3 sm:p-6 aspect-square max-h-[380px] sm:max-h-none flex flex-col items-center justify-center relative overflow-hidden group border border-gray-200/70 shadow-xs">
               
               {/* 3D / 2D Canvas Mode Toggle */}
               <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1 rounded-full shadow-xs border border-gray-200/60">

@@ -118,17 +118,17 @@ const Header = () => {
   return (
     <>
       {/* Top Announcement Bar */}
-      <div className="bg-[#FAF9F7] py-2.5 border-b border-gray-100 text-xs font-body text-[#808080]">
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span>Join the Social Club for exclusive Rewards</span>
+      <div className="bg-[#FAF9F7] py-2 sm:py-2.5 border-b border-gray-100 text-[11px] sm:text-xs font-body text-[#808080]">
+        <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center gap-2 truncate">
+            <span className="truncate">Join the Social Club for exclusive Rewards</span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
             <Link to="/live-rates" className="hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-colors font-medium">
               <span>Live Metal Rates:</span>
               <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold ₹{liveRates.gold.toLocaleString('en-IN')}/g • Silver ₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
             </Link>
-            <span>+91 (022) 6849 2000</span>
+            <span className="hidden sm:inline">+91 (022) 6849 2000</span>
             <div className="hidden sm:flex items-center space-x-3 text-[#222222]">
               <a href="#" className="hover:text-black transition-colors font-medium">X</a>
               <a href="#" className="hover:text-black transition-colors font-medium">IG</a>
@@ -138,12 +138,12 @@ const Header = () => {
         </div>
       </div>
 
-      <header className={`bg-white sticky top-0 z-50 transition-all duration-300 h-20 border-b border-gray-100/80 relative ${isScrolled ? 'shadow-soft' : ''}`}>
-        <nav className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
+      <header className={`bg-white sticky top-0 z-50 transition-all duration-300 h-16 sm:h-20 border-b border-gray-100/80 relative ${isScrolled ? 'shadow-soft' : ''}`}>
+        <nav className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
           <Link to="/" className="flex-shrink-0 flex items-center group">
             <span
-              className="font-heading text-2xl sm:text-3xl font-bold tracking-[0.25em] text-[#111111] uppercase transition-colors group-hover:text-[#B59A6C]"
+              className="font-heading text-xl sm:text-2xl lg:text-3xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[#111111] uppercase transition-colors group-hover:text-[#B59A6C]"
               style={{ lineHeight: 1 }}
             >
               GLIMMR
@@ -260,8 +260,8 @@ const Header = () => {
           </div>
 
           {/* Right Icons */}
-          <div className="flex items-center space-x-4 sm:space-x-6 flex-shrink-0">
-            <button onClick={toggleSearch} className="text-[#222222] hover:text-black transition-colors" title="Search">
+          <div className="flex items-center space-x-2.5 sm:space-x-5 lg:space-x-6 flex-shrink-0">
+            <button onClick={toggleSearch} className="text-[#222222] hover:text-black transition-colors p-1" title="Search">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
@@ -427,23 +427,25 @@ const Header = () => {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed inset-0 bg-white z-40 overflow-y-auto pt-24 pb-12 px-6 md:hidden"
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ type: 'tween', duration: 0.28 }}
+              className="fixed inset-0 bg-white z-40 overflow-y-auto pt-20 pb-10 px-6 md:hidden flex flex-col justify-between"
             >
-              <div className="flex flex-col space-y-6 text-xl font-heading text-[#222222] tracking-wider uppercase">
-                <Link to="/" className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>HOME</Link>
-                <Link to="/store-grid" className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>STORE</Link>
+              <div className="flex flex-col space-y-4 text-lg font-heading text-[#222222] tracking-wider uppercase">
+                <Link to="/" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>HOME</Link>
+                <Link to="/store-grid" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>STORE</Link>
+                <Link to="/custom-atelier" className="hover:text-[#B59A6C] text-[#B59A6C] font-semibold transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>CUSTOM STUDIO</Link>
+                <Link to="/gifting" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>GIFTING</Link>
                 
                 <div className="border-b border-gray-100 pb-2">
                   <button 
                     onClick={() => setOpenCategory(openCategory === 'categories' ? null : 'categories')}
-                    className="w-full flex items-center justify-between hover:text-[#B59A6C] transition-colors uppercase"
+                    className="w-full flex items-center justify-between hover:text-[#B59A6C] transition-colors uppercase py-1"
                   >
                     CATEGORIES
-                    <svg className={`w-5 h-5 transition-transform ${openCategory === 'categories' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-4 h-4 transition-transform ${openCategory === 'categories' ? 'rotate-180 text-[#B59A6C]' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -455,7 +457,7 @@ const Header = () => {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="pt-4 pl-4 flex flex-col space-y-3 text-base font-body text-[#808080] uppercase tracking-wider">
+                        <div className="pt-3 pl-4 flex flex-col space-y-2.5 text-sm font-body text-[#808080] uppercase tracking-wider">
                           <Link to={`/store-grid/earring`} className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>EARRING</Link>
                           <Link to={`/store-grid/necklace`} className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>NECKLACE</Link>
                           <Link to={`/store-grid/bracelet`} className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>BRACELET</Link>
@@ -469,14 +471,69 @@ const Header = () => {
 
                 <Link 
                   to="/live-rates" 
-                  className="hover:text-[#B59A6C] transition-colors"
+                  className="flex items-center justify-between hover:text-[#B59A6C] transition-colors py-1"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  LIVE RATES
+                  <span>LIVE RATES</span>
+                  <span className="font-mono text-[10px] px-2 py-0.5 bg-[#FAF9F7] border border-[#E5E2D9] text-[#B59A6C] font-bold">IBJA LIVE</span>
                 </Link>
 
-                <Link to="/about" className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>ABOUT</Link>
-                <Link to="/contact" className="hover:text-[#B59A6C] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>CONTACT</Link>
+                <Link to="/billing" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>ATELIER BILLING POS</Link>
+                <Link to="/about" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>ABOUT</Link>
+                <Link to="/contact" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>CONTACT</Link>
+              </div>
+
+              {/* Bottom Drawer Actions */}
+              <div className="pt-6 border-t border-gray-100 mt-6 space-y-4">
+                {user ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-[#FAF9F7] border border-[#E5E2D9] flex items-center justify-center font-bold text-xs text-[#222222]">
+                        {user.name ? user.name[0].toUpperCase() : 'U'}
+                      </div>
+                      <div className="truncate">
+                        <p className="font-bold text-xs text-[#222222] truncate">{user.name || 'Account'}</p>
+                        <p className="text-[11px] text-gray-400 font-mono truncate">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex-1 py-2 text-center text-xs font-bold uppercase tracking-wider border border-gray-200 text-[#222222] rounded-lg"
+                      >
+                        Profile
+                      </Link>
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex-1 py-2 text-center text-xs font-bold uppercase tracking-wider bg-[#222222] text-white rounded-lg"
+                        >
+                          Admin
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                        className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-red-600 border border-red-200 rounded-lg"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    to="/auth"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full py-3 text-center bg-[#222222] text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-black transition-colors"
+                  >
+                    Sign In / Register
+                  </Link>
+                )}
+                
+                <div className="text-center font-mono text-[9px] text-gray-400 uppercase tracking-widest">
+                  GLIMMR LUXURY ATELIER • MUMBAI
+                </div>
               </div>
             </motion.div>
           )}

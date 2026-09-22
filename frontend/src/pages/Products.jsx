@@ -147,12 +147,12 @@ const Products = () => {
           </div>
 
           {/* Hero Title */}
-          <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-[#222222] font-normal mb-8 tracking-tight">
+          <h1 className="font-heading text-3xl sm:text-5xl lg:text-6xl text-[#222222] font-normal mb-6 sm:mb-8 tracking-tight">
             {routeParams.material ? routeParams.material.charAt(0).toUpperCase() + routeParams.material.slice(1) : 'All Products'}
           </h1>
 
-          {/* Category Filter Text Links (Centered) */}
-          <div className="flex items-center justify-center space-x-6 sm:space-x-10 overflow-x-auto hide-scrollbar pb-2">
+          {/* Category Filter Text Links (Start-aligned with padding on mobile for touch scrolling, Centered on desktop) */}
+          <div className="flex items-center justify-start sm:justify-center space-x-5 sm:space-x-8 lg:space-x-10 overflow-x-auto hide-scrollbar pb-2 px-2 sm:px-0">
             {categories.map((cat) => {
               const catValue = cat.toLowerCase();
               const isActive = (cat === 'ALL' && !filters.category) || filters.category === catValue || filters.category === catValue + 's';
@@ -160,7 +160,7 @@ const Products = () => {
                 <button 
                   key={cat}
                   onClick={() => handleFilter('category', cat === 'ALL' ? '' : catValue)} 
-                  className={`whitespace-nowrap font-body text-xs sm:text-sm tracking-[0.15em] uppercase transition-colors pb-1 cursor-pointer ${
+                  className={`whitespace-nowrap font-body text-xs sm:text-sm tracking-[0.15em] uppercase transition-colors pb-1 cursor-pointer flex-shrink-0 ${
                     isActive 
                       ? 'text-[#222222] font-bold border-b-2 border-[#222222]' 
                       : 'text-[#808080] hover:text-[#222222]'
@@ -174,7 +174,7 @@ const Products = () => {
         </div>
       </div>
 
-      <div className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Search Results Indicator */}
         {filters.search && (
           <div className="mb-4 flex items-center justify-between">
@@ -191,23 +191,23 @@ const Products = () => {
         )}
 
         {/* Filter / Toolbar Divider Bar */}
-        <div className="py-3 border-t border-b border-gray-200 mb-8 flex justify-between items-center text-xs font-body text-[#808080]">
-          <span>Showing results.</span>
-          <div className="flex items-center gap-4">
-            <div className="flex bg-gray-100 p-1 rounded-sm">
+        <div className="py-3 border-t border-b border-gray-200 mb-6 sm:mb-8 flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 text-xs font-body text-[#808080]">
+          <span className="text-[11px] sm:text-xs">Showing curated catalog.</span>
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+            <div className="flex bg-gray-100 p-0.5 sm:p-1 rounded-sm">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-white text-[#222222] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1 sm:p-1.5 transition-colors ${viewMode === 'grid' ? 'bg-white text-[#222222] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 title="Grid View"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 transition-colors ${viewMode === 'list' ? 'bg-white text-[#222222] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1 sm:p-1.5 transition-colors ${viewMode === 'list' ? 'bg-white text-[#222222] shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                 title="List View"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
               </button>
             </div>
             {/* Framer Motion Animated Metal Selector Button (Borderless matching Sort By) */}
@@ -216,7 +216,7 @@ const Products = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsMetalMenuOpen(!isMetalMenuOpen)}
-                className="flex items-center gap-1.5 text-xs font-body border-none bg-transparent focus:outline-none text-[#222222] font-medium tracking-wider uppercase cursor-pointer py-1"
+                className="flex items-center gap-1.5 text-[11px] sm:text-xs font-body border-none bg-transparent focus:outline-none text-[#222222] font-medium tracking-wider uppercase cursor-pointer py-1"
               >
                 <span>
                   {filters.material === 'gold' ? 'GOLD ONLY' : filters.material === 'silver' ? 'SILVER ONLY' : 'METAL TYPE'}
@@ -358,7 +358,7 @@ const Products = () => {
               }
 
               return (
-                <div className={`grid gap-6 lg:gap-8 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2'}`}>
+                <div className={`grid gap-3.5 sm:gap-6 lg:gap-8 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2'}`}>
                   {displayList.map((product, idx) => {
                     const isFramerProduct = typeof product.id === 'string' && !product._id;
                     const productId = product._id || product.id;
@@ -464,31 +464,31 @@ const Products = () => {
                         key={productId} 
                         className="group relative cursor-pointer"
                       >
-                        <div className="relative aspect-square bg-[#FAF9F7] p-8 flex items-center justify-center mb-3 overflow-hidden transition-all">
+                        <div className="relative aspect-square bg-[#FAF9F7] p-3.5 sm:p-8 flex items-center justify-center mb-2 sm:mb-3 overflow-hidden transition-all">
                           {hasDiscount && (
-                            <span className="absolute top-3 left-3 bg-[#B59A6C] text-white text-[11px] font-mono px-2.5 py-1 z-10 font-bold uppercase tracking-wider">
+                            <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#B59A6C] text-white text-[9px] sm:text-[11px] font-mono px-1.5 sm:px-2.5 py-0.5 sm:py-1 z-10 font-bold uppercase tracking-wider">
                               {discountLabel}
                             </span>
                           )}
 
-                          {/* Top-Right Wishlist Button on Hover */}
+                          {/* Top-Right Wishlist Button */}
                           <button 
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               toggleWishlist(productId);
                             }} 
-                            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 rounded-full bg-white/90 hover:bg-white shadow-md z-20 text-gray-400 hover:text-[#222222]"
+                            className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-1.5 sm:p-2 rounded-full bg-white/90 hover:bg-white shadow-md z-20 text-gray-400 hover:text-[#222222]"
                             title="Add to Wishlist"
                           >
-                            <HeartIcon size={16} className={wishlist.includes(productId) ? 'fill-[#222222] text-[#222222]' : ''} />
+                            <HeartIcon size={14} className={wishlist.includes(productId) ? 'fill-[#222222] text-[#222222]' : ''} />
                           </button>
 
                           <Link to={`/products/${productId}`} className="w-full h-full flex items-center justify-center">
                             <img 
                               src={getProductImage(product)} 
                               alt={product.name} 
-                              className="w-full h-full object-contain max-h-[190px] sm:max-h-[220px] transition-transform duration-500 group-hover:scale-105"
+                              className="w-full h-full object-contain max-h-[130px] sm:max-h-[220px] transition-transform duration-500 group-hover:scale-105"
                             />
                           </Link>
 
@@ -497,7 +497,7 @@ const Products = () => {
                             whileHover={{ scale: 1.04 }}
                             whileTap={{ scale: 0.96 }}
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                            className="absolute inset-x-4 bottom-4 z-20 opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out flex justify-center"
+                            className="absolute inset-x-2 sm:inset-x-4 bottom-2 sm:bottom-4 z-20 opacity-0 transform translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out hidden sm:flex justify-center"
                           >
                             <Link
                               to={`/products/${productId}`}
@@ -516,15 +516,15 @@ const Products = () => {
                         </div>
 
                         <Link to={`/products/${productId}`} className="block text-left px-0.5">
-                          <h3 className="font-body text-base font-bold text-[#222222] truncate mt-2 group-hover:text-black transition-colors">{product.name}</h3>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="font-body text-sm text-[#222222] font-semibold">{priceDisplay}</p>
+                          <h3 className="font-body text-xs sm:text-base font-bold text-[#222222] truncate mt-1 sm:mt-2 group-hover:text-black transition-colors">{product.name}</h3>
+                          <div className="flex items-center justify-between mt-0.5 sm:mt-1 gap-1">
+                            <p className="font-body text-xs sm:text-sm text-[#222222] font-semibold">{priceDisplay}</p>
                             {product.karat ? (
-                              <span className="text-[10px] font-mono font-bold text-[#B59A6C] px-2 py-0.5 bg-[#FAF9F7] border border-[#B59A6C]/30">
+                              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#B59A6C] px-1.5 sm:px-2 py-0.5 bg-[#FAF9F7] border border-[#B59A6C]/30 whitespace-nowrap">
                                 {product.karat}K GOLD
                               </span>
                             ) : product.purityPercentage ? (
-                              <span className="text-[10px] font-mono font-bold text-[#808080] px-2 py-0.5 bg-[#FAF9F7] border border-gray-200">
+                              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#808080] px-1.5 sm:px-2 py-0.5 bg-[#FAF9F7] border border-gray-200 whitespace-nowrap">
                                 {product.purityPercentage}% SILVER
                               </span>
                             ) : null}

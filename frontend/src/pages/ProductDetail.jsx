@@ -166,13 +166,13 @@ const ProductDetail = () => {
   const diamondInfo = product?.diamond?.hasDiamond ? product.diamond : livePricing?.diamondDetails;
 
   return (
-    <div className="min-h-screen bg-white pt-8 lg:pt-12 relative">
-      <div className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
+    <div className="min-h-screen bg-white pt-4 sm:pt-8 lg:pt-12 relative">
+      <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 pb-10 lg:pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-start">
           {/* Left Column: Compact Main Image & Thumbnails (~40% width -> col-span-5) */}
-          <div className="md:col-span-5 lg:col-span-5 max-w-[380px] sm:max-w-[420px] w-full space-y-3 ml-0 mr-auto">
+          <div className="md:col-span-5 lg:col-span-5 w-full max-w-full md:max-w-[420px] space-y-3 mx-auto md:ml-0 md:mr-auto">
             {/* Main Image Box with Interactive Lighting Filter */}
-            <div className={`relative w-full aspect-square rounded-2xl p-5 sm:p-6 flex items-center justify-center overflow-hidden group transition-all duration-700 border border-[#E5E2D9] ${
+            <div className={`relative w-full aspect-square max-h-[340px] sm:max-h-[420px] rounded-2xl p-4 sm:p-6 flex items-center justify-center overflow-hidden group transition-all duration-700 border border-[#E5E2D9] ${
               lightFilter === 'candlelight' 
                 ? 'bg-gradient-to-b from-[#2A1E17] via-[#20150F] to-[#170E0A] shadow-[inset_0_0_40px_rgba(212,175,55,0.15)]' 
                 : lightFilter === 'spotlight' 
@@ -190,7 +190,7 @@ const ProductDetail = () => {
               <img
                 src={images[activeIndex] || getProductImage(product)}
                 alt={product.name}
-                className={`relative z-10 w-full h-full object-contain max-h-[200px] sm:max-h-[230px] transition-all duration-700 group-hover:scale-105 ${
+                className={`relative z-10 w-full h-full object-contain max-h-[190px] sm:max-h-[230px] transition-all duration-700 group-hover:scale-105 ${
                   lightFilter === 'spotlight' 
                     ? 'brightness-125 contrast-125 drop-shadow-[0_0_25px_rgba(255,255,255,0.75)]' 
                     : lightFilter === 'candlelight' 
@@ -202,13 +202,13 @@ const ProductDetail = () => {
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base z-20 cursor-pointer"
+                    className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-colors shadow-sm text-sm sm:text-base z-20 cursor-pointer"
                   >
                     ‹
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-8 h-8 flex items-center justify-center transition-colors shadow-sm text-base z-20 cursor-pointer"
+                    className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#222222] rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-colors shadow-sm text-sm sm:text-base z-20 cursor-pointer"
                   >
                     ›
                   </button>
@@ -217,7 +217,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Interactive Environmental Lighting Inspector Toolbar */}
-            <div className="w-full p-2.5 sm:p-3 bg-[#FAF9F7] border border-[#E5E2D9] rounded-2xl shadow-xs space-y-2">
+            <div className="w-full p-2 sm:p-3 bg-[#FAF9F7] border border-[#E5E2D9] rounded-xl sm:rounded-2xl shadow-xs space-y-1.5 sm:space-y-2">
               {/* Header */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
@@ -319,21 +319,21 @@ const ProductDetail = () => {
             </div>
 
             {/* Title & Wishlist */}
-            <div className="flex justify-between items-start mb-3">
-              <h1 className="font-heading text-4xl sm:text-5xl lg:text-5xl text-[#222222] font-normal leading-tight">
+            <div className="flex justify-between items-start mb-2 sm:mb-3 gap-3">
+              <h1 className="font-heading text-2xl sm:text-4xl lg:text-5xl text-[#222222] font-normal leading-tight">
                 {product.name}
               </h1>
               <button 
                 onClick={toggleWishlist} 
-                className="p-2 text-[#808080] hover:text-[#B59A6C] transition-colors"
+                className="p-1.5 sm:p-2 text-[#808080] hover:text-[#B59A6C] transition-colors flex-shrink-0"
                 title="Add to Wishlist"
               >
-                <HeartIcon size={24} className={wishlist.includes(id) ? 'fill-[#B59A6C] text-[#B59A6C]' : ''} />
+                <HeartIcon size={22} className={wishlist.includes(id) ? 'fill-[#B59A6C] text-[#B59A6C]' : ''} />
               </button>
             </div>
             
             {/* Price */}
-            <p className="font-heading text-2xl sm:text-3xl lg:text-4xl text-[#222222] mb-4 font-normal">
+            <p className="font-heading text-2xl sm:text-3xl lg:text-4xl text-[#222222] mb-3 sm:mb-4 font-normal">
               ₹{livePricing.totalLivePrice?.toLocaleString('en-IN')}
             </p>
 
@@ -341,78 +341,78 @@ const ProductDetail = () => {
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 space-y-3.5 pt-2"
+              className="mb-6 sm:mb-8 space-y-3 pt-1 sm:pt-2"
             >
-              <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1 border-b border-gray-200/80 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-heading text-xs font-bold text-[#111111] uppercase tracking-[0.15em]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                  <span className="font-heading text-[10px] sm:text-xs font-bold text-[#111111] uppercase tracking-[0.12em] sm:tracking-[0.15em]">
                     REAL-TIME LIVE METAL & DIAMOND VALUATION
                   </span>
                 </div>
-                <span className="font-mono text-xs font-semibold text-[#B59A6C]">
-                  IBJA LIVE RATE: ₹{livePricing.baseRatePerGram?.toLocaleString('en-IN')}/g
+                <span className="font-mono text-[10px] sm:text-xs font-semibold text-[#B59A6C]">
+                  IBJA: ₹{livePricing.baseRatePerGram?.toLocaleString('en-IN')}/g
                 </span>
               </div>
 
-              <div className="space-y-2.5 font-body text-xs text-[#444444]">
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-gray-600">Net Metal Weight ({livePricing.weight}g • {livePricing.karat}K Gold • {livePricing.purityPercentageStr} Purity)</span>
-                  <span className="font-mono font-bold text-[#111111]">₹{livePricing.rawMetalCost?.toLocaleString('en-IN')}</span>
+              <div className="space-y-2 font-body text-[11px] sm:text-xs text-[#444444]">
+                <div className="flex justify-between items-center py-0.5 gap-2">
+                  <span className="text-gray-600 flex-1">Net Metal ({livePricing.weight}g • {livePricing.karat}K Gold • {livePricing.purityPercentageStr} Purity)</span>
+                  <span className="font-mono font-bold text-[#111111] whitespace-nowrap">₹{livePricing.rawMetalCost?.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="text-gray-600">Artisan Making Charges (₹{livePricing.makingChargeRate}/g)</span>
-                  <span className="font-mono font-bold text-[#111111]">₹{livePricing.makingCharges?.toLocaleString('en-IN')}</span>
+                <div className="flex justify-between items-center py-0.5 gap-2">
+                  <span className="text-gray-600 flex-1">Artisan Making Charges (₹{livePricing.makingChargeRate}/g)</span>
+                  <span className="font-mono font-bold text-[#111111] whitespace-nowrap">₹{livePricing.makingCharges?.toLocaleString('en-IN')}</span>
                 </div>
                 {livePricing.gemstoneCost > 0 && (
-                  <div className="flex justify-between items-center py-1.5 border-y border-gray-100 my-1">
-                    <div>
+                  <div className="flex justify-between items-center py-1.5 border-y border-gray-100 my-1 gap-2">
+                    <div className="flex-1">
                       <span className="font-bold text-[#111111] block">Certified Diamond Valuation</span>
-                      <span className="text-[10px] text-gray-500 font-mono">
+                      <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono leading-tight block">
                         {livePricing.diamondDetails?.carat || 0.5} Carat • Cut: {String(livePricing.diamondDetails?.cut || 'excellent').toUpperCase()} • Color: {livePricing.diamondDetails?.color || 'G'} • Clarity: {livePricing.diamondDetails?.clarity || 'VVS1'}
                       </span>
                     </div>
-                    <span className="font-mono font-bold text-[#B59A6C]">₹{livePricing.gemstoneCost?.toLocaleString('en-IN')}</span>
+                    <span className="font-mono font-bold text-[#B59A6C] whitespace-nowrap">₹{livePricing.gemstoneCost?.toLocaleString('en-IN')}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200/80">
-                  <span className="font-semibold text-[#111111]">Subtotal (Metal + Diamond + Making)</span>
-                  <span className="font-mono font-bold text-[#111111]">₹{livePricing.subtotal?.toLocaleString('en-IN')}</span>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200/80 gap-2">
+                  <span className="font-semibold text-[#111111] flex-1">Subtotal (Metal + Diamond + Making)</span>
+                  <span className="font-mono font-bold text-[#111111] whitespace-nowrap">₹{livePricing.subtotal?.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center text-gray-500 py-0.5">
-                  <span>GST Tax (3%)</span>
-                  <span className="font-mono">₹{livePricing.gstTax?.toLocaleString('en-IN')}</span>
+                <div className="flex justify-between items-center text-gray-500 py-0.5 gap-2">
+                  <span className="flex-1">GST Tax (3%)</span>
+                  <span className="font-mono whitespace-nowrap">₹{livePricing.gstTax?.toLocaleString('en-IN')}</span>
                 </div>
               </div>             
               
               <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">FINAL PATRON LIVE PRICE</span>
-                  <span className="font-heading text-3xl font-bold text-[#111111]">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-gray-400 uppercase tracking-widest block">FINAL PATRON LIVE PRICE</span>
+                  <span className="font-heading text-2xl sm:text-3xl font-bold text-[#111111]">
                     ₹{livePricing.totalLivePrice?.toLocaleString('en-IN')}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-[#B59A6C] uppercase tracking-widest">
+                <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#B59A6C] uppercase tracking-widest">
                   100% BIS HALLMARKED
                 </span>
               </div>
             </motion.div>
 
             {/* Description Excerpt */}
-            <p className="font-body text-[#808080] text-sm sm:text-base leading-relaxed mb-8 max-w-2xl">
+            <p className="font-body text-[#808080] text-xs sm:text-base leading-relaxed mb-6 sm:mb-8 max-w-2xl">
               {product.description || 'Celebrate life\'s precious moments with our Golden Birthday Charm Bracelet, a delightful piece adorned with charming symbols of joy and love. Crafted in gleaming gold, this bracelet captures the essence of cherished memories, making it a thoughtful and meaningful gift. Embrace the enchanting journey of life.'}
             </p>
 
             {/* Main Action Button */}
             <button 
               onClick={addToCart} 
-              className="w-full bg-[#222222] text-white font-body py-4 sm:py-5 uppercase tracking-[0.15em] font-bold text-xs sm:text-sm hover:bg-[#B59A6C] transition-colors rounded-none mb-8 shadow-sm"
+              className="w-full bg-[#222222] text-white font-body py-3.5 sm:py-5 uppercase tracking-[0.15em] font-bold text-xs sm:text-sm hover:bg-[#B59A6C] transition-colors rounded-none mb-6 sm:mb-8 shadow-sm"
             >
               PURCHASE NOW
             </button>
 
             {/* Product Meta Details */}
-            <div className="border-t border-b border-gray-100 py-4 mb-8 space-y-2 text-xs font-body text-[#808080]">
+            <div className="border-t border-b border-gray-100 py-3 sm:py-4 mb-6 sm:mb-8 space-y-2 text-xs font-body text-[#808080]">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-[#222222]">Product Number:</span>
                 <span>{product.productNumber || '5672-9013-4826'}</span>
@@ -546,37 +546,37 @@ const ProductDetail = () => {
 
         {/* Related Products Section */}
         {relatedProducts.length > 0 && (
-          <section className="py-16 mt-16 border-t border-gray-100">
-            <h2 className="font-heading text-3xl sm:text-4xl uppercase tracking-wider text-[#222222] mb-10 text-left font-normal">
+          <section className="py-10 sm:py-16 mt-10 sm:mt-16 border-t border-gray-100">
+            <h2 className="font-heading text-2xl sm:text-4xl uppercase tracking-wider text-[#222222] mb-6 sm:mb-10 text-left font-normal">
               Related Products
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-8">
               {relatedProducts.map((fp) => {
                 const livePricingItem = getLiveProductPrice(fp);
                 return (
                   <motion.div key={fp._id || fp.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group relative cursor-pointer bg-white border border-[#EAE7E1] hover:border-[#B59A6C] transition-all duration-300 rounded-none overflow-hidden flex flex-col justify-between">
-                    <div className="relative aspect-square bg-[#FAF9F7] p-6 flex items-center justify-center overflow-hidden">
+                    <div className="relative aspect-square bg-[#FAF9F7] p-3.5 sm:p-6 flex items-center justify-center overflow-hidden">
                       <Link to={`/products/${fp._id || fp.id}`} className="w-full h-full flex items-center justify-center">
-                        <img src={getProductImage(fp)} alt={fp.name} className="w-full h-full object-contain max-h-[180px] transition-transform duration-500 group-hover:scale-105" />
+                        <img src={getProductImage(fp)} alt={fp.name} className="w-full h-full object-contain max-h-[120px] sm:max-h-[180px] transition-transform duration-500 group-hover:scale-105" />
                       </Link>
                     </div>
-                    <div className="p-5 text-left flex flex-col flex-1 justify-between bg-white">
+                    <div className="p-3 sm:p-5 text-left flex flex-col flex-1 justify-between bg-white">
                       <div>
-                        <span className="font-body text-[11px] font-semibold uppercase tracking-[0.2em] text-[#B59A6C] mb-1 block">
+                        <span className="font-body text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-[#B59A6C] mb-1 block">
                           {(fp.category || 'JEWELRY').toUpperCase()}
                         </span>
                         <Link to={`/products/${fp._id || fp.id}`}>
-                          <h3 className="font-heading text-xl text-[#222222] font-normal truncate group-hover:text-[#B59A6C] transition-colors mb-1">{fp.name}</h3>
+                          <h3 className="font-heading text-sm sm:text-xl text-[#222222] font-normal truncate group-hover:text-[#B59A6C] transition-colors mb-1">{fp.name}</h3>
                         </Link>
-                        <p className="font-heading text-base text-[#222222] font-bold mb-4">₹{livePricingItem.totalLivePrice.toLocaleString('en-IN')}</p>
+                        <p className="font-heading text-xs sm:text-base text-[#222222] font-bold mb-2 sm:mb-4">₹{livePricingItem.totalLivePrice.toLocaleString('en-IN')}</p>
                       </div>
                       <div>
                         <Link
                           to={`/products/${fp._id || fp.id}`}
-                          className="font-body text-xs font-bold text-[#222222] uppercase tracking-[0.15em] inline-flex items-center gap-2 group-hover:text-[#B59A6C] transition-colors"
+                          className="font-body text-[11px] sm:text-xs font-bold text-[#222222] uppercase tracking-[0.1em] sm:tracking-[0.15em] inline-flex items-center gap-1.5 sm:gap-2 group-hover:text-[#B59A6C] transition-colors"
                         >
                           <span>View Product</span>
-                          <span className="text-[#B59A6C] text-sm transition-transform group-hover:translate-x-1.5">→</span>
+                          <span className="text-[#B59A6C] text-xs sm:text-sm transition-transform group-hover:translate-x-1.5">→</span>
                         </Link>
                       </div>
                     </div>

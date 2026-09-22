@@ -95,35 +95,35 @@ const MonthlyUpdatesNewsletter = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1.0] }}
-      className="relative max-w-[1520px] mx-auto my-12 px-4 sm:px-6 lg:px-8"
+      className="relative max-w-[1520px] mx-auto my-8 sm:my-12 px-3 sm:px-6 lg:px-8"
     >
-      <div className="relative bg-[#111111] text-[#FAF9F7] rounded-[24px] py-10 px-6 sm:px-10 lg:px-14 overflow-hidden border border-[#B59A6C]/30 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+      <div className="relative bg-[#111111] text-[#FAF9F7] rounded-[20px] sm:rounded-[24px] py-8 sm:py-10 px-4 sm:px-10 lg:px-14 overflow-hidden border border-[#B59A6C]/30 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
         
         {/* Subtle Webflow Luxury Grid Overlay */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#B59A6C_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-12 items-center relative z-10">
           
           {/* Left Column: Form & Content */}
-          <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-center lg:text-left">
             
             {/* Webflow Pill Badge with Gold Halo Indicator */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-[#FDF2F0] border border-[#E8C8C1] rounded-full"
+              className="inline-flex items-center gap-2.5 px-3.5 py-1 sm:px-4 sm:py-1.5 bg-[#FDF2F0] border border-[#E8C8C1] rounded-full"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B59A6C] opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#B59A6C]" />
               </span>
-              <span className="text-[11px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
+              <span className="text-[10px] sm:text-[11px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
                 ATELIER PRIVÉ VIP CLUB
               </span>
             </motion.div>
 
-            <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl uppercase tracking-[0.15em] font-normal leading-tight text-white">
+            <h2 className="font-heading text-2xl sm:text-4xl lg:text-5xl uppercase tracking-[0.12em] sm:tracking-[0.15em] font-normal leading-tight text-white">
               Get Monthly Updates
             </h2>
 

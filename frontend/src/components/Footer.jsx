@@ -19,17 +19,17 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-[#222222] text-white py-20">
+    <footer className="bg-[#222222] text-white py-12 sm:py-20">
       <div className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10 mb-16">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10 mb-12 sm:mb-16">
           
           <motion.div 
             initial={{ opacity: 0, y: 30 }} 
             whileInView={{ opacity: 1, y: 0 }} 
             viewport={{ once: true }}
-            className="col-span-1 lg:col-span-1"
+            className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-1"
           >
             <Link to="/" className="inline-block mb-4">
               <GlimmrLogo size="md" variant="light" showSubtext={true} autoLoop={false} />
