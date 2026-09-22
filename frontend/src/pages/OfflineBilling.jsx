@@ -8,7 +8,30 @@ import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setC
 import BillingInvoice from '../components/BillingInvoice';
 import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../components/Icons';
 
-const CATEGORIES = ['all', 'rings', 'necklaces', 'bracelet', 'earring', 'watches'];
+const CATEGORIES = [
+  { id: 'all', label: 'All Pieces' },
+  { id: 'rings', label: 'Rings' },
+  { id: 'necklaces', label: 'Necklaces' },
+  { id: 'bracelets', label: 'Bracelets' },
+  { id: 'earrings', label: 'Earrings' },
+  { id: 'watches', label: 'Watches' }
+];
+
+const normalizeCategory = (cat) => {
+  if (!cat) return '';
+  return String(cat).toLowerCase().trim().replace(/s$/, '').replace(/e$/, '');
+};
+
+const matchesCategory = (productCategory, selectedCategory) => {
+  if (!selectedCategory || selectedCategory === 'all') return true;
+  const prodNorm = normalizeCategory(productCategory);
+  const selNorm = normalizeCategory(selectedCategory);
+  if (prodNorm === selNorm) return true;
+  if (prodNorm.startsWith(selNorm) || selNorm.startsWith(prodNorm)) return true;
+  const pStr = String(productCategory || '').toLowerCase();
+  const sStr = String(selectedCategory || '').toLowerCase().replace(/s$/, '');
+  return pStr.includes(sStr);
+};
 
 const MATERIALS = [
   { value: 'gold', label: 'Gold' },
@@ -46,12 +69,139 @@ const GST_PRESETS = [
   { label: '5%', value: 5 }
 ];
 
+const OFFLINE_FALLBACK_PRODUCTS = [
+  {
+    _id: 'pos-ring-001',
+    name: '22K Royal Kundan Gold Ring',
+    category: 'rings',
+    material: 'gold',
+    karat: 22,
+    metalWeight: 6.5,
+    weight: 6.5,
+    images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
+  },
+  {
+    _id: 'pos-ring-002',
+    name: '18K Solitaire Brilliant Diamond Ring',
+    category: 'rings',
+    material: 'gold',
+    karat: 18,
+    metalWeight: 4.2,
+    weight: 4.2,
+    diamond: { hasDiamond: true, carat: 0.5, cut: 'excellent', color: 'G', clarity: 'VS1' },
+    images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
+  },
+  {
+    _id: 'pos-ring-003',
+    name: '925 Sterling Silver Artisan Band Ring',
+    category: 'rings',
+    material: 'silver',
+    karat: 925,
+    metalWeight: 5.8,
+    weight: 5.8,
+    images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
+  },
+  {
+    _id: 'pos-ring-004',
+    name: '24K Classic Hallmarked Gold Band',
+    category: 'rings',
+    material: 'gold',
+    karat: 24,
+    metalWeight: 8.0,
+    weight: 8.0,
+    images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
+  },
+  {
+    _id: 'pos-neck-001',
+    name: '22K Traditional Temple Heritage Necklace',
+    category: 'necklaces',
+    material: 'gold',
+    karat: 22,
+    metalWeight: 26.5,
+    weight: 26.5,
+    images: ['https://framerusercontent.com/images/ye7CD1FwMK23YrmwGKBxPmwkxs.png']
+  },
+  {
+    _id: 'pos-neck-002',
+    name: '925 Sterling Silver Fine Chain Necklace',
+    category: 'necklaces',
+    material: 'silver',
+    karat: 925,
+    metalWeight: 14.0,
+    weight: 14.0,
+    images: ['https://framerusercontent.com/images/ObqkR0R5JsxlwfTh6qRzuVS0Kc.png']
+  },
+  {
+    _id: 'pos-brac-001',
+    name: '22K Imperial Kada Gold Bracelet',
+    category: 'bracelets',
+    material: 'gold',
+    karat: 22,
+    metalWeight: 18.2,
+    weight: 18.2,
+    images: ['https://framerusercontent.com/images/DdMSTOefO0YEho190OisMkszb8.png']
+  },
+  {
+    _id: 'pos-brac-002',
+    name: '925 Silver Guardian Bangle Bracelet',
+    category: 'bracelets',
+    material: 'silver',
+    karat: 925,
+    metalWeight: 12.5,
+    weight: 12.5,
+    images: ['https://framerusercontent.com/images/oXkONPSRmFprwc033T5YO7KhozQ.png']
+  },
+  {
+    _id: 'pos-ear-001',
+    name: '22K Heritage Kundan Jhumka Earrings',
+    category: 'earrings',
+    material: 'gold',
+    karat: 22,
+    metalWeight: 11.5,
+    weight: 11.5,
+    images: ['https://framerusercontent.com/images/VUCxKLRtAXtB7J9fhWKrMpxLg.png']
+  },
+  {
+    _id: 'pos-ear-002',
+    name: '18K Diamond Solitaire Stud Earrings',
+    category: 'earrings',
+    material: 'gold',
+    karat: 18,
+    metalWeight: 3.6,
+    weight: 3.6,
+    diamond: { hasDiamond: true, carat: 0.6, cut: 'excellent', color: 'F', clarity: 'VVS1' },
+    images: ['https://framerusercontent.com/images/bhjfpPAbvDLaUbc1DictL4xmYfQ.png']
+  },
+  {
+    _id: 'pos-wat-001',
+    name: 'Femme Chronos Haute Horology Gold Watch',
+    category: 'watches',
+    material: 'gold',
+    karat: 18,
+    metalWeight: 16.0,
+    weight: 16.0,
+    images: ['https://framerusercontent.com/images/J7D8037iOHxzeluZMHv3T7v8.png']
+  },
+  {
+    _id: 'pos-wat-002',
+    name: 'Silver Chrono Precision Timepiece',
+    category: 'watches',
+    material: 'silver',
+    karat: 925,
+    metalWeight: 24.0,
+    weight: 24.0,
+    images: ['https://framerusercontent.com/images/8nrI714PWPpxvAerPHfroa0aznI.png']
+  }
+];
+
 const OfflineBilling = () => {
   // Products & Search
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [productsLoading, setProductsLoading] = useState(true);
+  const [mobileTab, setMobileTab] = useState('catalog'); // 'catalog' | 'bill'
+  const [catalogAlert, setCatalogAlert] = useState('');
 
   // Metal Rates (Owner Editable)
   const [liveRates, setLiveRates] = useState(() => {
@@ -133,20 +283,45 @@ const OfflineBilling = () => {
   const [billHistory, setBillHistory] = useState([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // Fetch catalog products
+  // Fetch catalog products (loads full catalog for POS with offline fallback)
   useEffect(() => {
     const fetchProducts = async () => {
       setProductsLoading(true);
       try {
-        const res = await api.get('/products');
+        const res = await api.get('/products', { params: { limit: 1000 } });
         const list = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data?.products)
           ? res.data.products
           : [];
-        setProducts(list);
+        if (list.length > 0) {
+          setProducts(list);
+          try {
+            localStorage.setItem('glimmr_billing_products_cache', JSON.stringify(list));
+          } catch {}
+        } else {
+          const cached = localStorage.getItem('glimmr_billing_products_cache');
+          if (cached) {
+            try {
+              setProducts(JSON.parse(cached));
+            } catch {
+              setProducts(OFFLINE_FALLBACK_PRODUCTS);
+            }
+          } else {
+            setProducts(OFFLINE_FALLBACK_PRODUCTS);
+          }
+        }
       } catch {
-        setProducts([]);
+        const cached = localStorage.getItem('glimmr_billing_products_cache');
+        if (cached) {
+          try {
+            setProducts(JSON.parse(cached));
+          } catch {
+            setProducts(OFFLINE_FALLBACK_PRODUCTS);
+          }
+        } else {
+          setProducts(OFFLINE_FALLBACK_PRODUCTS);
+        }
       } finally {
         setProductsLoading(false);
       }
@@ -199,16 +374,16 @@ const OfflineBilling = () => {
     }
   }, [showHistory]);
 
-  // Filter products safely
+  // Filter products safely with category stemming
   const filteredProducts = useMemo(() => {
     const rawList = Array.isArray(products)
       ? products
       : Array.isArray(products?.products)
       ? products.products
       : [];
-    let list = rawList;
+    let list = rawList.length > 0 ? rawList : OFFLINE_FALLBACK_PRODUCTS;
     if (activeCategory !== 'all') {
-      list = list.filter(p => (p.category || '').toLowerCase() === activeCategory.toLowerCase());
+      list = list.filter(p => matchesCategory(p.category, activeCategory));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -399,6 +574,9 @@ const OfflineBilling = () => {
 
   // Add catalog product to bill
   const addProductToBill = useCallback((product) => {
+    setCatalogAlert(`Added "${product.name}" to customer bill.`);
+    setTimeout(() => setCatalogAlert(''), 3000);
+
     const existing = billItems.find(bi => bi.productId === (product._id || product.id));
     if (existing) {
       setBillItems(prev => prev.map(bi =>
@@ -1036,12 +1214,44 @@ const OfflineBilling = () => {
       ) : (
         /* MAIN SPLIT-PANEL BILLING INTERFACE */
         <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 py-4">
+
+          {/* Mobile View Switcher (Visible only on screens < lg) */}
+          <div className="lg:hidden flex items-center bg-white border border-gray-200 p-1 mb-4 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setMobileTab('catalog')}
+              className={`flex-1 py-2.5 text-xs font-body font-bold uppercase tracking-wider text-center transition-all cursor-pointer ${
+                mobileTab === 'catalog'
+                  ? 'bg-[#222222] text-white shadow-sm'
+                  : 'text-gray-600 hover:text-[#222222] bg-transparent'
+              }`}
+            >
+              Jewelry Catalog ({filteredProducts.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('bill')}
+              className={`flex-1 py-2.5 text-xs font-body font-bold uppercase tracking-wider text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                mobileTab === 'bill'
+                  ? 'bg-[#222222] text-white shadow-sm'
+                  : 'text-gray-600 hover:text-[#222222] bg-transparent'
+              }`}
+            >
+              <span>Customer Bill</span>
+              <span className={`px-2 py-0.5 text-[9px] font-mono font-bold ${
+                mobileTab === 'bill' ? 'bg-[#B59A6C] text-black' : 'bg-gray-100 text-gray-700'
+              }`}>
+                {billItems.length}
+              </span>
+            </button>
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-5 lg:gap-7">
 
             {/* ==================================================== */}
             {/* LEFT PANEL (58%): Catalog, Search & Custom Item Entry */}
             {/* ==================================================== */}
-            <div className="w-full lg:w-[58%] space-y-4">
+            <div className={`w-full lg:w-[58%] space-y-4 ${mobileTab === 'catalog' ? 'block' : 'hidden lg:block'}`}>
 
               {/* Search & Custom Item Action Bar */}
               <div className="flex gap-3">
@@ -1071,18 +1281,32 @@ const OfflineBilling = () => {
               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                 {CATEGORIES.map(cat => (
                   <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
                     className={`px-4 py-2 text-[10px] font-body font-bold uppercase tracking-widest whitespace-nowrap cursor-pointer transition-all ${
-                      activeCategory === cat
+                      activeCategory === cat.id
                         ? 'bg-[#222222] text-white shadow-sm'
                         : 'bg-white border border-gray-200 text-[#222222] hover:border-[#222222]'
                     }`}
                   >
-                    {cat === 'all' ? 'All Pieces' : cat}
+                    {cat.label}
                   </button>
                 ))}
               </div>
+
+              {/* Added to Bill Feedback Alert */}
+              {catalogAlert && (
+                <div className="bg-[#FAF9F7] border border-[#B59A6C] text-[#222222] px-3.5 py-2 text-xs font-body flex items-center justify-between shadow-sm">
+                  <span className="font-medium text-[#222222]">{catalogAlert}</span>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('bill')}
+                    className="underline font-bold text-[10px] uppercase tracking-wider text-[#B59A6C] hover:text-black cursor-pointer ml-2"
+                  >
+                    View Bill
+                  </button>
+                </div>
+              )}
 
               {/* OWNER CUSTOM ITEM CREATION DRAWER */}
               <AnimatePresence>
@@ -1321,8 +1545,16 @@ const OfflineBilling = () => {
                     </div>
                   ))
                 ) : filteredProducts.length === 0 ? (
-                  <div className="col-span-full text-center py-12 text-gray-400 font-body text-sm bg-white border border-dashed border-gray-200">
-                    No catalog items found matching "{searchQuery}". You can use the "+ Custom Jewelry Entry" button above to add any custom piece.
+                  <div className="col-span-full text-center py-10 px-4 text-gray-500 font-body text-sm bg-white border border-dashed border-gray-200">
+                    <p className="font-heading text-base text-[#222222] font-bold mb-1">No items found in this selection</p>
+                    <p className="text-xs text-gray-400 mb-4">You can switch back to "All Pieces" or create a bespoke custom entry.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveCategory('all'); setSearchQuery(''); }}
+                      className="px-4 py-2 bg-[#222222] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer"
+                    >
+                      Show All Pieces
+                    </button>
                   </div>
                 ) : (
                   filteredProducts.map((product, idx) => {
@@ -1374,13 +1606,44 @@ const OfflineBilling = () => {
                   })
                 )}
               </div>
+
+              {/* Mobile Sticky Floating Bill Bar */}
+              {billItems.length > 0 && mobileTab === 'catalog' && (
+                <div className="lg:hidden sticky bottom-3 z-30 bg-[#111111] text-white p-3.5 shadow-xl flex items-center justify-between border border-[#B59A6C]">
+                  <div>
+                    <span className="text-[10px] font-mono text-[#B59A6C] uppercase font-bold block">
+                      {billItems.length} Piece{billItems.length !== 1 ? 's' : ''} in Bill
+                    </span>
+                    <span className="font-mono text-sm font-bold text-white">
+                      Rs.{billTotals.totalPayable.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('bill')}
+                    className="px-4 py-2 bg-[#B59A6C] text-black text-xs font-body font-bold uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
+                  >
+                    View Bill &rarr;
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* ==================================================== */}
             {/* RIGHT PANEL (42%): Current Bill, Owner Controls & Totals */}
             {/* ==================================================== */}
-            <div className="w-full lg:w-[42%]">
+            <div className={`w-full lg:w-[42%] ${mobileTab === 'bill' ? 'block' : 'hidden lg:block'}`}>
               <div className="bg-white border border-gray-200 sticky top-24 shadow-card">
+
+                {/* Mobile Return to Catalog Button */}
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('catalog')}
+                  className="lg:hidden w-full py-2.5 bg-[#222222] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer flex items-center justify-center gap-1.5 border-b border-white/10"
+                >
+                  <span>&larr;</span>
+                  <span>Return to Jewelry Catalog</span>
+                </button>
 
                 {/* Console Top Header */}
                 <div className="bg-[#111111] text-white p-4 flex justify-between items-center border-b border-[#B59A6C]/30">
