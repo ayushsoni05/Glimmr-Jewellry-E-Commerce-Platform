@@ -11,29 +11,40 @@ const adminMiddleware = require('../middleware/admin');
 
 const router = express.Router();
 
-// Helper: fetch live per-gram rates for gold and silver from metals.dev (IBJA)
+// Helper: fetch live per-gram rates for gold and silver from MetalPriceAPI (INR by default)
 async function fetchPerGramRates(currency = 'INR') {
-  const apiKey = process.env.METALS_DEV_API_KEY || 'RJ1XWLR1MA9FGVR0I41A488R0I41A';
-  const metalsDevUrl = `https://api.metals.dev/v1/metal/authority?api_key=${apiKey}&authority=ibja&currency=${currency.toUpperCase()}&unit=g`;
+  const metalApiKey = process.env.METALPRICEAPI_KEY || '2231ecdf41631c3c93b8b39dca380250';
+  const OZ_TO_GRAM = 31.1034768;
+  const IMPORT_DUTY_MULTIPLIER = 1.09;
+  const curr = currency.toUpperCase();
+  const isINR = curr === 'INR';
 
   let goldPerGram = 0, silverPerGram = 0;
   try {
-    const resp = await axios.get(metalsDevUrl, {
+    const url = `https://api.metalpriceapi.com/v1/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
+    const resp = await axios.get(url, {
       headers: { 'Accept': 'application/json' },
       timeout: 5000,
     });
-    const apiData = resp.data || {};
-    if (apiData.status === 'success' && apiData.rates) {
-      goldPerGram = Number(apiData.rates.ibja_gold) || 0;
-      silverPerGram = Number(apiData.rates.ibja_silver) || 0;
+    const d = resp.data || {};
+    if (d.success && d.rates) {
+      const ounceGold = Number(d.rates[`${curr}XAU`]) || (d.rates.XAU ? (1 / Number(d.rates.XAU)) : 0);
+      const ounceSilver = Number(d.rates[`${curr}XAG`]) || (d.rates.XAG ? (1 / Number(d.rates.XAG)) : 0);
+      if (ounceGold > 0) {
+        const rawGold = ounceGold / OZ_TO_GRAM;
+        goldPerGram = isINR ? Math.round(rawGold * IMPORT_DUTY_MULTIPLIER) : Number(rawGold.toFixed(2));
+      }
+      if (ounceSilver > 0) {
+        const rawSilver = ounceSilver / OZ_TO_GRAM;
+        silverPerGram = isINR ? Number((rawSilver * IMPORT_DUTY_MULTIPLIER).toFixed(2)) : Number(rawSilver.toFixed(2));
+      }
     }
   } catch (err) {
-    console.warn('[ORDER RATES] Failed to fetch from metals.dev, using fallback rates:', err.message);
+    console.warn('[ORDER RATES] Failed to fetch from MetalPriceAPI, using fallback:', err.message);
   }
 
-  // Exact IBJA fallback standards
-  if (!goldPerGram || goldPerGram <= 0) goldPerGram = currency.toUpperCase() === 'GBP' ? 116.8 : 15064;
-  if (!silverPerGram || silverPerGram <= 0) silverPerGram = currency.toUpperCase() === 'GBP' ? 1.8 : 231.3;
+  if (!goldPerGram || goldPerGram <= 0) goldPerGram = curr === 'GBP' ? 110.4 : 14684;
+  if (!silverPerGram || silverPerGram <= 0) silverPerGram = curr === 'GBP' ? 1.66 : 223.27;
 
   return { goldPerGram, silverPerGram };
 }

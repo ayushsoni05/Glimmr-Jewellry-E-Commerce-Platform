@@ -5,42 +5,40 @@ const Cart = require('../models/Cart');
 
 const router = express.Router();
 
-// Helper: fetch live per-gram rates for gold and silver (INR by default)
+// Helper: fetch live per-gram rates for gold and silver from MetalPriceAPI (INR by default)
 async function fetchPerGramRates(currency = 'INR') {
-  const goldApiToken = process.env.GOLDAPI_TOKEN || 'goldapi-pdixz26mhm8766q-io';
+  const metalApiKey = process.env.METALPRICEAPI_KEY || '2231ecdf41631c3c93b8b39dca380250';
   const OZ_TO_GRAM = 31.1034768;
-
-  const tryEndpoint = async (metal) => {
-    const base = `https://www.goldapi.io/api/${metal}/${currency.toUpperCase()}`;
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(now.getDate()).padStart(2, '0');
-    const dateStr = `${y}${m}${d}`;
-    const urls = [base, `${base}/${dateStr}`];
-    let lastErr;
-    for (const u of urls) {
-      try {
-        const resp = await axios.get(u, {
-          headers: { 'x-access-token': goldApiToken, 'Accept': 'application/json' },
-          timeout: 10000,
-        });
-        const data = resp.data || {};
-        const ounce = (data && !data.error) ? (data.price || data.close_price || data.open_price) : null;
-        if (ounce) return Number(ounce) / OZ_TO_GRAM; // per gram
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw lastErr || new Error(`Failed fetching ${metal}`);
-  };
+  const IMPORT_DUTY_MULTIPLIER = 1.09;
+  const curr = currency.toUpperCase();
+  const isINR = curr === 'INR';
 
   let goldPerGram = 0, silverPerGram = 0;
-  try { goldPerGram = await tryEndpoint('XAU'); } catch {}
-  try { silverPerGram = await tryEndpoint('XAG'); } catch {}
+  try {
+    const url = `https://api.metalpriceapi.com/v1/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
+    const resp = await axios.get(url, {
+      headers: { 'Accept': 'application/json' },
+      timeout: 5000,
+    });
+    const d = resp.data || {};
+    if (d.success && d.rates) {
+      const ounceGold = Number(d.rates[`${curr}XAU`]) || (d.rates.XAU ? (1 / Number(d.rates.XAU)) : 0);
+      const ounceSilver = Number(d.rates[`${curr}XAG`]) || (d.rates.XAG ? (1 / Number(d.rates.XAG)) : 0);
+      if (ounceGold > 0) {
+        const rawGold = ounceGold / OZ_TO_GRAM;
+        goldPerGram = isINR ? Math.round(rawGold * IMPORT_DUTY_MULTIPLIER) : Number(rawGold.toFixed(2));
+      }
+      if (ounceSilver > 0) {
+        const rawSilver = ounceSilver / OZ_TO_GRAM;
+        silverPerGram = isINR ? Number((rawSilver * IMPORT_DUTY_MULTIPLIER).toFixed(2)) : Number(rawSilver.toFixed(2));
+      }
+    }
+  } catch (err) {
+    console.warn('[CART RATES] Failed to fetch from MetalPriceAPI, using fallback:', err.message);
+  }
 
-  if (!goldPerGram || goldPerGram <= 0) goldPerGram = currency.toUpperCase() === 'GBP' ? 110.4 : 15600;
-  if (!silverPerGram || silverPerGram <= 0) silverPerGram = currency.toUpperCase() === 'GBP' ? 1.66 : 235.0;
+  if (!goldPerGram || goldPerGram <= 0) goldPerGram = curr === 'GBP' ? 110.4 : 14684;
+  if (!silverPerGram || silverPerGram <= 0) silverPerGram = curr === 'GBP' ? 1.66 : 223.27;
 
   return { goldPerGram, silverPerGram };
 }

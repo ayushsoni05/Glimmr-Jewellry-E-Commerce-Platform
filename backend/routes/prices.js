@@ -11,31 +11,69 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour (3,600,000 ms)
 const TROY_OUNCE_TO_GRAM = 31.1034768;
 const IMPORT_DUTY_MULTIPLIER = 1.09; // Domestic IBJA benchmark includes custom duty / cess
 
-// Multi-Source Live Metals Fetcher (metals.dev -> Yahoo Commodities -> Standard IBJA Baseline)
+// Multi-Source Live Metals Fetcher (MetalPriceAPI -> metals.dev -> Yahoo Commodities -> Standard IBJA Baseline)
 const fetchLiveMetals = async (currency = 'inr') => {
   const isINR = currency.toLowerCase() === 'inr';
   const isGBP = currency.toLowerCase() === 'gbp';
-  let provider = 'metals.dev (IBJA)';
+  const curr = currency.toUpperCase();
+  let provider = 'MetalPriceAPI (Live Indian Benchmark)';
   let goldPerGram = 0;
   let silverPerGram = 0;
+  let rawGoldPerGram = 0;
+  let rawSilverPerGram = 0;
   let apiData = {};
 
-  // Source 1: metals.dev IBJA authority endpoint
+  // Source 1: MetalPriceAPI (metalpriceapi.com with dedicated live key)
   try {
-    const apiKey = process.env.METALS_DEV_API_KEY || 'RJ1XWLR1MA9FGVR0I41A488R0I41A';
-    const metalsDevUrl = `https://api.metals.dev/v1/metal/authority?api_key=${apiKey}&authority=ibja&currency=${currency.toUpperCase()}&unit=g`;
-    const resp = await axios.get(metalsDevUrl, {
+    const metalApiKey = process.env.METALPRICEAPI_KEY || '2231ecdf41631c3c93b8b39dca380250';
+    const metalPriceUrl = `https://api.metalpriceapi.com/v1/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
+    const resp = await axios.get(metalPriceUrl, {
       headers: { 'Accept': 'application/json' },
-      timeout: 4000,
+      timeout: 6000,
     });
-    apiData = resp.data || {};
-    if (apiData.status === 'success' && apiData.rates) {
-      goldPerGram = Number(apiData.rates.ibja_gold) || 0;
-      silverPerGram = Number(apiData.rates.ibja_silver) || 0;
-      provider = 'metals.dev (IBJA)';
+    const d = resp.data || {};
+    if (d.success && d.rates) {
+      apiData = d;
+      const ounceGold = Number(d.rates[`${curr}XAU`]) || (d.rates.XAU ? (1 / Number(d.rates.XAU)) : 0);
+      const ounceSilver = Number(d.rates[`${curr}XAG`]) || (d.rates.XAG ? (1 / Number(d.rates.XAG)) : 0);
+
+      if (ounceGold > 0) {
+        rawGoldPerGram = ounceGold / TROY_OUNCE_TO_GRAM;
+        // Convert to Indian Domestic Retail Benchmark (including Customs Duty & Cess)
+        goldPerGram = isINR ? Math.round(rawGoldPerGram * IMPORT_DUTY_MULTIPLIER) : Number(rawGoldPerGram.toFixed(2));
+      }
+      if (ounceSilver > 0) {
+        rawSilverPerGram = ounceSilver / TROY_OUNCE_TO_GRAM;
+        silverPerGram = isINR ? Number((rawSilverPerGram * IMPORT_DUTY_MULTIPLIER).toFixed(2)) : Number(rawSilverPerGram.toFixed(2));
+      }
+
+      if (goldPerGram > 0) {
+        provider = 'MetalPriceAPI (Live Indian Benchmark)';
+      }
     }
   } catch (apiErr) {
-    // metals.dev quota limit or network timeout - automatically proceed to Source 2
+    console.warn('[PRICE_SERVICE] MetalPriceAPI error, proceeding to fallback:', apiErr.message);
+  }
+
+  // Source 2: metals.dev IBJA authority endpoint (Fallback)
+  if (!goldPerGram || goldPerGram <= 0) {
+    try {
+      const apiKey = process.env.METALS_DEV_API_KEY || 'RJ1XWLR1MA9FGVR0I41A488R0I41A';
+      const metalsDevUrl = `https://api.metals.dev/v1/metal/authority?api_key=${apiKey}&authority=ibja&currency=${curr}&unit=g`;
+      const resp = await axios.get(metalsDevUrl, {
+        headers: { 'Accept': 'application/json' },
+        timeout: 4000,
+      });
+      const data = resp.data || {};
+      if (data.status === 'success' && data.rates) {
+        apiData = data;
+        goldPerGram = Number(data.rates.ibja_gold) || 0;
+        silverPerGram = Number(data.rates.ibja_silver) || 0;
+        provider = 'metals.dev (IBJA)';
+      }
+    } catch (fallbackErr) {
+      // Proceed to Source 3
+    }
   }
 
   // Source 2: Live Commodity Market Feeds (Yahoo Finance Gold GC=F, Silver SI=F, Live FX)
@@ -100,15 +138,36 @@ const fetchLiveMetals = async (currency = 'inr') => {
   const purity = { '24k': 1.0, '22k': 22 / 24, '18k': 18 / 24, '14k': 14 / 24 };
 
   const result = {
-    gold: { price: goldPerGram, currency: currency.toUpperCase(), unit: 'gram' },
-    silver: { price: silverPerGram, currency: currency.toUpperCase(), unit: 'gram' },
+    gold: {
+      price: goldPerGram,
+      spotPrice: rawGoldPerGram > 0 ? Number(rawGoldPerGram.toFixed(2)) : goldPerGram,
+      currency: currency.toUpperCase(),
+      unit: 'gram'
+    },
+    silver: {
+      price: silverPerGram,
+      spotPrice: rawSilverPerGram > 0 ? Number(rawSilverPerGram.toFixed(2)) : silverPerGram,
+      currency: currency.toUpperCase(),
+      unit: 'gram',
+      pricePerKg: Math.round(silverPerGram * 1000)
+    },
     gold_10g_24k: Math.round(goldPerGram * 10 * purity['24k']),
     gold_10g_22k: Math.round(goldPerGram * 10 * purity['22k']),
     gold_10g_18k: Math.round(goldPerGram * 10 * purity['18k']),
-    timestamp: apiData.timestamp || new Date().toISOString(),
+    gold_10g_14k: Math.round(goldPerGram * 10 * purity['14k']),
+    silver_1kg: Math.round(silverPerGram * 1000),
+    rates_per_gram: {
+      gold_24k: goldPerGram,
+      gold_22k: Math.round(goldPerGram * purity['22k']),
+      gold_18k: Math.round(goldPerGram * purity['18k']),
+      gold_14k: Math.round(goldPerGram * purity['14k']),
+      silver: silverPerGram
+    },
+    timestamp: apiData.timestamp ? new Date(apiData.timestamp * 1000).toISOString() : new Date().toISOString(),
     nextUpdateIn: '1 hour',
     authority: 'ibja',
     provider,
+    source: 'metalpriceapi.com',
     raw: apiData,
   };
 
