@@ -355,6 +355,112 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     setTimeout(() => { printFrame.contentWindow.print(); setTimeout(() => document.body.removeChild(printFrame), 1000); }, 500);
   };
 
+  const handleShareWhatsApp = () => {
+    const phone = customer.phone ? customer.phone.replace(/\D/g, '') : '';
+    const formattedPhone = phone.length === 10 ? `91${phone}` : phone;
+    
+    const itemLines = safeItems.map((d, i) => 
+      `${i + 1}. ${d.name} (${d.karat || ''}K ${(d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1)}) - Rs.${(d.totalPrice * d.quantity).toLocaleString('en-IN')}`
+    ).join('%0a');
+    
+    const message = [
+      `*GLIMMR ATELIER*`,
+      `Store Billing Invoice`,
+      `---`,
+      `Bill: ${billNumber}`,
+      `Date: ${invoiceDate} | ${invoiceTime}`,
+      `Customer: ${customer.name || 'Walk-in Customer'}`,
+      `---`,
+      `*Items:*`,
+      itemLines,
+      `---`,
+      `Subtotal: Rs.${subtotal.toLocaleString('en-IN')}`,
+      computedTotalGst > 0 ? `GST (${rateNum}%): Rs.${computedTotalGst.toLocaleString('en-IN')}` : '',
+      discountAmount > 0 ? `Discount: -Rs.${discountAmount.toLocaleString('en-IN')}` : '',
+      oldGoldDeduction > 0 ? `Old Gold: -Rs.${oldGoldDeduction.toLocaleString('en-IN')}` : '',
+      `---`,
+      `*Total Payable: Rs.${totalPayable.toLocaleString('en-IN')}*`,
+      `Payment: ${paymentMethod.toUpperCase()}`,
+      `---`,
+      `Gold Rate: Rs.${Number(goldRateUsed).toLocaleString('en-IN')}/g`,
+      `BIS Hallmarked | GSTIN: 27AAAAA0000A1Z5`,
+      `Thank you for choosing Glimmr Atelier.`
+    ].filter(Boolean).join('%0a');
+    
+    const url = formattedPhone 
+      ? `https://wa.me/${formattedPhone}?text=${message}`
+      : `https://wa.me/?text=${message}`;
+    
+    window.open(url, '_blank');
+  };
+
+  const handleThermalPrint = () => {
+    const thermalFrame = document.createElement('iframe');
+    thermalFrame.style.display = 'none';
+    document.body.appendChild(thermalFrame);
+    const tDoc = thermalFrame.contentDocument || thermalFrame.contentWindow.document;
+
+    const itemsHtml = safeItems.map((d, i) => {
+      const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1);
+      return '<div style="padding:2px 0;"><div class="item-row"><span class="item-name">' + (i + 1) + '. ' + (d.name || 'Jewelry').substring(0, 28) + '</span><span class="bold">Rs.' + (d.totalPrice * d.quantity).toLocaleString('en-IN') + '</span></div><div style="font-size:9px;color:#555;padding-left:14px;">' + mat + ' ' + (d.karat || '') + 'K ' + (d.weight ? d.weight + 'g' : '') + ' x' + d.quantity + '</div></div>';
+    }).join('');
+
+    const gstLine = computedTotalGst > 0 ? '<div class="summary-row"><span>GST (' + rateNum + '%):</span><span>Rs.' + computedTotalGst.toLocaleString('en-IN') + '</span></div>' : '';
+    const discountLine = discountAmount > 0 ? '<div class="summary-row" style="color:#333;"><span>Discount:</span><span>-Rs.' + discountAmount.toLocaleString('en-IN') + '</span></div>' : '';
+    const oldGoldLine = oldGoldDeduction > 0 ? '<div class="summary-row"><span>Old Gold:</span><span>-Rs.' + oldGoldDeduction.toLocaleString('en-IN') + '</span></div>' : '';
+    const cashLine = paymentMethod === 'cash' && cashReceived > 0 ? '<div class="summary-row"><span>Cash Received:</span><span>Rs.' + cashReceived.toLocaleString('en-IN') + '</span></div><div class="summary-row"><span>Change:</span><span>Rs.' + changeReturned.toLocaleString('en-IN') + '</span></div>' : '';
+
+    tDoc.open();
+    tDoc.write(`<html><head><title>Thermal Receipt</title><style>
+      @page { size: 80mm auto; margin: 2mm; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Courier New', monospace; font-size: 11px; width: 76mm; color: #000; line-height: 1.4; }
+      .center { text-align: center; }
+      .right { text-align: right; }
+      .bold { font-weight: 700; }
+      .divider { border-top: 1px dashed #000; margin: 4px 0; }
+      .brand { font-size: 16px; font-weight: 700; letter-spacing: 2px; margin-bottom: 2px; }
+      .sub { font-size: 8px; color: #555; }
+      .item-row { display: flex; justify-content: space-between; padding: 2px 0; }
+      .item-name { max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; padding: 4px 0; }
+      .summary-row { display: flex; justify-content: space-between; font-size: 10px; padding: 1px 0; }
+    </style></head><body>
+      <div class="center">
+        <div class="brand">GLIMMR</div>
+        <div class="sub">ATELIER - FINE JEWELRY</div>
+        <div class="sub">BKC, Mumbai 400051</div>
+        <div class="sub">GSTIN: 27AAAAA0000A1Z5</div>
+      </div>
+      <div class="divider"></div>
+      <div class="item-row"><span>Bill: ${billNumber}</span><span>${invoiceDate}</span></div>
+      <div class="item-row"><span>${customer.name || 'Walk-in'}</span><span>${customer.phone || ''}</span></div>
+      <div class="divider"></div>
+      ${itemsHtml}
+      <div class="divider"></div>
+      <div class="summary-row"><span>Subtotal:</span><span>Rs.${subtotal.toLocaleString('en-IN')}</span></div>
+      ${gstLine}
+      ${discountLine}
+      ${oldGoldLine}
+      <div class="divider"></div>
+      <div class="total-row"><span>TOTAL:</span><span>Rs.${totalPayable.toLocaleString('en-IN')}</span></div>
+      <div class="summary-row"><span>Payment:</span><span class="bold">${paymentMethod.toUpperCase()}</span></div>
+      ${cashLine}
+      <div class="divider"></div>
+      <div class="summary-row"><span>Gold Rate:</span><span>Rs.${Number(goldRateUsed).toLocaleString('en-IN')}/g</span></div>
+      <div class="summary-row"><span>Silver Rate:</span><span>Rs.${Number(silverRateUsed).toLocaleString('en-IN')}/g</span></div>
+      <div class="divider"></div>
+      <div class="center" style="font-size:9px;margin-top:4px;">
+        <div>BIS Hallmarked | HSN: 7113</div>
+        <div>Computer Generated Invoice</div>
+        <div style="margin-top:4px;font-weight:700;">Thank you for visiting</div>
+        <div style="font-weight:700;">Glimmr Atelier</div>
+      </div>
+    </body></html>`);
+    tDoc.close();
+    setTimeout(() => { thermalFrame.contentWindow.print(); setTimeout(() => document.body.removeChild(thermalFrame), 1000); }, 500);
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -525,25 +631,41 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
-              <button
-                onClick={handleDownloadPDF}
-                disabled={downloading}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#222222] text-white py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <DownloadIcon size={16} />
-                {downloading ? 'Generating PDF...' : 'Download PDF Invoice'}
-              </button>
-              <button
-                onClick={handlePrint}
-                className="flex-1 flex items-center justify-center gap-2 border border-[#222222] text-[#222222] py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
-              >
-                <ShieldCheckIcon size={16} />
-                Print Invoice
-              </button>
+            <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={downloading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#222222] text-white py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <DownloadIcon size={16} />
+                  {downloading ? 'Generating PDF...' : 'Download PDF'}
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex-1 flex items-center justify-center gap-2 border border-[#222222] text-[#222222] py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                >
+                  <ShieldCheckIcon size={16} />
+                  Print A4 Invoice
+                </button>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={handleThermalPrint}
+                  className="flex-1 flex items-center justify-center gap-2 border border-gray-300 text-gray-700 py-2.5 text-[10px] font-body font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Thermal Receipt (80mm)
+                </button>
+                <button
+                  onClick={handleShareWhatsApp}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white py-2.5 text-[10px] font-body font-bold uppercase tracking-wider hover:bg-[#128C7E] transition-colors cursor-pointer"
+                >
+                  Share via WhatsApp
+                </button>
+              </div>
               <button
                 onClick={onClose}
-                className="px-6 py-3 text-gray-500 text-xs font-body font-bold uppercase tracking-wider hover:text-[#111111] transition-colors cursor-pointer"
+                className="px-6 py-2.5 text-gray-500 text-xs font-body font-bold uppercase tracking-wider hover:text-[#111111] transition-colors cursor-pointer"
               >
                 Close
               </button>

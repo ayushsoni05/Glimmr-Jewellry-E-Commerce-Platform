@@ -6,6 +6,8 @@ import { calculateProductLivePrice, KARAT_PURITY, DIAMOND_CUT_MULTIPLIERS, DIAMO
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
 import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setCachedRates } from '../utils/billingStorage';
 import BillingInvoice from '../components/BillingInvoice';
+import DayEndReport from '../components/DayEndReport';
+import { createRateLock, getActiveLocks, redeemRateLock, formatLockExpiry } from '../utils/rateLockStorage';
 import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../components/Icons';
 
 const CATEGORIES = [
@@ -244,6 +246,13 @@ const OfflineBilling = () => {
   const [cashReceived, setCashReceived] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
 
+  // Split Payment tracking
+  const [splitCashAmount, setSplitCashAmount] = useState('');
+  const [splitCardAmount, setSplitCardAmount] = useState('');
+  const [splitUpiAmount, setSplitUpiAmount] = useState('');
+  const [splitCardRef, setSplitCardRef] = useState('');
+  const [splitUpiRef, setSplitUpiRef] = useState('');
+
   // Old Gold Exchange / Scrap Buyback (Owner Filled)
   const [hasOldGold, setHasOldGold] = useState(false);
   const [oldGoldWeight, setOldGoldWeight] = useState('');
@@ -282,6 +291,9 @@ const OfflineBilling = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [billHistory, setBillHistory] = useState([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showZReport, setShowZReport] = useState(false);
+  const [showRateLockDrawer, setShowRateLockDrawer] = useState(false);
+  const [activeLocks, setActiveLocks] = useState(() => getActiveLocks());
 
   // Fetch catalog products (loads full catalog for POS with offline fallback)
   useEffect(() => {
@@ -798,6 +810,11 @@ const OfflineBilling = () => {
     };
   }, [billItems, appliedVoucher, appliedCashDiscount, oldGoldDeduction, gstRate, taxSplitMode, makingConcessionPercent]);
 
+  // Split payment logic
+  const splitTotal = (parseFloat(splitCashAmount) || 0) + (parseFloat(splitCardAmount) || 0) + (parseFloat(splitUpiAmount) || 0);
+  const splitBalanceRemaining = billTotals.totalPayable - splitTotal;
+  const isSplitBalanced = Math.abs(splitBalanceRemaining) < 1; // Allow Rs.1 rounding tolerance
+
   // Cash change calculation
   const changeToReturn = useMemo(() => {
     const received = parseFloat(cashReceived) || 0;
@@ -911,8 +928,8 @@ const OfflineBilling = () => {
       } : {},
       totalPayable: billTotals.totalPayable,
       paymentMethod,
-      paymentReference,
-      cashReceived: paymentMethod === 'cash' ? (parseFloat(cashReceived) || 0) : 0,
+      paymentReference: paymentMethod === 'mixed' ? `Cash: Rs.${splitCashAmount || 0} | Card: Rs.${splitCardAmount || 0} | UPI: Rs.${splitUpiAmount || 0} | Ref: ${splitCardRef || splitUpiRef || 'N/A'}` : paymentReference,
+      cashReceived: paymentMethod === 'cash' ? (parseFloat(cashReceived) || 0) : paymentMethod === 'mixed' ? (parseFloat(splitCashAmount) || 0) : 0,
       changeReturned: paymentMethod === 'cash' ? changeToReturn : 0,
       goldRateUsed: liveRates.gold,
       silverRateUsed: liveRates.silver,
@@ -932,7 +949,8 @@ const OfflineBilling = () => {
   }, [
     billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin,
     operatorName, billNotes, paymentMethod, paymentReference, cashReceived, changeToReturn,
-    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate, taxSplitMode
+    liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate, taxSplitMode,
+    splitCashAmount, splitCardAmount, splitUpiAmount, splitCardRef, splitUpiRef, isSplitBalanced
   ]);
 
   const handleClearBill = useCallback(() => {
@@ -943,6 +961,11 @@ const OfflineBilling = () => {
     setCustomerGstin('');
     setCashReceived('');
     setPaymentReference('');
+    setSplitCashAmount('');
+    setSplitCardAmount('');
+    setSplitUpiAmount('');
+    setSplitCardRef('');
+    setSplitUpiRef('');
     setCashDiscountInput('');
     setAppliedCashDiscount(0);
     setAppliedVoucher(null);
@@ -965,6 +988,34 @@ const OfflineBilling = () => {
       setShowInvoice(false);
     }, 200);
   }, [billItems, handleGenerateInvoice, handleClearBill]);
+
+  // Rate Lock Handlers
+  const handleCreateRateLock = useCallback(() => {
+    const lock = createRateLock(
+      customerName || 'Walk-in Customer',
+      customerPhone,
+      liveRates.gold,
+      liveRates.silver
+    );
+    setActiveLocks(getActiveLocks());
+    setCatalogAlert(`Rate lock token ${lock.token} created for ${customerName || 'Walk-in'} at Gold Rs.${liveRates.gold}/g`);
+    setTimeout(() => setCatalogAlert(''), 4000);
+  }, [customerName, customerPhone, liveRates]);
+
+  const handleRedeemRateLock = useCallback((token) => {
+    const result = redeemRateLock(token, 'PENDING');
+    if (result.success) {
+      const lock = result.lock;
+      setLiveRates({ gold: lock.goldRate, silver: lock.silverRate });
+      setRateStatus('custom');
+      setActiveLocks(getActiveLocks());
+      setCatalogAlert(`Rate lock redeemed: Gold Rs.${lock.goldRate}/g applied from token ${token}`);
+      setTimeout(() => setCatalogAlert(''), 4000);
+    } else {
+      setCatalogAlert(`Rate lock error: ${result.message}`);
+      setTimeout(() => setCatalogAlert(''), 4000);
+    }
+  }, []);
 
   const currentDateTime = new Date().toLocaleDateString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
@@ -1011,6 +1062,24 @@ const OfflineBilling = () => {
               className="px-2.5 py-1.5 bg-white/10 text-white border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/20 transition-colors cursor-pointer"
             >
               {showMakingTools ? 'Close Making' : 'Making Charges'}
+            </button>
+
+            <button
+              onClick={() => setShowZReport(true)}
+              className="px-2.5 py-1.5 bg-white/10 text-white border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              Z-Report
+            </button>
+
+            <button
+              onClick={() => setShowRateLockDrawer(!showRateLockDrawer)}
+              className={`px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                showRateLockDrawer
+                  ? 'bg-[#B59A6C] text-black border-[#B59A6C]'
+                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+              }`}
+            >
+              Rate Locks {activeLocks.length > 0 ? `(${activeLocks.length})` : ''}
             </button>
 
             <span className="text-white/40 hidden xl:inline">{currentDateTime}</span>
@@ -1127,6 +1196,72 @@ const OfflineBilling = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Rate Lock Tokens Drawer */}
+        <AnimatePresence>
+          {showRateLockDrawer && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-white/10 mt-3 pt-3"
+            >
+              <div className="max-w-[1520px] mx-auto py-2 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-[#B59A6C] font-bold uppercase tracking-wider text-[10px]">
+                    Rate Lock Tokens (Lock today's rate for a customer, valid 48h)
+                  </span>
+                  <button
+                    onClick={handleCreateRateLock}
+                    className="px-4 py-1.5 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
+                  >
+                    + Lock Current Rate
+                  </button>
+                </div>
+
+                {activeLocks.length === 0 ? (
+                  <div className="text-center py-4 text-white/30 font-body text-xs border border-dashed border-white/10">
+                    No active rate locks. Create one to guarantee today's gold rate for a customer.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {activeLocks.map(lock => (
+                      <div key={lock.token} className="bg-black/40 border border-white/10 p-3 space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-[10px] font-bold text-[#B59A6C]">{lock.token}</span>
+                          <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 border ${
+                            lock.status === 'active' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/40' :
+                            lock.status === 'redeemed' ? 'text-blue-400 border-blue-500/30 bg-blue-950/40' :
+                            'text-gray-400 border-gray-500/30 bg-gray-950/40'
+                          }`}>{lock.status}</span>
+                        </div>
+                        <div className="text-[10px] text-white/70">
+                          <span className="font-bold text-white/90">{lock.customerName}</span>
+                          {lock.customerPhone && <span className="text-white/50 ml-1">({lock.customerPhone})</span>}
+                        </div>
+                        <div className="flex justify-between text-[9px] font-mono text-white/60">
+                          <span>Gold: Rs.{lock.goldRate.toLocaleString('en-IN')}/g</span>
+                          <span>Silver: Rs.{lock.silverRate.toLocaleString('en-IN')}/g</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-white/10">
+                          <span className="text-[8px] font-mono text-white/40">{formatLockExpiry(lock.expiresAt)}</span>
+                          {lock.status === 'active' && (
+                            <button
+                              onClick={() => handleRedeemRateLock(lock.token)}
+                              className="px-2 py-0.5 bg-emerald-600 text-white text-[8px] font-bold uppercase hover:bg-emerald-500 transition-colors cursor-pointer"
+                            >
+                              Redeem and Apply
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -2321,7 +2456,7 @@ const OfflineBilling = () => {
                         </div>
                       </div>
 
-                      {/* CASH CALCULATOR OR REFERENCE INPUT */}
+                      {/* CASH CALCULATOR OR REFERENCE INPUT OR SPLIT PAYMENT */}
                       {paymentMethod === 'cash' ? (
                         <div className="grid grid-cols-2 gap-3 bg-[#FAF9F7] p-3 border border-gray-200">
                           <div>
@@ -2342,16 +2477,100 @@ const OfflineBilling = () => {
                             </div>
                           </div>
                         </div>
+                      ) : paymentMethod === 'mixed' ? (
+                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-3">
+                          <div className="flex justify-between items-center border-b border-gray-200/60 pb-1.5">
+                            <span className="text-[9px] font-body font-bold uppercase tracking-widest text-[#B59A6C]">Split Payment Allocation</span>
+                            <span className={`text-[10px] font-mono font-bold ${isSplitBalanced ? 'text-emerald-700' : splitBalanceRemaining > 0 ? 'text-amber-700' : 'text-rose-600'}`}>
+                              {isSplitBalanced ? 'Balanced' : splitBalanceRemaining > 0 ? `Rs.${Math.round(splitBalanceRemaining).toLocaleString('en-IN')} remaining` : `Rs.${Math.abs(Math.round(splitBalanceRemaining)).toLocaleString('en-IN')} excess`}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Cash Portion (Rs.)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={splitCashAmount}
+                                onChange={(e) => setSplitCashAmount(e.target.value)}
+                                placeholder="0"
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold focus:outline-none focus:border-[#222222]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Card Portion (Rs.)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={splitCardAmount}
+                                onChange={(e) => setSplitCardAmount(e.target.value)}
+                                placeholder="0"
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold focus:outline-none focus:border-[#222222]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">UPI Portion (Rs.)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={splitUpiAmount}
+                                onChange={(e) => setSplitUpiAmount(e.target.value)}
+                                placeholder="0"
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold focus:outline-none focus:border-[#222222]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Card/UPI Reference</label>
+                              <input
+                                type="text"
+                                value={splitCardRef || splitUpiRef}
+                                onChange={(e) => { setSplitCardRef(e.target.value); setSplitUpiRef(e.target.value); }}
+                                placeholder="Slip or UTR ref"
+                                className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#222222]"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Quick-fill presets */}
+                          <div className="flex flex-wrap gap-1.5 pt-1 border-t border-gray-200/60">
+                            <span className="text-[8px] font-mono text-gray-400 uppercase">Quick Split:</span>
+                            <button
+                              type="button"
+                              onClick={() => { const half = Math.round(billTotals.totalPayable / 2); setSplitCashAmount(String(half)); setSplitCardAmount(String(billTotals.totalPayable - half)); setSplitUpiAmount(''); }}
+                              className="px-2 py-0.5 text-[8px] font-mono font-bold border border-gray-200 bg-white text-gray-700 hover:border-[#222222] cursor-pointer"
+                            >
+                              50/50 Cash+Card
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { const half = Math.round(billTotals.totalPayable / 2); setSplitCashAmount(String(half)); setSplitUpiAmount(String(billTotals.totalPayable - half)); setSplitCardAmount(''); }}
+                              className="px-2 py-0.5 text-[8px] font-mono font-bold border border-gray-200 bg-white text-gray-700 hover:border-[#222222] cursor-pointer"
+                            >
+                              50/50 Cash+UPI
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setSplitCashAmount(String(billTotals.totalPayable)); setSplitCardAmount(''); setSplitUpiAmount(''); }}
+                              className="px-2 py-0.5 text-[8px] font-mono font-bold border border-gray-200 bg-white text-gray-700 hover:border-[#222222] cursor-pointer"
+                            >
+                              All Cash
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         <div className="bg-[#FAF9F7] p-3 border border-gray-200">
                           <label className="block text-[8px] font-body font-bold uppercase tracking-widest text-gray-500 mb-1">
-                            {paymentMethod === 'card' ? 'Card Auth / Slip Ref' : paymentMethod === 'upi' ? 'UPI UTR / Trans ID' : 'Payment Split Details'}
+                            {paymentMethod === 'card' ? 'Card Auth / Slip Ref' : 'UPI UTR / Trans ID'}
                           </label>
                           <input
                             type="text"
                             value={paymentReference}
                             onChange={(e) => setPaymentReference(e.target.value)}
-                            placeholder={paymentMethod === 'card' ? 'e.g. Card ending 4821 / Slip #104' : paymentMethod === 'upi' ? 'e.g. UPI Ref #948201849' : 'e.g. 50k Cash + 100k UPI'}
+                            placeholder={paymentMethod === 'card' ? 'e.g. Card ending 4821 / Slip #104' : 'e.g. UPI Ref #948201849'}
                             className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-mono text-[#222222] focus:outline-none focus:border-[#222222]"
                           />
                         </div>
@@ -2448,6 +2667,12 @@ const OfflineBilling = () => {
         isOpen={showInvoice}
         onClose={() => setShowInvoice(false)}
         billData={invoiceBillData}
+      />
+
+      {/* DAY-END Z-REPORT & GSTR-1 EXPORT MODAL */}
+      <DayEndReport
+        isOpen={showZReport}
+        onClose={() => setShowZReport(false)}
       />
 
     </div>
