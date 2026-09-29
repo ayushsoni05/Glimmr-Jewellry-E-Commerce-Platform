@@ -93,7 +93,7 @@ function App() {
                   <Route path="/custom-atelier" element={<CustomAtelier />} />
                   <Route path="/verify-certificate" element={<CertificateVerifier />} />
                   <Route path="/gifting" element={<GiftingSuite />} />
-                  <Route path="/billing" element={<OfflineBilling />} />
+                  <Route path="/billing" element={<AdminRoute><OfflineBilling /></AdminRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AnimatePresence>

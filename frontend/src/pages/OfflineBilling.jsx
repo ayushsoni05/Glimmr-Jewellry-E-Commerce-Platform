@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import { getProductImage } from '../utils/productImages';
 import { calculateProductLivePrice, KARAT_PURITY, DIAMOND_CUT_MULTIPLIERS, DIAMOND_COLOR_MULTIPLIERS, DIAMOND_CLARITY_MULTIPLIERS } from '../utils/productPricing';
@@ -197,6 +199,8 @@ const OFFLINE_FALLBACK_PRODUCTS = [
 ];
 
 const OfflineBilling = () => {
+  const { user } = useAuth();
+
   // Products & Search
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -223,8 +227,8 @@ const OfflineBilling = () => {
   const [taxSplitMode, setTaxSplitMode] = useState('split'); // 'split' = CGST+SGST, 'single' = Unified GST / IGST
 
   // Dynamic Making Charges Controls (Owner Configurable)
-  const [defaultMakingRate, setDefaultMakingRate] = useState(450);
-  const [bulkMakingRateInput, setBulkMakingRateInput] = useState('450');
+  const [defaultMakingRate, setDefaultMakingRate] = useState(1500); // Default lump-sum making charges
+  const [bulkMakingRateInput, setBulkMakingRateInput] = useState('1500');
   const [makingConcessionPercent, setMakingConcessionPercent] = useState(0); // 0, 25, 50, 100
   const [showMakingTools, setShowMakingTools] = useState(false);
 
@@ -233,8 +237,13 @@ const OfflineBilling = () => {
   const [editingItemId, setEditingItemId] = useState(null);
   const [editItemForm, setEditItemForm] = useState({});
 
+  // Photo Upload State & Refs
+  const customFileInputRef = useRef(null);
+  const lineItemFileInputRef = useRef(null);
+  const [uploadTargetItemId, setUploadTargetItemId] = useState(null);
+
   // Owner & Customer Info (Filled by Owner)
-  const [operatorName, setOperatorName] = useState('Owner');
+  const [operatorName, setOperatorName] = useState(() => user?.name || 'Owner');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState(''); // Strict 10-digit limit
   const [customerAddress, setCustomerAddress] = useState('');
@@ -275,7 +284,8 @@ const OfflineBilling = () => {
     karat: 22,
     weight: '',
     stoneWeight: '',
-    makingChargeRate: 450,
+    makingCharges: '1500', // Direct flat rupee making charge
+    quantity: 1,
     hasDiamond: false,
     diamondCarat: '',
     diamondCut: 'excellent',
@@ -284,6 +294,70 @@ const OfflineBilling = () => {
     diamondPrice: '',
     image: IMAGE_PRESETS[0].url
   });
+
+  // Photo compression helper to keep bill lightweight & offline-ready
+  const processImageFile = (file) => {
+    return new Promise((resolve) => {
+      if (!file) return resolve(null);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 400; // Crisp thumbnails for invoices & light storage
+          let width = img.width;
+          let height = img.height;
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleCustomImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const base64 = await processImageFile(file);
+    if (base64) {
+      setCustomItem(prev => ({ ...prev, image: base64 }));
+      setCatalogAlert('Custom piece photo uploaded.');
+      setTimeout(() => setCatalogAlert(''), 2500);
+    }
+  };
+
+  const triggerLineItemUpload = (itemId) => {
+    setUploadTargetItemId(itemId);
+    if (lineItemFileInputRef.current) {
+      lineItemFileInputRef.current.value = '';
+      lineItemFileInputRef.current.click();
+    }
+  };
+
+  const handleLineItemFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTargetItemId) return;
+    const base64 = await processImageFile(file);
+    if (base64) {
+      setBillItems(prev => prev.map(bi => bi.id === uploadTargetItemId ? { ...bi, image: base64 } : bi));
+      setCatalogAlert('Photo updated on bill item.');
+      setTimeout(() => setCatalogAlert(''), 2500);
+    }
+    setUploadTargetItemId(null);
+  };
 
   // Modals & History
   const [showInvoice, setShowInvoice] = useState(false);
@@ -476,22 +550,16 @@ const OfflineBilling = () => {
     }));
   };
 
-  // Making Charges Handlers
-  const handleUpdateItemMakingRate = (itemId, newRate) => {
-    const rateNum = Math.max(0, parseFloat(newRate) || 0);
+  // Making Charges Handlers (Direct Rupee Amount)
+  const handleUpdateItemMakingCharges = (itemId, newAmount) => {
+    const amountNum = Math.max(0, parseFloat(newAmount) || 0);
     setBillItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
-      const baseMetalRate = item.material === 'silver' ? liveRates.silver : liveRates.gold;
-      const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
-      const metalCost = Math.round((item.netWeight || item.weight) * baseMetalRate * purityMult);
-      const makingCharges = Math.round(item.weight * rateNum);
-      const subtotal = metalCost + makingCharges + (item.gemstoneCost || 0);
+      const subtotal = item.metalCost + amountNum + (item.gemstoneCost || 0);
       const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
-        makingChargeRate: rateNum,
-        metalCost,
-        makingCharges,
+        makingCharges: amountNum,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax
@@ -500,20 +568,14 @@ const OfflineBilling = () => {
   };
 
   const handleApplyGlobalMakingRate = () => {
-    const rateNum = Math.max(0, parseFloat(bulkMakingRateInput) || 0);
-    setDefaultMakingRate(rateNum);
+    const amountNum = Math.max(0, parseFloat(bulkMakingRateInput) || 0);
+    setDefaultMakingRate(amountNum);
     setBillItems(prev => prev.map(item => {
-      const baseMetalRate = item.material === 'silver' ? liveRates.silver : liveRates.gold;
-      const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
-      const metalCost = Math.round((item.netWeight || item.weight) * baseMetalRate * purityMult);
-      const makingCharges = Math.round(item.weight * rateNum);
-      const subtotal = metalCost + makingCharges + (item.gemstoneCost || 0);
+      const subtotal = item.metalCost + amountNum + (item.gemstoneCost || 0);
       const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
-        makingChargeRate: rateNum,
-        metalCost,
-        makingCharges,
+        makingCharges: amountNum,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax
@@ -540,19 +602,20 @@ const OfflineBilling = () => {
     };
   }, [liveRates, gstRate]);
 
-  // Calculate custom item price
+  // Calculate custom item price with flat making charges
   const calculateCustomItemPrice = useCallback((item) => {
     const grossWeight = parseFloat(item.weight) || 0;
     const stoneWeight = parseFloat(item.stoneWeight) || 0;
     const netWeight = Math.max(0, grossWeight - stoneWeight);
-    const makingRate = parseFloat(item.makingChargeRate) || defaultMakingRate;
+    const makingCharges = parseFloat(item.makingCharges) !== undefined && item.makingCharges !== ''
+      ? Math.max(0, parseFloat(item.makingCharges) || 0)
+      : defaultMakingRate;
     const material = item.material;
     const karat = Number(item.karat);
 
     const baseRate = material === 'silver' ? liveRates.silver : liveRates.gold;
     const purityMult = KARAT_PURITY[karat] || (karat / 24);
     const rawMetalCost = Math.round(netWeight * baseRate * purityMult);
-    const makingCharges = Math.round(grossWeight * makingRate);
 
     let gemstoneCost = 0;
     if (item.diamondPrice && parseFloat(item.diamondPrice) > 0) {
@@ -610,9 +673,8 @@ const OfflineBilling = () => {
       karat: Number(product.karat) || 22,
       weight: Number(product.metalWeight || product.weight) || 0,
       netWeight: Number(product.metalWeight || product.weight) || 0,
-      makingChargeRate: defaultMakingRate,
+      makingCharges: bd.makingCharges, // Flat Rs. amount
       metalCost: bd.rawMetalCost,
-      makingCharges: bd.makingCharges,
       gemstoneCost: bd.gemstoneCost || 0,
       subtotal: bd.subtotal,
       gstTax: bd.gstTax,
@@ -621,7 +683,7 @@ const OfflineBilling = () => {
       image: imgSrc,
       isCustomItem: false
     }]);
-  }, [billItems, getLivePrice, defaultMakingRate]);
+  }, [billItems, getLivePrice]);
 
   // Add bespoke custom item
   const addCustomItemToBill = useCallback(() => {
@@ -629,6 +691,7 @@ const OfflineBilling = () => {
 
     const bd = calculateCustomItemPrice(customItem);
     const defaultName = `Custom ${customItem.material.charAt(0).toUpperCase() + customItem.material.slice(1)} ${customItem.karat}K`;
+    const qty = Math.max(1, parseInt(customItem.quantity, 10) || 1);
 
     setBillItems(prev => [...prev, {
       id: Date.now().toString(),
@@ -638,14 +701,13 @@ const OfflineBilling = () => {
       karat: Number(customItem.karat),
       weight: parseFloat(customItem.weight),
       netWeight: bd.netWeight,
-      makingChargeRate: parseFloat(customItem.makingChargeRate) || defaultMakingRate,
+      makingCharges: bd.makingCharges, // Exact rupee making charge
       metalCost: bd.rawMetalCost,
-      makingCharges: bd.makingCharges,
       gemstoneCost: bd.gemstoneCost,
       subtotal: bd.subtotal,
       gstTax: bd.gstTax,
       totalPrice: bd.totalLivePrice,
-      quantity: 1,
+      quantity: qty,
       image: customItem.image || IMAGE_PRESETS[0].url,
       isCustomItem: true
     }]);
@@ -656,7 +718,8 @@ const OfflineBilling = () => {
       karat: 22,
       weight: '',
       stoneWeight: '',
-      makingChargeRate: defaultMakingRate,
+      makingCharges: '1500',
+      quantity: 1,
       hasDiamond: false,
       diamondCarat: '',
       diamondCut: 'excellent',
@@ -666,7 +729,7 @@ const OfflineBilling = () => {
       image: IMAGE_PRESETS[0].url
     });
     setShowCustomForm(false);
-  }, [customItem, calculateCustomItemPrice, defaultMakingRate]);
+  }, [customItem, calculateCustomItemPrice]);
 
   // Edit line item modal/drawer
   const handleStartEditItem = (item) => {
@@ -676,7 +739,7 @@ const OfflineBilling = () => {
       weight: item.weight,
       karat: item.karat,
       material: item.material,
-      makingChargeRate: item.makingChargeRate || defaultMakingRate,
+      makingCharges: item.makingCharges ?? 0,
       gemstoneCost: item.gemstoneCost || 0,
       image: item.image
     });
@@ -687,7 +750,9 @@ const OfflineBilling = () => {
       if (item.id !== itemId) return item;
 
       const weight = parseFloat(editItemForm.weight) || item.weight;
-      const makingRate = parseFloat(editItemForm.makingChargeRate) || defaultMakingRate;
+      const makingCharges = parseFloat(editItemForm.makingCharges) !== undefined && !isNaN(parseFloat(editItemForm.makingCharges))
+        ? Math.max(0, parseFloat(editItemForm.makingCharges))
+        : (item.makingCharges || 0);
       const karat = Number(editItemForm.karat) || item.karat;
       const material = editItemForm.material || item.material;
       const gemstoneCost = parseFloat(editItemForm.gemstoneCost) || 0;
@@ -695,7 +760,6 @@ const OfflineBilling = () => {
       const baseRate = material === 'silver' ? liveRates.silver : liveRates.gold;
       const purityMult = KARAT_PURITY[karat] || (karat / 24);
       const rawMetalCost = Math.round(weight * baseRate * purityMult);
-      const makingCharges = Math.round(weight * makingRate);
       const subtotal = rawMetalCost + makingCharges + gemstoneCost;
       const gstTax = Math.round(subtotal * (gstRate / 100));
 
@@ -706,10 +770,9 @@ const OfflineBilling = () => {
         netWeight: weight,
         karat,
         material,
-        makingChargeRate: makingRate,
+        makingCharges,
         gemstoneCost,
         metalCost: rawMetalCost,
-        makingCharges,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax,
@@ -728,6 +791,11 @@ const OfflineBilling = () => {
       }
       return bi;
     }));
+  }, []);
+
+  const handleSetItemQuantity = useCallback((itemId, val) => {
+    const qty = Math.max(1, parseInt(val, 10) || 1);
+    setBillItems(prev => prev.map(bi => bi.id === itemId ? { ...bi, quantity: qty } : bi));
   }, []);
 
   const removeItem = useCallback((itemId) => {
@@ -1023,6 +1091,36 @@ const OfflineBilling = () => {
 
   const karatOptions = customItem.material === 'silver' ? KARATS_SILVER : KARATS_GOLD;
 
+  // Strict Administrator Terminal Verification
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-[#FAF9F7] flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-white border border-gray-200 p-8 shadow-card space-y-4">
+          <div className="w-12 h-12 bg-[#222222] text-[#B59A6C] mx-auto flex items-center justify-center font-serif text-xl font-bold">
+            G
+          </div>
+          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#B59A6C] block">
+            RESTRICTED TERMINAL ACCESS
+          </span>
+          <h2 className="font-heading text-2xl font-bold text-[#111111]">
+            Administrator Only
+          </h2>
+          <p className="text-xs font-body text-gray-500 leading-relaxed">
+            The Atelier Point of Sale terminal and offline billing system is strictly reserved for authorized store administrators. Please sign in with an administrator account to continue.
+          </p>
+          <div className="pt-2">
+            <Link
+              to="/auth"
+              className="inline-block px-6 py-2.5 bg-[#222222] text-white text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-black transition-colors"
+            >
+              Sign In as Administrator &rarr;
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF9F7]">
 
@@ -1155,7 +1253,7 @@ const OfflineBilling = () => {
               <div className="max-w-[1520px] mx-auto flex flex-wrap items-center justify-between gap-4 py-2 text-xs">
                 <div className="flex items-center gap-3">
                   <span className="text-[#B59A6C] font-bold uppercase tracking-wider text-[10px]">
-                    Store-wide Making Charge:
+                    Store-wide Flat Making Charge:
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span className="text-white/60 text-[10px]">Rs.</span>
@@ -1163,9 +1261,9 @@ const OfflineBilling = () => {
                       type="number"
                       value={bulkMakingRateInput}
                       onChange={(e) => setBulkMakingRateInput(e.target.value)}
-                      className="w-20 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
+                      className="w-24 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
                     />
-                    <span className="text-white/60 text-[10px]">/g</span>
+                    <span className="text-white/60 text-[10px]">(flat/item)</span>
                     <button
                       onClick={handleApplyGlobalMakingRate}
                       className="px-3 py-1 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors ml-1 cursor-pointer"
@@ -1461,39 +1559,76 @@ const OfflineBilling = () => {
                         <span className="text-[10px] font-mono text-gray-400">All fields fully customizable</span>
                       </div>
 
-                      {/* Select Preset Image or Enter URL */}
-                      <div>
-                        <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600 mb-1.5">
-                          Select Product Visual Thumbnail (Required for Invoice)
-                        </label>
-                        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 mb-2">
-                          {IMAGE_PRESETS.map((preset) => (
+                      {/* Select Preset Image, Upload Photo or Enter URL */}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600">
+                            Product Photo / Visual Thumbnail
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              ref={customFileInputRef}
+                              accept="image/*"
+                              onChange={handleCustomImageUpload}
+                              className="hidden"
+                            />
                             <button
-                              key={preset.id}
                               type="button"
-                              onClick={() => setCustomItem(prev => ({ ...prev, image: preset.url }))}
-                              className={`aspect-square p-1 border flex flex-col items-center justify-center transition-all bg-[#FAF9F7] cursor-pointer ${
-                                customItem.image === preset.url
-                                  ? 'border-[#B59A6C] ring-2 ring-[#B59A6C]/40 bg-white'
-                                  : 'border-gray-200 opacity-60 hover:opacity-100'
-                              }`}
+                              onClick={() => customFileInputRef.current?.click()}
+                              className="px-3 py-1.5 bg-[#222222] text-[#B59A6C] text-[10px] font-mono font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
                             >
-                              <img src={preset.url} alt={preset.label} className="w-8 h-8 object-contain" />
-                              <span className="text-[8px] font-body mt-1 text-gray-600 leading-none">{preset.label}</span>
+                              <span>Upload Photo / Camera</span>
                             </button>
-                          ))}
+                          </div>
                         </div>
+
+                        {/* Image Preview & Preset Selection */}
+                        <div className="flex items-center gap-3 bg-[#FAF9F7] p-2.5 border border-gray-200">
+                          <div className="relative shrink-0">
+                            <img
+                              src={customItem.image || IMAGE_PRESETS[0].url}
+                              alt="Thumbnail"
+                              className="w-14 h-14 object-cover border-2 border-[#B59A6C] bg-white shadow-xs"
+                            />
+                            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1 bg-[#111111] text-white text-[7px] font-mono uppercase">
+                              Active
+                            </span>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[8px] font-mono text-gray-400 uppercase block mb-1">Quick Select Preset:</span>
+                            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                              {IMAGE_PRESETS.map((preset) => (
+                                <button
+                                  key={preset.id}
+                                  type="button"
+                                  onClick={() => setCustomItem(prev => ({ ...prev, image: preset.url }))}
+                                  className={`p-1 border shrink-0 bg-white transition-all cursor-pointer ${
+                                    customItem.image === preset.url
+                                      ? 'border-[#B59A6C] ring-1 ring-[#B59A6C]'
+                                      : 'border-gray-200 hover:border-gray-400'
+                                  }`}
+                                  title={preset.label}
+                                >
+                                  <img src={preset.url} alt={preset.label} className="w-6 h-6 object-contain" />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
                         <input
                           type="text"
                           value={customItem.image}
                           onChange={(e) => setCustomItem(prev => ({ ...prev, image: e.target.value }))}
-                          placeholder="Or paste custom image URL"
-                          className="w-full px-3 py-1.5 bg-[#FAF9F7] border border-gray-200 text-xs font-mono text-gray-700 focus:outline-none focus:border-[#222222]"
+                          placeholder="Or paste external image URL"
+                          className="w-full px-3 py-1.5 bg-white border border-gray-200 text-xs font-mono text-gray-700 focus:outline-none focus:border-[#222222]"
                         />
                       </div>
 
                       {/* Main Item Spec Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                         <div className="col-span-2">
                           <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600 mb-1">Item Title</label>
                           <input
@@ -1559,34 +1694,73 @@ const OfflineBilling = () => {
                             className="w-full px-2.5 py-2 bg-[#FAF9F7] border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
                           />
                         </div>
+
+                        <div>
+                          <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600 mb-1">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="9999"
+                            value={customItem.quantity || 1}
+                            onChange={(e) => setCustomItem(prev => ({ ...prev, quantity: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+                            className="w-full px-2.5 py-2 bg-[#FAF9F7] border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                          />
+                        </div>
                       </div>
 
                       {/* Making Charges & Diamond */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600 mb-1">Making Charge (Rs./g)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={customItem.makingChargeRate}
-                            onChange={(e) => setCustomItem(prev => ({ ...prev, makingChargeRate: e.target.value }))}
-                            className="w-full px-3 py-2 bg-[#FAF9F7] border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
-                          />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-700">Making Charges (Flat Rs.)</label>
+                            <span className="text-[8px] font-mono text-[#B59A6C] font-bold">Lump Sum</span>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-gray-400">Rs.</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={customItem.makingCharges}
+                              onChange={(e) => setCustomItem(prev => ({ ...prev, makingCharges: e.target.value }))}
+                              placeholder="e.g. 1500"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                            />
+                          </div>
+                          <div className="flex gap-1 flex-wrap pt-0.5">
+                            {[0, 500, 1000, 1500, 2500, 5000].map(amt => (
+                              <button
+                                key={amt}
+                                type="button"
+                                onClick={() => setCustomItem(prev => ({ ...prev, makingCharges: String(amt) }))}
+                                className={`px-2 py-0.5 border text-[8px] font-mono font-bold cursor-pointer transition-colors ${
+                                  customItem.makingCharges === String(amt)
+                                    ? 'bg-[#222222] text-white border-[#222222]'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#B59A6C]'
+                                }`}
+                              >
+                                {amt === 0 ? 'Free' : `Rs.${amt}`}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-600 mb-1">Fixed Stone Cost (Rs.)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={customItem.diamondPrice}
-                            onChange={(e) => setCustomItem(prev => ({ ...prev, diamondPrice: e.target.value }))}
-                            placeholder="Optional lump sum"
-                            className="w-full px-3 py-2 bg-[#FAF9F7] border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
-                          />
+                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-1.5">
+                          <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-700">Fixed Stone / Diamond Cost (Rs.)</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-gray-400">Rs.</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={customItem.diamondPrice}
+                              onChange={(e) => setCustomItem(prev => ({ ...prev, diamondPrice: e.target.value }))}
+                              placeholder="0"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                            />
+                          </div>
+                          <span className="text-[8px] font-mono text-gray-400 block">Optional lump sum for stones</span>
                         </div>
 
-                        <div className="col-span-2 flex items-center pt-4">
+                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 flex flex-col justify-center">
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
@@ -1596,6 +1770,7 @@ const OfflineBilling = () => {
                             />
                             <span className="text-xs font-body font-bold text-gray-700">Calculate Diamond using 4Cs Matrix</span>
                           </label>
+                          <span className="text-[8px] font-mono text-gray-400 mt-1 block">Enable only if pricing via color/clarity</span>
                         </div>
                       </div>
 
@@ -1901,19 +2076,43 @@ const OfflineBilling = () => {
                             className="bg-[#FAF9F7] border border-gray-200 p-3"
                           >
                             <div className="flex gap-3">
-                              {bi.image && (
-                                <img
-                                  src={bi.image}
-                                  alt={bi.name}
-                                  className="w-12 h-12 object-cover border border-gray-200 shrink-0 bg-white"
-                                />
-                              )}
+                              {/* Photo Thumbnail with Instant Upload / Change Trigger */}
+                              <div className="relative shrink-0 group">
+                                {bi.image ? (
+                                  <img
+                                    src={bi.image}
+                                    alt={bi.name}
+                                    className="w-14 h-14 object-cover border border-gray-200 bg-white"
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 border border-dashed border-gray-300 flex items-center justify-center text-[8px] font-mono text-gray-400 bg-white">
+                                    No Photo
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => triggerLineItemUpload(bi.id)}
+                                  className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity p-1 text-center"
+                                  title="Upload or change photo"
+                                >
+                                  <span className="text-[7px] font-mono font-bold uppercase leading-tight text-[#B59A6C]">Upload Photo</span>
+                                </button>
+                              </div>
 
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-start">
-                                  <h4 className="font-heading font-bold text-xs text-[#111111] leading-snug break-words pr-2">
-                                    {bi.name}
-                                  </h4>
+                                  <div>
+                                    <h4 className="font-heading font-bold text-xs text-[#111111] leading-snug break-words pr-2">
+                                      {bi.name}
+                                    </h4>
+                                    <button
+                                      type="button"
+                                      onClick={() => triggerLineItemUpload(bi.id)}
+                                      className="text-[8px] font-mono text-gray-400 hover:text-[#B59A6C] underline cursor-pointer mt-0.5 inline-block"
+                                    >
+                                      Change Photo
+                                    </button>
+                                  </div>
                                   <div className="flex items-center gap-2 shrink-0">
                                     <button
                                       onClick={() => isEditing ? setEditingItemId(null) : handleStartEditItem(bi)}
@@ -1961,11 +2160,11 @@ const OfflineBilling = () => {
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-mono text-gray-400 uppercase">Making (Rs./g)</label>
+                                        <label className="text-[8px] font-mono text-gray-400 uppercase">Making (Flat Rs.)</label>
                                         <input
                                           type="number"
-                                          value={editItemForm.makingChargeRate}
-                                          onChange={(e) => setEditItemForm(prev => ({ ...prev, makingChargeRate: e.target.value }))}
+                                          value={editItemForm.makingCharges}
+                                          onChange={(e) => setEditItemForm(prev => ({ ...prev, makingCharges: e.target.value }))}
                                           className="w-full px-1.5 py-1 border border-gray-200 font-mono text-xs"
                                         />
                                       </div>
@@ -1988,7 +2187,7 @@ const OfflineBilling = () => {
                                   </div>
                                 )}
 
-                                {/* Mathematical Breakdown with Direct Making Charge Adjuster */}
+                                {/* Mathematical Breakdown with Direct Flat Making Charge Adjuster */}
                                 {!isEditing && (
                                   <div className="mt-1.5 space-y-1 text-[9px] text-gray-500">
                                     <div className="flex justify-between">
@@ -1996,24 +2195,24 @@ const OfflineBilling = () => {
                                       <span className="font-mono text-gray-700">Rs.{(bi.metalCost * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
 
-                                    {/* INLINE EDITABLE MAKING CHARGE FIELD */}
-                                    <div className="flex items-center justify-between bg-white/70 p-1 border border-gray-200/60">
+                                    {/* INLINE EDITABLE MAKING CHARGE FIELD (FLAT RUPEE AMOUNT) */}
+                                    <div className="flex items-center justify-between bg-white/70 p-1.5 border border-gray-200/60">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="font-medium text-gray-600">Making:</span>
-                                        <div className="flex items-center border border-gray-300 px-1 py-0.5 bg-white">
-                                          <span className="text-[8px] font-mono text-gray-400 mr-0.5">Rs.</span>
+                                        <span className="font-medium text-gray-600">Making Charges:</span>
+                                        <div className="flex items-center border border-gray-300 px-1.5 py-0.5 bg-white">
+                                          <span className="text-[8px] font-mono text-gray-400 mr-1">Rs.</span>
                                           <input
                                             type="number"
                                             min="0"
-                                            value={bi.makingChargeRate ?? defaultMakingRate}
-                                            onChange={(e) => handleUpdateItemMakingRate(bi.id, e.target.value)}
-                                            className="w-12 text-[9px] font-mono font-bold text-[#111111] focus:outline-none"
+                                            value={bi.makingCharges}
+                                            onChange={(e) => handleUpdateItemMakingCharges(bi.id, e.target.value)}
+                                            className="w-16 text-[10px] font-mono font-bold text-[#111111] focus:outline-none"
+                                            placeholder="0"
                                           />
-                                          <span className="text-[8px] font-mono text-gray-400">/g</span>
                                         </div>
                                       </div>
                                       <span className="font-mono font-bold text-gray-800">
-                                        Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}
+                                        Total: Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}
                                       </span>
                                     </div>
 
@@ -2031,18 +2230,24 @@ const OfflineBilling = () => {
                                   </div>
                                 )}
 
-                                {/* Quantity and Total */}
+                                {/* Quantity and Total with Direct Numeric Entry */}
                                 <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200/60">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[8px] font-mono text-gray-500 uppercase mr-0.5">Qty:</span>
                                     <button
                                       onClick={() => updateQuantity(bi.id, -1)}
                                       className="w-6 h-6 border border-gray-300 flex items-center justify-center text-[#222222] hover:bg-[#222222] hover:text-white transition-all cursor-pointer text-sm font-bold bg-white"
                                     >
                                       -
                                     </button>
-                                    <span className="font-mono font-bold text-xs text-[#111111] w-6 text-center">
-                                      {bi.quantity}
-                                    </span>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max="9999"
+                                      value={bi.quantity}
+                                      onChange={(e) => handleSetItemQuantity(bi.id, e.target.value)}
+                                      className="w-12 h-6 border border-gray-300 text-center font-mono font-bold text-xs text-[#111111] focus:outline-none focus:border-[#222222] bg-white"
+                                    />
                                     <button
                                       onClick={() => updateQuantity(bi.id, 1)}
                                       className="w-6 h-6 border border-gray-300 flex items-center justify-center text-[#222222] hover:bg-[#222222] hover:text-white transition-all cursor-pointer text-sm font-bold bg-white"
@@ -2673,6 +2878,14 @@ const OfflineBilling = () => {
       <DayEndReport
         isOpen={showZReport}
         onClose={() => setShowZReport(false)}
+      />
+      {/* Hidden file input for line item photo upload */}
+      <input
+        type="file"
+        ref={lineItemFileInputRef}
+        accept="image/*"
+        onChange={handleLineItemFileSelected}
+        className="hidden"
       />
 
     </div>

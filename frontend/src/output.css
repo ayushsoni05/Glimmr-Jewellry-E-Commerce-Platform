@@ -1006,6 +1006,10 @@ img {
   bottom: 0px;
 }
 
+.-bottom-1\.5{
+  bottom: -0.375rem;
+}
+
 .-bottom-20{
   bottom: -5rem;
 }
@@ -1436,6 +1440,10 @@ img {
 
 .mr-0\.5{
   margin-right: 0.125rem;
+}
+
+.mr-1{
+  margin-right: 0.25rem;
 }
 
 .mr-2{
@@ -4629,6 +4637,10 @@ img {
   padding-left: 1rem;
 }
 
+.pl-8{
+  padding-left: 2rem;
+}
+
 .pl-\[72px\]{
   padding-left: 72px;
 }
@@ -4643,6 +4655,10 @@ img {
 
 .pr-2{
   padding-right: 0.5rem;
+}
+
+.pr-3{
+  padding-right: 0.75rem;
 }
 
 .pr-4{
@@ -5767,8 +5783,9 @@ img {
   --tw-ring-color: rgb(34 34 34 / var(--tw-ring-opacity, 1));
 }
 
-.ring-\[\#B59A6C\]\/40{
-  --tw-ring-color: rgb(181 154 108 / 0.4);
+.ring-\[\#B59A6C\]{
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(181 154 108 / var(--tw-ring-opacity, 1));
 }
 
 .ring-\[\#E8C8C1\]\/30{
@@ -6523,10 +6540,6 @@ img {
   text-decoration-line: underline;
 }
 
-.hover\:opacity-100:hover{
-  opacity: 1;
-}
-
 .hover\:opacity-90:hover{
   opacity: 0.9;
 }
@@ -7078,10 +7091,6 @@ img {
 
   .sm\:grid-cols-4{
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .sm\:grid-cols-8{
-    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 
   .sm\:flex-row{
@@ -7786,6 +7795,10 @@ img {
 
   .lg\:grid-cols-6{
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .lg\:grid-cols-7{
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .lg\:flex-row{

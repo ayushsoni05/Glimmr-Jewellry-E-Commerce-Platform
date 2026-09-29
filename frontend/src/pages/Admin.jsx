@@ -384,9 +384,18 @@ const Admin = () => {
               <span className="text-[10px] font-body font-bold uppercase tracking-[0.3em] text-[#B59A6C] block mb-1">
                 ATELIER CONTROL CENTER
               </span>
-              <h1 className="text-3xl sm:text-4xl font-heading text-[#222222] font-bold">
-                Admin Management
-              </h1>
+              <div className="flex items-center gap-4 mt-2">
+                <h1 className="text-3xl sm:text-4xl font-heading text-[#222222] font-bold">
+                  Admin Management
+                </h1>
+                <button
+                  type="button"
+                  onClick={() => navigate('/billing')}
+                  className="px-3.5 py-1.5 bg-[#222222] text-[#B59A6C] border border-[#B59A6C]/40 text-xs font-mono font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-black transition-colors cursor-pointer"
+                >
+                  Launch POS Billing &rarr;
+                </button>
+              </div>
             </div>
 
             {/* Live Metrics Overview Cards */}

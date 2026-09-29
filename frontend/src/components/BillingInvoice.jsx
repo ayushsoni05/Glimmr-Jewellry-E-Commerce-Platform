@@ -58,6 +58,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
   const loadImageAsBase64 = (src) => {
     return new Promise((resolve) => {
       if (!src) { resolve(null); return; }
+      if (src.startsWith('data:image/')) { resolve(src); return; }
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {

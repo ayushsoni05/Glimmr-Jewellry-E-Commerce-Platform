@@ -277,7 +277,10 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-48 bg-white shadow-soft rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 border border-gray-100 p-2 z-50">
                   <Link to="/profile" className="block px-4 py-2.5 text-sm text-[#222222] hover:bg-[#FAF9F7] hover:font-bold rounded-xl transition-colors font-body">Profile</Link>
                   {user.role === 'admin' && (
-                    <Link to="/admin" className="block px-4 py-2.5 text-sm text-[#222222] hover:bg-[#FAF9F7] hover:font-bold rounded-xl transition-colors font-body">Admin Panel</Link>
+                    <>
+                      <Link to="/admin" className="block px-4 py-2.5 text-sm text-[#222222] hover:bg-[#FAF9F7] hover:font-bold rounded-xl transition-colors font-body">Admin Panel</Link>
+                      <Link to="/billing" className="block px-4 py-2.5 text-sm text-[#B59A6C] hover:bg-[#FAF9F7] hover:font-bold rounded-xl transition-colors font-body">POS Billing</Link>
+                    </>
                   )}
                   <button
                     onClick={logout}
