@@ -46,11 +46,11 @@ async function sendOtpViaSms(phoneNumber, otp, context = 'verification') {
   }
 
   if (normalizedPhone.length !== 10) {
-    console.error('❌ [FAST2SMS] Invalid phone number format:', phoneNumber);
+    console.error('[FAST2SMS] Invalid phone number format:', phoneNumber);
     throw new Error('Invalid phone number. Must be 10-digit Indian number.');
   }
 
-  const message = `Your Glimmr ${context} OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+  const message = `Your New Monika Jewellers ${context} OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
 
   const payload = {
     route: 'v3',

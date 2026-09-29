@@ -1600,7 +1600,7 @@ router.get('/test-email-config', async (req, res) => {
       user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '***' : 'NOT SET'
     };
     
-    const fromEmail = process.env.RESEND_FROM || process.env.MAIL_FROM || 'Glimmr <onboarding@resend.dev>';
+    const fromEmail = process.env.RESEND_FROM || process.env.MAIL_FROM || 'New Monika Jewellers <onboarding@resend.dev>';
     
     return res.json({
       resend: {

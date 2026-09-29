@@ -31,7 +31,7 @@ const Contact = () => {
       title: 'CUSTOMER CONCIERGE',
       subtitle: 'Personalized Assistance & Inquiries',
       phone: '+91 (022) 8800-4499',
-      email: 'concierge@glimmr.com',
+      email: 'concierge@newmonikajewellers.com',
       hours: 'Mon - Sat: 10:00 AM - 8:00 PM IST',
     },
     {
@@ -47,7 +47,7 @@ const Contact = () => {
       title: 'BESPOKE & ENGAGEMENT',
       subtitle: 'Custom Bridal & Heirloom Design',
       phone: '+91 (022) 8800-4500',
-      email: 'bespoke@glimmr.com',
+      email: 'bespoke@newmonikajewellers.com',
       hours: 'By Private Appointment Only',
     },
   ];
@@ -117,7 +117,7 @@ const Contact = () => {
                     Message Received
                   </h3>
                   <p className="font-body text-[#808080] text-sm max-w-md mx-auto leading-relaxed">
-                    Thank you for reaching out to Glimmr. Our dedicated luxury concierge team will respond to your inquiry within 24 hours.
+                    Thank you for reaching out to New Monika Jewellers. Our dedicated luxury concierge team will respond to your inquiry within 24 hours.
                   </p>
                 </motion.div>
               ) : (
@@ -242,7 +242,7 @@ const Contact = () => {
             <div className="w-full max-w-[430px] aspect-[430/645] bg-[#FAF9F7] overflow-hidden relative shadow-[0_25px_60px_rgba(0,0,0,0.09)] border border-gray-200/60 group mx-auto">
               <img
                 src="https://framerusercontent.com/images/kbOrsOMF8pMkMH6SntJTPO88bQ.png"
-                alt="Glimmr Flagship Atelier Showroom"
+                alt="New Monika Jewellers Flagship Atelier Showroom"
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-6 text-white text-left">
@@ -330,7 +330,7 @@ const Contact = () => {
           className="max-w-2xl mx-auto flex flex-col items-center relative z-10"
         >
           <span className="font-body text-xs font-semibold uppercase tracking-[0.3em] text-[#B59A6C] mb-3">
-            JOIN THE GLIMMR SOCIAL CLUB
+            JOIN THE NEW MONIKA JEWELLERS SOCIAL CLUB
           </span>
           <h3 className="font-heading text-3xl sm:text-4xl uppercase tracking-[0.2em] mb-4 font-normal">
             Private VIP Invitations

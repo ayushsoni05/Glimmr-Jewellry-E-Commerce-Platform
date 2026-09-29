@@ -2,23 +2,23 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * GlimmrLogo — Pixel-perfect replica of the Reliqium logo.gif animation
- * adapted for "GLIMMR".
+ * NMJLogo — Pixel-perfect replica of the Reliqium logo.gif animation
+ * adapted for "NMJ" (New Monika Jewellers).
  *
- * Animation timeline (3.71s total loop, matching 111 frames @ ~33ms):
+ * Animation timeline (2.8s total loop):
  *   Phase 1  Blank         0–700ms
  *   Phase 2  Cursor blink  700–1700ms  (3 on/off cycles)
- *   Phase 3  Typewriter    1700–2335ms (6 letters @ ~105ms each)
- *   Phase 4  Hold          2335–3710ms
+ *   Phase 3  Typewriter    1700–2015ms (3 letters @ ~105ms each)
+ *   Phase 4  Hold          2015–2800ms
  *
- * Visual specs extracted from frame-by-frame pixel analysis:
+ * Visual specs:
  *   Text color   #969696  (ultra-light silver-gray, anti-aliased)
  *   Font         Josefin Sans weight 100  (hair-thin uppercase sans-serif)
  *   Tracking     0.45em   (~7-8px gaps between letters at GIF scale)
  *   Cursor       thin "|" bar, same gray, opacity blink
  */
 
-const LETTERS = ['G', 'L', 'I', 'M', 'M', 'R'];
+const LETTERS = ['N', 'M', 'J'];
 
 // Timing constants (milliseconds) — matched to original GIF
 const PHASE_BLANK     = 700;
@@ -26,7 +26,7 @@ const PHASE_CURSOR    = 1000;   // 3 blink cycles
 const LETTER_DELAY    = 105;    // ~105ms per letter typed
 const PHASE_HOLD      = 1375;   // hold full text until loop restarts
 
-const GlimmrLogo = ({
+const NMJLogo = ({
   autoLoop = true,
   variant = 'dark',   // 'dark' (light bg) | 'light' (dark bg)
   size = 'md',        // 'sm' | 'md' | 'lg'
@@ -181,4 +181,4 @@ const GlimmrLogo = ({
   );
 };
 
-export default GlimmrLogo;
+export default NMJLogo;

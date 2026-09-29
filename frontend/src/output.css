@@ -2084,6 +2084,10 @@ img {
   width: 85%;
 }
 
+.w-auto{
+  width: auto;
+}
+
 .w-fit{
   width: -moz-fit-content;
   width: fit-content;
@@ -6771,6 +6775,10 @@ img {
   opacity: 1;
 }
 
+.group:hover .group-hover\:opacity-80{
+  opacity: 0.8;
+}
+
 .group:hover .group-hover\:opacity-95{
   opacity: 0.95;
 }
@@ -6939,6 +6947,10 @@ img {
 
   .sm\:h-11{
     height: 2.75rem;
+  }
+
+  .sm\:h-12{
+    height: 3rem;
   }
 
   .sm\:h-20{
@@ -7455,10 +7467,6 @@ img {
     letter-spacing: 0.18em;
   }
 
-  .sm\:tracking-\[0\.25em\]{
-    letter-spacing: 0.25em;
-  }
-
   .sm\:tracking-\[0\.2em\]{
     letter-spacing: 0.2em;
   }
@@ -7625,11 +7633,6 @@ img {
     text-align: left;
   }
 
-  .md\:text-2xl{
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
   .md\:text-3xl{
     font-size: 1.875rem;
     line-height: 2.25rem;
@@ -7642,11 +7645,6 @@ img {
 
   .md\:text-5xl{
     font-size: 3rem;
-    line-height: 1;
-  }
-
-  .md\:text-6xl{
-    font-size: 3.75rem;
     line-height: 1;
   }
 
@@ -7664,6 +7662,11 @@ img {
   .md\:text-sm{
     font-size: 0.875rem;
     line-height: 1.25rem;
+  }
+
+  .md\:text-xl{
+    font-size: 1.25rem;
+    line-height: 1.75rem;
   }
 }
 
@@ -7735,6 +7738,10 @@ img {
 
   .lg\:aspect-\[4\/3\]{
     aspect-ratio: 4/3;
+  }
+
+  .lg\:h-14{
+    height: 3.5rem;
   }
 
   .lg\:h-\[500px\]{

@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
 
     // 1. Define the System Prompt (The Rules)
     const systemPrompt = `
-      You are Glimmr's AI assistant. Help with ANY topic.
+      You are New Monika Jewellers' AI assistant. Help with ANY topic.
       
       CRITICAL INSTRUCTION:
       If the user implies they want to buy products, search, or browse, you MUST output a JSON block at the end of your response.

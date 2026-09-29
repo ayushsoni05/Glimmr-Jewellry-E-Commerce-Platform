@@ -4,7 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import GlimmrLogo from './GlimmrLogo';
+// Logo image used directly via <img> tag
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -142,12 +142,11 @@ const Header = () => {
         <nav className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
           <Link to="/" className="flex-shrink-0 flex items-center group">
-            <span
-              className="font-heading text-xl sm:text-2xl lg:text-3xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[#111111] uppercase transition-colors group-hover:text-[#B59A6C]"
-              style={{ lineHeight: 1 }}
-            >
-              GLIMMR
-            </span>
+            <img
+              src="/logo-nmj.png"
+              alt="New Monika Jewellers"
+              className="h-10 sm:h-12 lg:h-14 w-auto object-contain transition-opacity group-hover:opacity-80"
+            />
           </Link>
 
           {/* Nav Links Center */}
@@ -437,6 +436,12 @@ const Header = () => {
               className="fixed inset-0 bg-white z-40 overflow-y-auto pt-20 pb-10 px-6 md:hidden flex flex-col justify-between"
             >
               <div className="flex flex-col space-y-4 text-lg font-heading text-[#222222] tracking-wider uppercase">
+                <div className="pb-3 mb-2 border-b border-gray-100 flex items-center justify-between">
+                  <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
+                    <img src="/logo-nmj.png" alt="New Monika Jewellers" className="h-10 w-auto object-contain" />
+                  </Link>
+                  <span className="font-heading text-[10px] tracking-[0.2em] text-[#B59A6C] uppercase font-bold">MUMBAI</span>
+                </div>
                 <Link to="/" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>HOME</Link>
                 <Link to="/store-grid" className="hover:text-[#B59A6C] transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>STORE</Link>
                 <Link to="/custom-atelier" className="hover:text-[#B59A6C] text-[#B59A6C] font-semibold transition-colors py-1" onClick={() => setIsMobileMenuOpen(false)}>CUSTOM STUDIO</Link>
@@ -535,7 +540,7 @@ const Header = () => {
                 )}
                 
                 <div className="text-center font-mono text-[9px] text-gray-400 uppercase tracking-widest">
-                  GLIMMR LUXURY ATELIER • MUMBAI
+                  NEW MONIKA JEWELLERS • MUMBAI
                 </div>
               </div>
             </motion.div>

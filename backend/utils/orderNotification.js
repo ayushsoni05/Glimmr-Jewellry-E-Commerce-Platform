@@ -38,7 +38,7 @@ const mailTransport = createMailTransport();
 // Helper function to send email: try Resend REST API, Brevo API, or SMTP
 async function sendEmail({ to, subject, html }) {
   const fromEmail = process.env.BREVO_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-  const fromName = 'Glimmr Jewelry';
+  const fromName = 'New Monika Jewellers';
 
   console.log('[ORDER_EMAIL] Attempting to send...');
   console.log('[ORDER_EMAIL] To:', to);
@@ -53,7 +53,7 @@ async function sendEmail({ to, subject, html }) {
       const response = await axios.post(
         'https://api.resend.com/emails',
         {
-          from: process.env.RESEND_FROM_EMAIL || 'Glimmr Jewelry <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM_EMAIL || 'New Monika Jewellers <onboarding@resend.dev>',
           to: [to],
           subject,
           html,
@@ -149,9 +149,9 @@ function getProgressBarHTML(stage) {
 const getFooterHTML = () => `
   <tr>
     <td style="padding: 30px; background-color: #111111; text-align: center;">
-      <p style="margin: 0 0 10px 0; font-size: 18px; color: #B59A6C; font-family: Georgia, serif; letter-spacing: 3px;">GLIMMR</p>
+      <p style="margin: 0 0 10px 0; font-size: 18px; color: #B59A6C; font-family: Georgia, serif; letter-spacing: 3px;">NEW MONIKA JEWELLERS</p>
       <p style="margin: 0 0 10px 0; font-size: 12px; color: #999999; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-        Need help? Contact us at <a href="mailto:${process.env.SMTP_USER || 'support@glimmr.com'}" style="color: #B59A6C; text-decoration: none;">${process.env.SMTP_USER || 'support@glimmr.com'}</a><br/><br/>
+        Need help? Contact us at <a href="mailto:${process.env.SMTP_USER || 'support@newmonikajewellers.com'}" style="color: #B59A6C; text-decoration: none;">${process.env.SMTP_USER || 'support@newmonikajewellers.com'}</a><br/><br/>
         This is an automated email. Please do not reply to this message.
       </p>
       <p style="margin: 10px 0 0 0; font-size: 10px; color: #999999; text-transform: uppercase; letter-spacing: 1px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -287,7 +287,7 @@ async function sendOrderConfirmationEmail(order, user) {
               <!-- Header -->
               <tr>
                 <td style="background-color: #111111; padding: 30px; text-align: center; border-bottom: 2px solid #B59A6C;">
-                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">GLIMMR</h1>
+                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">NEW MONIKA JEWELLERS</h1>
                 </td>
               </tr>
 
@@ -403,7 +403,7 @@ async function sendOrderConfirmationEmail(order, user) {
 
     await sendEmail({
       to: user.email,
-      subject: `Order Confirmed #${order._id} - Glimmr Jewelry`,
+      subject: `Order Confirmed #${order._id} - New Monika Jewellers`,
       html
     });
     console.log(`[NOTIFICATION] Order confirmation email sent to ${user.email}`);
@@ -484,7 +484,7 @@ async function sendOrderShippedEmail(order, user) {
               <!-- Header -->
               <tr>
                 <td style="background-color: #111111; padding: 30px; text-align: center; border-bottom: 2px solid #B59A6C;">
-                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">GLIMMR</h1>
+                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">NEW MONIKA JEWELLERS</h1>
                 </td>
               </tr>
 
@@ -556,7 +556,7 @@ async function sendOrderShippedEmail(order, user) {
 
     await sendEmail({
       to: user.email,
-      subject: `Order Shipped #${order._id} - Glimmr Jewelry`,
+      subject: `Order Shipped #${order._id} - New Monika Jewellers`,
       html
     });
     console.log(`[NOTIFICATION] Order shipped email sent to ${user.email}`);
@@ -612,7 +612,7 @@ async function sendOrderDeliveredEmail(order, user) {
               <!-- Header -->
               <tr>
                 <td style="background-color: #111111; padding: 30px; text-align: center; border-bottom: 2px solid #B59A6C;">
-                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">GLIMMR</h1>
+                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">NEW MONIKA JEWELLERS</h1>
                 </td>
               </tr>
 
@@ -664,7 +664,7 @@ async function sendOrderDeliveredEmail(order, user) {
 
     await sendEmail({
       to: user.email,
-      subject: `Order Delivered #${order._id} - Glimmr Jewelry`,
+      subject: `Order Delivered #${order._id} - New Monika Jewellers`,
       html
     });
     console.log(`[NOTIFICATION] Order delivered email sent to ${user.email}`);
@@ -727,7 +727,7 @@ async function sendGenericStatusUpdateEmail(order, user, status) {
               <!-- Header -->
               <tr>
                 <td style="background-color: #111111; padding: 30px; text-align: center; border-bottom: 2px solid #B59A6C;">
-                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">GLIMMR</h1>
+                  <h1 style="margin: 0; color: #B59A6C; font-family: Georgia, serif; font-size: 24px; font-weight: normal; letter-spacing: 4px; text-transform: uppercase;">NEW MONIKA JEWELLERS</h1>
                 </td>
               </tr>
 

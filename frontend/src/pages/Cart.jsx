@@ -199,7 +199,7 @@ const Cart = () => {
             <div className="lg:col-span-5 relative bg-[#111111] min-h-[260px] lg:min-h-[460px] overflow-hidden">
               <img
                 src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop"
-                alt="Glimmr Fine Jewelry Acquisitions"
+                alt="New Monika Jewellers Fine Jewelry Acquisitions"
                 className="w-full h-full object-cover object-center opacity-90 hover:scale-105 transition-transform duration-700 ease-out"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -242,7 +242,7 @@ const Cart = () => {
                 </h2>
 
                 <p className="font-body text-gray-600 text-sm sm:text-base leading-relaxed font-light">
-                  To view your selected 24K Kundan gold, sterling silver, and luxury watches, please sign in or register your Glimmr Atelier patron account.
+                  To view your selected 24K Kundan gold, sterling silver, and luxury watches, please sign in or register your New Monika Jewellers patron account.
                 </p>
 
                 {/* Benefits Pill List */}

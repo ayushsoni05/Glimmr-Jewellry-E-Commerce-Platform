@@ -196,7 +196,7 @@ const Collections = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Glimmr Promise Showcase Section */}
+        {/* New Monika Jewellers Promise Showcase Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -209,7 +209,7 @@ const Collections = () => {
               HERITAGE & EXCELLENCE
             </span>
             <h2 className="font-heading text-3xl sm:text-4xl text-[#222222] font-normal tracking-tight uppercase">
-              The Glimmr Guarantee
+              The New Monika Jewellers Guarantee
             </h2>
           </div>
 

@@ -1,17 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import GlimmrLogo from './GlimmrLogo';
+import NMJLogo from './GlimmrLogo';
 
 const GlimmrLoader = ({
   size = 'lg',
-  subtitle = 'GLIMMR ATELIER • CRAFTING PERFECTION',
+  subtitle = 'NEW MONIKA JEWELLERS • CRAFTING PERFECTION',
   fullScreen = false,
 }) => {
   const animationContent = (
     <div className="flex flex-col items-center justify-center p-6 text-center select-none">
-      {/* Pixel-perfect Reliqium-style logo animation for GLIMMR */}
+      {/* Pixel-perfect Reliqium-style logo animation for NMJ */}
       <div className="mb-8">
-        <GlimmrLogo autoLoop={true} size={size} variant="dark" />
+        <NMJLogo autoLoop={true} size={size} variant="dark" />
       </div>
 
       {/* Minimal gold shimmer accent line */}

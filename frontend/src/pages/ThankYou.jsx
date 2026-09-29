@@ -114,7 +114,7 @@ const ThankYou = () => {
             Thank You for Your Acquisition
           </h1>
           <p className="text-xs md:text-sm font-body text-gray-500 max-w-xl mx-auto leading-relaxed uppercase tracking-wider">
-            Your order has been registered into the Glimmr Atelier portfolio log. Our master jewelers are inspecting your pieces for white-glove dispatch.
+            Your order has been registered into the New Monika Jewellers portfolio log. Our master jewelers are inspecting your pieces for white-glove dispatch.
           </p>
         </motion.div>
 

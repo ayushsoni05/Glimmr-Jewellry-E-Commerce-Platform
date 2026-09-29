@@ -439,7 +439,7 @@ const Profile = () => {
               </h2>
               
               <p className="text-xs font-body text-gray-500 mb-4 tracking-wider">
-                {user?.email || 'patron@glimmr.com'}
+                {user?.email || 'patron@newmonikajewellers.com'}
               </p>
 
               {/* Copy Patron ID Badge */}
@@ -556,7 +556,7 @@ const Profile = () => {
             >
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-[#B59A6C] block mb-1">
-                  GLIMMR ATELIER PRIVÉ PORTAL
+                  NEW MONIKA JEWELLERS PRIVÉ PORTAL
                 </span>
                 <h1 className="font-heading text-2xl font-bold text-[#111111] uppercase tracking-wider">
                   Patron Concierge Dashboard
@@ -1244,7 +1244,7 @@ const Profile = () => {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#B59A6C]/10 rounded-full blur-2xl pointer-events-none" />
                     <div className="relative z-10">
                       <span className="text-xs font-body font-extrabold uppercase tracking-[0.25em] text-[#D4AF37] block mb-1">
-                        GLIMMR ATELIER WALLET
+                        NEW MONIKA JEWELLERS WALLET
                       </span>
                       <h3 className="text-3xl font-heading font-extrabold text-white tracking-wide">Balance: <span className="text-white">₹0.00</span></h3>
                     </div>

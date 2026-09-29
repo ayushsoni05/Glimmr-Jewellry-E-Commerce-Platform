@@ -105,7 +105,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFont('times', 'bold');
       doc.setFontSize(22);
       doc.setTextColor(17, 17, 17);
-      doc.text('GLIMMR ATELIER', 15, 20);
+      doc.text('NEW MONIKA JEWELLERS', 15, 20);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
@@ -307,7 +307,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
       doc.setFont('times', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(181, 154, 108);
-      doc.text('Glimmr Atelier', 195, y + 5, { align: 'right' });
+      doc.text('New Monika Jewellers', 195, y + 5, { align: 'right' });
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(140, 140, 140);
@@ -410,7 +410,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
           <div className="sticky top-0 z-20 bg-[#FAF9F7] border-b border-[#E5E2D9] px-6 py-4 flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-2 text-xs font-body font-bold text-[#111111] uppercase tracking-wider">
               <ShieldCheckIcon size={18} className="text-[#B59A6C]" />
-              <span>Official GST Tax Invoice &bull; Glimmr Atelier</span>
+              <span>Official GST Tax Invoice &bull; New Monika Jewellers</span>
             </div>
             
             <div className="flex items-center gap-2 sm:gap-3">
@@ -452,7 +452,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4 border-b border-gray-200 pb-5">
               <div>
                 <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#111111] tracking-wider uppercase mb-1">
-                  GLIMMR ATELIER
+                  NEW MONIKA JEWELLERS
                 </h1>
                 <p className="text-[10px] font-body text-gray-500 uppercase tracking-[0.2em]">
                   HAUTE JOAILLERIE & CERTIFIED FINE JEWELRY
@@ -595,7 +595,7 @@ const TaxInvoiceModal = ({ isOpen, onClose, order }) => {
 
               <div className="text-right">
                 <div className="w-28 h-8 border-b border-gray-300 mb-1 flex items-center justify-center">
-                  <span className="font-heading text-xs italic text-[#B59A6C] tracking-widest font-bold">Glimmr Atelier</span>
+                  <span className="font-heading text-xs italic text-[#B59A6C] tracking-widest font-bold">New Monika Jewellers</span>
                 </div>
                 <span className="text-[9px] font-body text-gray-400 uppercase tracking-widest block">AUTHORIZED SIGNATORY</span>
               </div>

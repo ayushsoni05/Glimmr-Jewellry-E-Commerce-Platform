@@ -51,14 +51,14 @@ export const ToastProvider = ({ children }) => {
       );
     }
     return (
-      <div className="w-7 h-7 rounded-full bg-white/20 border border-white/30 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold shadow-sm">
-        ✨
+      <div className="w-7 h-7 rounded-full bg-white/20 border border-white/30 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm">
+        NMJ
       </div>
     );
   };
 
   const getLabel = () => {
-    if (variant === 'success') return 'GLIMMR CONCIERGE';
+    if (variant === 'success') return 'NEW MONIKA JEWELLERS CONCIERGE';
     if (variant === 'error') return 'NOTICE';
     return 'ATELIER UPDATE';
   };

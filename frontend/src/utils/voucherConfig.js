@@ -1,5 +1,5 @@
 /**
- * Official Glimmr Atelier Luxury Vouchers Configuration
+ * Official New Monika Jewellers Luxury Vouchers Configuration
  */
 
 export const AVAILABLE_VOUCHERS = [
@@ -13,7 +13,7 @@ export const AVAILABLE_VOUCHERS = [
     badge: 'Popular'
   },
   {
-    code: 'GLIMMR500',
+    code: 'NMJ500',
     name: 'VIP Direct Privilege',
     discountAmount: 500,
     minSpend: 2500,

@@ -1,5 +1,5 @@
 /**
- * Dynamic Product Pricing Utility for Glimmr Atelier Platform
+ * Dynamic Product Pricing Utility for New Monika Jewellers Platform
  * Calculates real-time jewelry pricing based on weight, karat purity, 
  * live IBJA metal rates, 4Cs diamond valuation, making charges, and 3% GST.
  */

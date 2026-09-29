@@ -173,7 +173,7 @@ const Auth = ({ initialMode = 'login' }) => {
         <div className="hidden lg:block lg:col-span-6 relative bg-[#222222] overflow-hidden">
           <img
             src={FRAMER_IMAGES.minimalMeBanner}
-            alt="GLIMMR Fine Jewelry"
+            alt="New Monika Jewellers Fine Jewelry"
             className="w-full h-full object-cover object-center opacity-85 transition-transform duration-1000 hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -181,8 +181,8 @@ const Auth = ({ initialMode = 'login' }) => {
           {/* Editorial Overlay Content */}
           <div className="absolute inset-0 p-12 flex flex-col justify-between z-10 text-white">
             <div className="flex items-center gap-3">
-              <span className="font-heading text-2xl tracking-[0.25em] font-normal uppercase text-white">
-                G L I M M R
+              <span className="font-heading text-xl tracking-[0.2em] font-normal uppercase text-white">
+                NEW MONIKA JEWELLERS
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" />
             </div>
@@ -205,8 +205,8 @@ const Auth = ({ initialMode = 'login' }) => {
         <div className="lg:col-span-6 p-8 sm:p-12 lg:p-14 flex flex-col justify-center bg-white">
           {/* Header Title & Subtitle */}
           <div className="mb-8 text-center sm:text-left">
-            <Link to="/" className="inline-block lg:hidden font-heading text-2xl tracking-[0.2em] font-normal uppercase text-[#222222] mb-6">
-              GLIMMR
+            <Link to="/" className="inline-block lg:hidden font-heading text-lg tracking-[0.15em] font-normal uppercase text-[#222222] mb-6">
+              NEW MONIKA JEWELLERS
             </Link>
 
             {/* Mode Switch Tabs (SIGN IN / CREATE ACCOUNT) */}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import GlimmrLogo from './GlimmrLogo';
+// Brand logo
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +32,7 @@ const Footer = () => {
             className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-1"
           >
             <Link to="/" className="inline-block mb-4">
-              <GlimmrLogo size="md" variant="light" showSubtext={true} autoLoop={false} />
+              <img src="/logo-nmj.png" alt="New Monika Jewellers" className="h-12 w-auto object-contain brightness-110" />
             </Link>
             <p className="text-white/60 font-body text-xs max-w-xs mb-6">
               Indulge in the opulence of Golden Memory, a mesmerizing jewelry collection fit for a queen.
@@ -136,7 +136,7 @@ const Footer = () => {
              <span className="hidden md:inline">|</span>
              <span>+1 (234) 567 890</span>
              <span className="hidden md:inline">|</span>
-             <span>support@glimmr.com</span>
+             <span>support@newmonikajewellers.com</span>
            </p>
         </motion.div>
 
@@ -148,7 +148,7 @@ const Footer = () => {
           className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center mt-12 gap-3"
         >
           <p className="text-white/40 text-sm font-body">
-            Copyright &copy; GLIMMR 2024
+            Copyright &copy; New Monika Jewellers 2024
           </p>
           <Link to="/billing" className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#B59A6C] hover:text-white uppercase tracking-widest transition-colors">
             <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C]" /> ATELIER POS
