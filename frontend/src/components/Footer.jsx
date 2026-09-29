@@ -32,7 +32,7 @@ const Footer = () => {
             className="col-span-2 sm:col-span-2 md:col-span-3 lg:col-span-1"
           >
             <Link to="/" className="inline-block mb-4">
-              <img src="/logo-nmj.png" alt="New Monika Jewellers" className="h-16 sm:h-20 w-auto object-contain brightness-110" />
+              <img src="/logo-nmj-horizontal.png" alt="New Monika Jewellers" className="h-12 sm:h-14 w-auto object-contain brightness-110" />
             </Link>
             <p className="text-white/60 font-body text-xs max-w-xs mb-6">
               Indulge in the opulence of Golden Memory, a mesmerizing jewelry collection fit for a queen.
