@@ -6775,10 +6775,6 @@ img {
   opacity: 1;
 }
 
-.group:hover .group-hover\:opacity-80{
-  opacity: 0.8;
-}
-
 .group:hover .group-hover\:opacity-95{
   opacity: 0.95;
 }
@@ -6949,8 +6945,8 @@ img {
     height: 2.75rem;
   }
 
-  .sm\:h-12{
-    height: 3rem;
+  .sm\:h-16{
+    height: 4rem;
   }
 
   .sm\:h-20{
@@ -7740,8 +7736,12 @@ img {
     aspect-ratio: 4/3;
   }
 
-  .lg\:h-14{
-    height: 3.5rem;
+  .lg\:h-20{
+    height: 5rem;
+  }
+
+  .lg\:h-24{
+    height: 6rem;
   }
 
   .lg\:h-\[500px\]{

@@ -138,14 +138,14 @@ const Header = () => {
         </div>
       </div>
 
-      <header className={`bg-white sticky top-0 z-50 transition-all duration-300 h-16 sm:h-20 border-b border-gray-100/80 relative ${isScrolled ? 'shadow-soft' : ''}`}>
+      <header className={`bg-white sticky top-0 z-50 transition-all duration-300 h-16 sm:h-20 lg:h-24 border-b border-gray-100/80 relative ${isScrolled ? 'shadow-soft' : ''}`}>
         <nav className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 h-full flex justify-between items-center">
           {/* Logo Left */}
-          <Link to="/" className="flex-shrink-0 flex items-center group">
+          <Link to="/" className="flex-shrink-0 flex items-center group py-1">
             <img
               src="/logo-nmj.png"
               alt="New Monika Jewellers"
-              className="h-10 sm:h-12 lg:h-14 w-auto object-contain transition-opacity group-hover:opacity-80"
+              className="h-12 sm:h-16 lg:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
             />
           </Link>
 
@@ -438,7 +438,7 @@ const Header = () => {
               <div className="flex flex-col space-y-4 text-lg font-heading text-[#222222] tracking-wider uppercase">
                 <div className="pb-3 mb-2 border-b border-gray-100 flex items-center justify-between">
                   <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-                    <img src="/logo-nmj.png" alt="New Monika Jewellers" className="h-10 w-auto object-contain" />
+                    <img src="/logo-nmj.png" alt="New Monika Jewellers" className="h-14 w-auto object-contain" />
                   </Link>
                   <span className="font-heading text-[10px] tracking-[0.2em] text-[#B59A6C] uppercase font-bold">MUMBAI</span>
                 </div>
