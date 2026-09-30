@@ -143,7 +143,7 @@ const Header = () => {
           {/* Logo Left */}
           <Link to="/" className="flex-shrink-0 flex items-center group">
             <img
-              src="/logo-mj-horizontal.png"
+              src="/logo-mj-horizontal-dark.png"
               alt="Monika Jewellers"
               className="h-[42px] sm:h-[52px] lg:h-[58px] w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
             />
@@ -438,7 +438,7 @@ const Header = () => {
               <div className="flex flex-col space-y-4 text-lg font-heading text-[#222222] tracking-wider uppercase">
                 <div className="pb-3 mb-2 border-b border-gray-100 flex items-center justify-between">
                   <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-                    <img src="/logo-mj-horizontal.png" alt="Monika Jewellers" className="h-11 w-auto object-contain" />
+                    <img src="/logo-mj-horizontal-dark.png" alt="Monika Jewellers" className="h-11 w-auto object-contain" />
                   </Link>
                   <span className="font-heading text-[10px] tracking-[0.2em] text-[#B59A6C] uppercase font-bold">MUMBAI</span>
                 </div>
