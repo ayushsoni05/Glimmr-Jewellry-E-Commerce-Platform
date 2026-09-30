@@ -97,7 +97,7 @@ const OTPLogin = () => {
         <div className="hidden lg:block lg:col-span-6 relative bg-[#222222] overflow-hidden">
           <img
             src={FRAMER_IMAGES.minimalMeBanner}
-            alt="New Monika Jewellers OTP Verification"
+            alt="Monika Jewellers OTP Verification"
             className="w-full h-full object-cover object-center opacity-80 transition-transform duration-1000 hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
@@ -128,7 +128,7 @@ const OTPLogin = () => {
         <div className="lg:col-span-6 p-8 sm:p-12 lg:p-14 flex flex-col justify-center bg-white">
           <div className="mb-8 text-center sm:text-left">
             <Link to="/" className="inline-block lg:hidden font-heading text-2xl tracking-[0.2em] font-normal uppercase text-[#222222] mb-6">
-              NEW MONIKA JEWELLERS
+              MONIKA JEWELLERS
             </Link>
 
             <span className="font-body text-[11px] font-semibold tracking-[0.25em] uppercase text-[#B59A6C] mb-2 block">

@@ -68,7 +68,7 @@ const VerifyEmail = () => {
             </motion.div>
             <h2 className="text-3xl font-heading text-dark mb-4">Email Verified</h2>
             <p className="text-muted font-body mb-8">
-              Your email has been successfully verified. Welcome to New Monika Jewellers!
+              Your email has been successfully verified. Welcome to Monika Jewellers!
             </p>
             <Link to="/" className="btn-primary w-full block">
               Return to Home

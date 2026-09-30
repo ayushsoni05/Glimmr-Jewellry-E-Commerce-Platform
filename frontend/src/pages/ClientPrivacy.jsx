@@ -83,9 +83,9 @@ const ClientPrivacy = () => {
       tagline: 'COLLECTING PATRON IDENTIFIERS WITH UTMOST CARE',
       icon: UsersIcon,
       paragraphs: [
-        'At New Monika Jewellers, we collect personal information strictly necessary to curate bespoke fine jewelry portfolios, facilitate secure transactions, and fulfill insured shipments.',
+        'At Monika Jewellers, we collect personal information strictly necessary to curate bespoke fine jewelry portfolios, facilitate secure transactions, and fulfill insured shipments.',
         'We collect personal identifiers such as your full legal name, billing address, white-glove delivery address, contact phone number, and email address. We also record portfolio preferences including ring sizes, preferred metal purities (24K Gold, 925 Silver), and custom engraving specifications.',
-        'We operate under strict confidentiality. New Monika Jewellers never sells, rents, or trades your personal data to third-party advertising networks.'
+        'We operate under strict confidentiality. Monika Jewellers never sells, rents, or trades your personal data to third-party advertising networks.'
       ],
       image: 'https://framerusercontent.com/images/DdMSTOefO0YEho190OisMkszb8.png?width=1200',
     },
@@ -96,7 +96,7 @@ const ClientPrivacy = () => {
       tagline: '256-BIT SSL ENCRYPTION & SECURE VAULT PROTECTION',
       icon: LockIcon,
       paragraphs: [
-        'Your digital privacy is safeguarded under international banking-grade encryption standards. All communications between your device and New Monika Jewellers servers are encrypted via 256-bit Secure Sockets Layer (SSL) technology.',
+        'Your digital privacy is safeguarded under international banking-grade encryption standards. All communications between your device and Monika Jewellers servers are encrypted via 256-bit Secure Sockets Layer (SSL) technology.',
         'Customer profile credentials and shipping destinations reside within isolated, access-controlled cloud database clusters protected by multi-factor authentication.',
         'Internal access to customer records is restricted exclusively to authorized Atelier concierges under non-disclosure agreements.'
       ],
@@ -109,7 +109,7 @@ const ClientPrivacy = () => {
       tagline: 'PCI-DSS LEVEL 1 TOKENIZED PAYMENT PROCESSING',
       icon: WalletIcon,
       paragraphs: [
-        'New Monika Jewellers never stores credit card numbers, debit card PINs, or raw banking credentials on local servers. Financial privacy is absolute.',
+        'Monika Jewellers never stores credit card numbers, debit card PINs, or raw banking credentials on local servers. Financial privacy is absolute.',
         'All online payments are tokenized and processed through PCI-DSS Level 1 compliant gateways (Stripe & Razorpay). Encrypted transaction tokens guarantee complete confidentiality during payment settlement.',
         'Official GST sales tax invoices are generated upon order completion and stored securely to comply with Indian tax regulations.'
       ],
@@ -150,7 +150,7 @@ const ClientPrivacy = () => {
       paragraphs: [
         'Under the Digital Personal Data Protection (DPDP) Act 2023 and global privacy frameworks, you hold complete ownership over your personal data.',
         'You have the right to request a digital export of your stored personal record, correct inaccurate address credentials, or request permanent account erasure.',
-        'For data requests or privacy inquiries, our Data Protection Officer (DPO) is available 24/7 at privacy@newmonikajewellers.com.'
+        'For data requests or privacy inquiries, our Data Protection Officer (DPO) is available 24/7 at privacy@monikajewellers.com.'
       ],
       image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1400&q=95',
     },
@@ -270,7 +270,7 @@ const ClientPrivacy = () => {
                   />
                   <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm p-4 border border-white/60">
                     <span className="font-heading text-xs uppercase tracking-widest text-[#222222] font-bold block">
-                      NEW MONIKA JEWELLERS TRUST GUARANTEE
+                      MONIKA JEWELLERS TRUST GUARANTEE
                     </span>
                     <span className="font-body text-[11px] text-[#808080]">
                       Certified Data Governance & SSL Security

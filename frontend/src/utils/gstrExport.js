@@ -53,7 +53,7 @@ export function downloadGSTR1(bills, monthLabel) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `GSTR1_NMJ_${monthLabel || 'export'}.csv`;
+  link.download = `GSTR1_MJ_${monthLabel || 'export'}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }

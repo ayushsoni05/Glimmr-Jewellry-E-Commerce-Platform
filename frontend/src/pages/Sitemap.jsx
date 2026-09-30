@@ -196,7 +196,7 @@ const Sitemap = () => {
           image: 'https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png' 
         },
         { 
-          title: 'About New Monika Jewellers', 
+          title: 'About Monika Jewellers', 
           path: '/about', 
           desc: 'Our legacy, master craftsmen, and BIS hallmarking heritage.', 
           meta: 'Atelier Heritage',
@@ -345,7 +345,7 @@ const Sitemap = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="font-body text-[#808080] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed font-normal"
           >
-            Visual showcase directory of all New Monika Jewellers fine jewelry collections, bespoke services, client care guidelines, and compliance documentation.
+            Visual showcase directory of all Monika Jewellers fine jewelry collections, bespoke services, client care guidelines, and compliance documentation.
           </motion.p>
 
           {/* Webflow Minimalist Architectural Search Bar */}

@@ -68,7 +68,7 @@ const MonthlyUpdatesNewsletter = () => {
         if (res.data.alreadySubscribed) {
           toastSuccess(res.data.message || `Welcome back! Your code is ${res.data.voucherCode}`);
         } else {
-          toastSuccess('Welcome to New Monika Jewellers Privé! 10% Voucher code generated.');
+          toastSuccess('Welcome to Monika Jewellers Privé! 10% Voucher code generated.');
         }
       }
     } catch (err) {
@@ -128,7 +128,7 @@ const MonthlyUpdatesNewsletter = () => {
             </h2>
 
             <p className="font-body text-gray-300 text-sm sm:text-base leading-relaxed max-w-lg mx-auto lg:mx-0 font-light">
-              Join the New Monika Jewellers Social Club for early access to private Kundan pre-launches, live metal rate alerts, and exclusive patron rewards.
+              Join the Monika Jewellers Social Club for early access to private Kundan pre-launches, live metal rate alerts, and exclusive patron rewards.
             </p>
 
             {/* Perks Bar */}
@@ -162,7 +162,7 @@ const MonthlyUpdatesNewsletter = () => {
                       <CheckCircleIcon size={22} className="text-emerald-600 shrink-0" />
                       <div>
                         <h4 className="font-heading font-bold text-xs uppercase tracking-wider text-[#111111]">
-                          WELCOME TO NEW MONIKA JEWELLERS PRIVÉ!
+                          WELCOME TO MONIKA JEWELLERS PRIVÉ!
                         </h4>
                         <p className="text-[11px] font-body text-gray-600 mt-0.5">
                           Your 10% welcome voucher: <strong className="font-mono text-[#B59A6C]">{voucherCode}</strong>

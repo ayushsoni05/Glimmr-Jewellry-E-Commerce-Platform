@@ -1596,6 +1596,10 @@ img {
   height: 2.5rem;
 }
 
+.h-11{
+  height: 2.75rem;
+}
+
 .h-12{
   height: 3rem;
 }
@@ -1746,6 +1750,10 @@ img {
 
 .h-\[3px\]{
   height: 3px;
+}
+
+.h-\[42px\]{
+  height: 42px;
 }
 
 .h-\[450px\]{
@@ -6732,6 +6740,12 @@ img {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.group:hover .group-hover\:scale-\[1\.02\]{
+  --tw-scale-x: 1.02;
+  --tw-scale-y: 1.02;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .group:hover .group-hover\:border-\[\#222222\]{
   --tw-border-opacity: 1;
   border-color: rgb(34 34 34 / var(--tw-border-opacity, 1));
@@ -6975,6 +6989,10 @@ img {
 
   .sm\:h-\[420px\]{
     height: 420px;
+  }
+
+  .sm\:h-\[52px\]{
+    height: 52px;
   }
 
   .sm\:h-\[580px\]{
@@ -7738,6 +7756,10 @@ img {
 
   .lg\:h-\[500px\]{
     height: 500px;
+  }
+
+  .lg\:h-\[58px\]{
+    height: 58px;
   }
 
   .lg\:h-\[700px\]{

@@ -157,7 +157,7 @@ const AdminBespokeOrders = () => {
                     <span>Call Customer</span>
                   </a>
                   <a
-                    href={`mailto:${order.customerEmail}?subject=Regarding Your New Monika Jewellers Bespoke Ring Request (${order.customOrderId})`}
+                    href={`mailto:${order.customerEmail}?subject=Regarding Your Monika Jewellers Bespoke Ring Request (${order.customOrderId})`}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-mono font-bold rounded-[8px] transition-colors"
                   >
                     <Mail className="w-3.5 h-3.5" />

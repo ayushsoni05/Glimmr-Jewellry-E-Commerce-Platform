@@ -50,7 +50,7 @@ router.post('/subscribe', async (req, res) => {
         success: true,
         alreadySubscribed: true,
         voucherCode: subscriber.voucherCode,
-        message: `You are already subscribed to New Monika Jewellers Privé! Your 10% welcome voucher code is ${subscriber.voucherCode}.`
+        message: `You are already subscribed to Monika Jewellers Privé! Your 10% welcome voucher code is ${subscriber.voucherCode}.`
       });
     }
 
@@ -73,14 +73,14 @@ router.post('/subscribe', async (req, res) => {
     const emailHtml = `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; padding: 30px; background-color: #FAF9F7; border: 1px solid #E5E2D9; color: #222222;">
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #E5E2D9;">
-          <h1 style="font-size: 24px; letter-spacing: 0.2em; text-transform: uppercase; color: #111111; margin: 0;">NEW MONIKA JEWELLERS</h1>
+          <h1 style="font-size: 24px; letter-spacing: 0.2em; text-transform: uppercase; color: #111111; margin: 0;">MONIKA JEWELLERS</h1>
           <p style="font-size: 11px; letter-spacing: 0.15em; color: #B59A6C; text-transform: uppercase; margin-top: 5px;">ATELIER PRIVÉ VIP CLUB</p>
         </div>
         
         <div style="padding: 30px 0; text-align: center;">
-          <h2 style="font-size: 20px; font-weight: normal; text-transform: uppercase; letter-spacing: 0.1em; color: #222222; margin-bottom: 15px;">WELCOME TO NEW MONIKA JEWELLERS PRIVÉ</h2>
+          <h2 style="font-size: 20px; font-weight: normal; text-transform: uppercase; letter-spacing: 0.1em; color: #222222; margin-bottom: 15px;">WELCOME TO MONIKA JEWELLERS PRIVÉ</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #555555; margin-bottom: 25px;">
-            Thank you for joining the New Monika Jewellers Social Club. As a Privé patron, you enjoy priority access to private Kundan pre-launches, hourly metal rate alerts, and exclusive rewards.
+            Thank you for joining the Monika Jewellers Social Club. As a Privé patron, you enjoy priority access to private Kundan pre-launches, hourly metal rate alerts, and exclusive rewards.
           </p>
           
           <div style="background-color: #111111; color: #FAF9F7; padding: 20px; border: 1px solid #B59A6C; max-width: 320px; margin: 0 auto;">
@@ -94,16 +94,16 @@ router.post('/subscribe', async (req, res) => {
         </div>
         
         <div style="text-align: center; border-top: 1px solid #E5E2D9; pt: 20px; font-size: 11px; color: #999999;">
-          <p>© ${new Date().getFullYear()} New Monika Jewellers. 100% BIS Hallmarked Fine Jewelry.</p>
+          <p>© ${new Date().getFullYear()} Monika Jewellers. 100% BIS Hallmarked Fine Jewelry.</p>
         </div>
       </div>
     `;
 
     try {
       await mailTransport.sendMail({
-        from: `New Monika Jewellers <${fromEmail}>`,
+        from: `Monika Jewellers <${fromEmail}>`,
         to: cleanEmail,
-        subject: `Welcome to New Monika Jewellers Privé — Your 10% Voucher Code: ${voucherCode}`,
+        subject: `Welcome to Monika Jewellers Privé — Your 10% Voucher Code: ${voucherCode}`,
         html: emailHtml
       });
       console.log(`[NEWSLETTER] Welcome email sent to ${cleanEmail}`);
@@ -115,7 +115,7 @@ router.post('/subscribe', async (req, res) => {
       success: true,
       alreadySubscribed: false,
       voucherCode,
-      message: `Welcome to New Monika Jewellers Privé! Your 10% welcome voucher code is ${voucherCode}.`
+      message: `Welcome to Monika Jewellers Privé! Your 10% welcome voucher code is ${voucherCode}.`
     });
   } catch (error) {
     console.error('[NEWSLETTER] Subscription error:', error);

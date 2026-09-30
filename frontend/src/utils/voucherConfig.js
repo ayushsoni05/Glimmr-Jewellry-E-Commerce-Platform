@@ -1,5 +1,5 @@
 /**
- * Official New Monika Jewellers Luxury Vouchers Configuration
+ * Official Monika Jewellers Luxury Vouchers Configuration
  */
 
 export const AVAILABLE_VOUCHERS = [
@@ -13,7 +13,7 @@ export const AVAILABLE_VOUCHERS = [
     badge: 'Popular'
   },
   {
-    code: 'NMJ500',
+    code: 'MJ500',
     name: 'VIP Direct Privilege',
     discountAmount: 500,
     minSpend: 2500,

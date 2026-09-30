@@ -52,13 +52,13 @@ export const ToastProvider = ({ children }) => {
     }
     return (
       <div className="w-7 h-7 rounded-full bg-white/20 border border-white/30 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold shadow-sm">
-        NMJ
+        MJ
       </div>
     );
   };
 
   const getLabel = () => {
-    if (variant === 'success') return 'NEW MONIKA JEWELLERS CONCIERGE';
+    if (variant === 'success') return 'MONIKA JEWELLERS CONCIERGE';
     if (variant === 'error') return 'NOTICE';
     return 'ATELIER UPDATE';
   };

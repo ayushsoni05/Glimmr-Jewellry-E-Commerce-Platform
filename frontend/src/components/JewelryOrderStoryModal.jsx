@@ -27,7 +27,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
   const items = orderData?.items || orderData?.orderItems || [];
   const firstItem = items[0] || {};
   const productObj = firstItem.product || firstItem;
-  const productName = productObj.name || firstItem.name || 'New Monika Jewellers Fine Jewelry Creation';
+  const productName = productObj.name || firstItem.name || 'Monika Jewellers Fine Jewelry Creation';
   const shippingAddress = orderData?.shippingAddress || {};
 
   // Calculate live price breakdown for every item
@@ -152,7 +152,7 @@ const JewelryOrderStoryModal = ({ isOpen, orderData, onClose }) => {
               <div className="flex items-center gap-2.5 px-4 py-1 bg-[#15151a]/90 border border-[#B59A6C]/35 rounded-full shadow-xl mb-3 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-ping" />
                 <span className="text-[9px] font-mono tracking-[0.22em] text-[#E8D5B7] uppercase font-bold">
-                  NEW MONIKA JEWELLERS &bull; ORDER REGISTERED
+                  MONIKA JEWELLERS &bull; ORDER REGISTERED
                 </span>
               </div>
 

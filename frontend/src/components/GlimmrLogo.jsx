@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * NMJLogo — Pixel-perfect replica of the Reliqium logo.gif animation
- * adapted for "NMJ" (New Monika Jewellers).
+ * MJLogo — Pixel-perfect replica of the Reliqium logo.gif animation
+ * adapted for "MJ" (Monika Jewellers).
  *
  * Animation timeline (2.8s total loop):
  *   Phase 1  Blank         0–700ms
@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
  *   Cursor       thin "|" bar, same gray, opacity blink
  */
 
-const LETTERS = ['N', 'M', 'J'];
+const LETTERS = ['M', 'J'];
 
 // Timing constants (milliseconds) — matched to original GIF
 const PHASE_BLANK     = 700;
@@ -26,7 +26,7 @@ const PHASE_CURSOR    = 1000;   // 3 blink cycles
 const LETTER_DELAY    = 105;    // ~105ms per letter typed
 const PHASE_HOLD      = 1375;   // hold full text until loop restarts
 
-const NMJLogo = ({
+const MJLogo = ({
   autoLoop = true,
   variant = 'dark',   // 'dark' (light bg) | 'light' (dark bg)
   size = 'md',        // 'sm' | 'md' | 'lg'
@@ -181,4 +181,4 @@ const NMJLogo = ({
   );
 };
 
-export default NMJLogo;
+export default MJLogo;

@@ -6,11 +6,11 @@ const Terms = () => {
   const sections = [
     {
       title: '1. Acceptance of Atelier Purchasing Terms',
-      content: 'By accessing, browsing, or purchasing from New Monika Jewellers, you accept and agree to be bound by these terms, conditions, and notices. Every transaction represents a binding contract for haute joaillerie craftsmanship.',
+      content: 'By accessing, browsing, or purchasing from Monika Jewellers, you accept and agree to be bound by these terms, conditions, and notices. Every transaction represents a binding contract for haute joaillerie craftsmanship.',
     },
     {
       title: '2. Fine Jewelry Valuation & Metal Purity Guarantee',
-      content: 'All precious gold (24K, 22K, 18K, 14K) and sterling silver (925 purity) pieces offered by New Monika Jewellers are 100% BIS Hallmarked. Metal weights, gemstone carat weights, and market pricing are transparently declared on your GST Tax Invoice.',
+      content: 'All precious gold (24K, 22K, 18K, 14K) and sterling silver (925 purity) pieces offered by Monika Jewellers are 100% BIS Hallmarked. Metal weights, gemstone carat weights, and market pricing are transparently declared on your GST Tax Invoice.',
     },
     {
       title: '3. Privacy & Client Data Protection',
@@ -19,7 +19,7 @@ const Terms = () => {
     },
     {
       title: '4. Intellectual Property & Atelier Craftsmanship',
-      content: 'All bespoke designs, CAD renders, high-resolution imagery, logo trademarks, and editorial copy displayed on New Monika Jewellers are exclusive proprietary property. Unauthorized reproduction or commercial distribution is strictly prohibited.',
+      content: 'All bespoke designs, CAD renders, high-resolution imagery, logo trademarks, and editorial copy displayed on Monika Jewellers are exclusive proprietary property. Unauthorized reproduction or commercial distribution is strictly prohibited.',
     },
     {
       title: '5. White-Glove Insured Delivery & Liability',
@@ -27,7 +27,7 @@ const Terms = () => {
     },
     {
       title: '6. Modification of Terms',
-      content: 'New Monika Jewellers reserves the right to revise or update these terms at any time. Continued use of the platform following published changes constitutes full acceptance.',
+      content: 'Monika Jewellers reserves the right to revise or update these terms at any time. Continued use of the platform following published changes constitutes full acceptance.',
     },
   ];
 
@@ -66,7 +66,7 @@ const Terms = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed"
           >
-            Official purchasing guidelines, BIS hallmarking guarantees, and client service agreements for New Monika Jewellers.
+            Official purchasing guidelines, BIS hallmarking guarantees, and client service agreements for Monika Jewellers.
           </motion.p>
         </div>
       </section>

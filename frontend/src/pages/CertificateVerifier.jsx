@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import NMJLogo from '../components/GlimmrLogo';
+import MJLogo from '../components/GlimmrLogo';
 
 const SAMPLE_CERTIFICATES = {
   'GLM-999-2026': {
@@ -50,7 +50,7 @@ const CertificateVerifier = () => {
         certId: query,
         bisHallmark: `HM-${Math.floor(1000 + Math.random() * 9000)}-IN`,
         lab: 'International Gemological Institute (IGI Approved)',
-        productName: 'New Monika Jewellers Masterpiece Creation',
+        productName: 'Monika Jewellers Masterpiece Creation',
         purity: '18K Gold (75.0% Purity Verified)',
         netWeight: '12.50 Grams',
         diamondCut: 'Brilliant Round Cut',
@@ -71,7 +71,7 @@ const CertificateVerifier = () => {
         {/* Title Header */}
         <div className="text-center mb-10">
           <div className="inline-block mb-3">
-            <NMJLogo size="md" variant="dark" autoLoop={false} />
+            <MJLogo size="md" variant="dark" autoLoop={false} />
           </div>
           <h1 className="text-3xl sm:text-4xl font-heading font-bold text-[#111111] uppercase tracking-wider">
             Digital Hallmark & Certificate Verifier
@@ -134,7 +134,7 @@ const CertificateVerifier = () => {
                 ● OFFICIAL CERTIFICATE OF AUTHENTICITY
               </span>
               <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#111111] uppercase tracking-wider">
-                NEW MONIKA JEWELLERS LAB DOCKET
+                MONIKA JEWELLERS LAB DOCKET
               </h2>
               <p className="font-mono text-xs text-gray-500 mt-1">CERTIFICATE ID: {activeCert.certId}</p>
             </div>
@@ -196,7 +196,7 @@ const CertificateVerifier = () => {
 
               {/* Verified Gold Emblem Seal */}
               <div className="w-20 h-20 rounded-full border-2 border-[#B59A6C] bg-gradient-to-tr from-[#FAF9F7] to-[#F7E7CE] flex flex-col items-center justify-center text-center shadow-md">
-                <span className="font-serif text-[10px] font-bold text-[#B59A6C] uppercase tracking-widest">NMJ</span>
+                <span className="font-serif text-[10px] font-bold text-[#B59A6C] uppercase tracking-widest">MJ</span>
                 <span className="font-mono text-[8px] text-gray-700 font-bold">VERIFIED</span>
               </div>
             </div>

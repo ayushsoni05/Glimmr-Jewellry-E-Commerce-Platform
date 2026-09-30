@@ -269,7 +269,7 @@ const CareInstructions = () => {
           </h2>
 
           <p className="max-w-xl mx-auto text-xs sm:text-sm font-body text-gray-500 leading-relaxed">
-            All New Monika Jewellers high jewelry creations include lifetime complimentary ultrasonic cleaning, prong security audits, and rhodium re-plating at any of our flagship boutiques.
+            All Monika Jewellers high jewelry creations include lifetime complimentary ultrasonic cleaning, prong security audits, and rhodium re-plating at any of our flagship boutiques.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 pt-2">

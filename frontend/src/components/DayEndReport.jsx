@@ -112,7 +112,7 @@ const DayEndReport = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">New Monika Jewellers POS</span>
+                <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">Monika Jewellers POS</span>
                 <h2 className="font-heading text-xl font-bold text-[#111111] tracking-wider">Day-End Z-Report</h2>
               </div>
               <button

@@ -109,7 +109,7 @@ const BusinessCard = () => {
             <DiamondIcon className="w-16 h-16 text-amber-600 mx-auto" />
           </motion.div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 bg-clip-text text-transparent">
-            New Monika Jewellers Business Cards
+            Monika Jewellers Business Cards
           </h1>
           <p className="text-xl text-slate-600">
             Luxury jewelry-themed business cards with stunning 3D animations
@@ -263,7 +263,7 @@ const BusinessCard = () => {
                       >
                         <div>
                           <h1 className="text-2xl md:text-3xl font-bold text-amber-500 tracking-wide mb-2">
-                            NEW MONIKA JEWELLERS
+                            MONIKA JEWELLERS
                           </h1>
                           <div className="h-px bg-gradient-to-r from-amber-500 to-transparent w-3/4 mb-3"></div>
                           <p className="text-amber-400 text-xs md:text-sm uppercase tracking-widest">
@@ -276,7 +276,7 @@ const BusinessCard = () => {
                         
                         <div className="pt-4">
                           <p className="text-amber-400 text-xs md:text-sm tracking-wider">
-                            www.newmonikajewellers.com
+                            www.monikajewellers.com
                           </p>
                         </div>
                       </motion.div>
@@ -349,7 +349,7 @@ const BusinessCard = () => {
                               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             />
                           </svg>
-                          <p className="text-amber-200 text-sm">contact@newmonikajewellers.com</p>
+                          <p className="text-amber-200 text-sm">contact@monikajewellers.com</p>
                         </div>
 
                         <div className="flex items-start gap-3">
@@ -480,7 +480,7 @@ const BusinessCard = () => {
 
                       <div>
                         <h3 className="text-lg md:text-xl font-bold text-amber-700 mb-1">
-                          NEW MONIKA JEWELLERS
+                          MONIKA JEWELLERS
                         </h3>
                         <div className="h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent w-full mb-2"></div>
                         <p className="text-amber-600 text-xs uppercase tracking-wider">
@@ -553,7 +553,7 @@ const BusinessCard = () => {
                       transition={{ duration: 0.3 }}
                     >
                       <h3 className={`text-xl font-bold ${template.accentColor} mb-2`}>
-                        New Monika Jewellers
+                        Monika Jewellers
                       </h3>
                       <p className={`text-sm ${template.accentColor} opacity-80 mb-4`}>
                         {template.name}

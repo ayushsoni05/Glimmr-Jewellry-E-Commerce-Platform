@@ -368,7 +368,7 @@ const Prices = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="font-body text-[#808080] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed font-normal"
           >
-            Official New Monika Jewellers bullion valuation ticker. Sourced directly from Indian Bullion and Jewellers Association (IBJA) and international bullion markets for total purchasing transparency.
+            Official Monika Jewellers bullion valuation ticker. Sourced directly from Indian Bullion and Jewellers Association (IBJA) and international bullion markets for total purchasing transparency.
           </motion.p>
         </div>
       </section>
@@ -541,7 +541,7 @@ const Prices = () => {
                   </div>
                 </div>
                 <p className="text-xs font-body text-gray-500 pt-3 border-t border-gray-100">
-                  Standard purity for New Monika Jewellers Royal Kundan bridal necklaces & bangles.
+                  Standard purity for Monika Jewellers Royal Kundan bridal necklaces & bangles.
                 </p>
               </motion.div>
 
@@ -598,7 +598,7 @@ const Prices = () => {
                   </div>
                 </div>
                 <p className="text-xs font-body text-gray-500 pt-3 border-t border-gray-100">
-                  Standard purity for New Monika Jewellers artisanal Hasli necklaces & solid cuffs.
+                  Standard purity for Monika Jewellers artisanal Hasli necklaces & solid cuffs.
                 </p>
               </motion.div>
 
@@ -786,7 +786,7 @@ const Prices = () => {
               100% BIS Hallmarked & Fair Metal Rate Promise
             </h3>
             <p className="text-xs font-body text-gray-300 leading-relaxed font-light">
-              Every gold and silver creation at New Monika Jewellers is crafted using 100% BIS Hallmarked metals with transparent making charges. Our live rates are linked to official bullion benchmarks, guaranteeing that your exchange and buyback valuations remain 100% fair and verified.
+              Every gold and silver creation at Monika Jewellers is crafted using 100% BIS Hallmarked metals with transparent making charges. Our live rates are linked to official bullion benchmarks, guaranteeing that your exchange and buyback valuations remain 100% fair and verified.
             </p>
           </div>
         </div>

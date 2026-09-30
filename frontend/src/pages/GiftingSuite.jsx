@@ -735,7 +735,7 @@ const GiftingSuite = () => {
                 INSTANT DIGITAL DISPATCH
               </span>
               <h2 className="text-3xl font-heading text-[#222222] mb-6">
-                New Monika Jewellers Luxury E-Gift Cards
+                Monika Jewellers Luxury E-Gift Cards
               </h2>
 
               {/* 3D Gift Card Container */}
@@ -787,7 +787,7 @@ const GiftingSuite = () => {
                           className="font-heading text-lg font-bold tracking-[0.35em] block"
                           style={{ color: '#B59A6C' }}
                         >
-                          NMJ
+                          MJ
                         </motion.span>
                         <span className="text-[8px] font-mono text-gray-600 tracking-[0.3em] block mt-0.5">FINE JEWELLERY</span>
                       </div>
@@ -849,7 +849,7 @@ const GiftingSuite = () => {
                           animate={{ opacity: 1 }}
                           className="text-[11px] font-body font-bold text-gray-400 block mt-0.5"
                         >
-                          {senderName || 'NMJ PATRON'}
+                          {senderName || 'MJ PATRON'}
                         </motion.span>
                       </div>
                     </div>
@@ -859,7 +859,7 @@ const GiftingSuite = () => {
 
               {/* Security Strip */}
               <div className="mt-2 flex items-center justify-between px-2">
-                <span className="text-[9px] font-mono text-[#808080]">Redeemable across all New Monika Jewellers collections</span>
+                <span className="text-[9px] font-mono text-[#808080]">Redeemable across all Monika Jewellers collections</span>
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500/60" />
                   <span className="text-[9px] font-mono text-[#808080]">Secured</span>
@@ -1170,7 +1170,7 @@ const GiftingSuite = () => {
                     />
 
                     <div className="flex justify-between items-start relative z-10">
-                      <span className="font-heading text-xs font-bold tracking-[0.3em] text-[#B59A6C]">NMJ</span>
+                      <span className="font-heading text-xs font-bold tracking-[0.3em] text-[#B59A6C]">MJ</span>
                       <div className="w-6 h-4 rounded-sm bg-gradient-to-br from-[#E8D5B7] via-[#B59A6C] to-[#8C734B]" />
                     </div>
 
@@ -1221,7 +1221,7 @@ const GiftingSuite = () => {
                   {/* Center Brand Crest on Pocket */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
                     <span className="font-heading text-[9px] font-bold tracking-[0.35em] text-[#7A6B56] uppercase block">
-                      NEW MONIKA JEWELLERS
+                      MONIKA JEWELLERS
                     </span>
                   </div>
                 </div>

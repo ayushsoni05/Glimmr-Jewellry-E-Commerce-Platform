@@ -40,7 +40,7 @@ const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || SENDER_EMAIL || 'adm
  */
 const sendEmail = async (options) => {
   const mailOptions = {
-    from: options.from || `"New Monika Jewellers" <${SENDER_EMAIL}>`,
+    from: options.from || `"Monika Jewellers" <${SENDER_EMAIL}>`,
     to: options.to,
     subject: options.subject,
     text: options.text,
@@ -62,7 +62,7 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>You Have Received a New Monika Jewellers Luxury E-Gift Card</title>
+  <title>You Have Received a Monika Jewellers Luxury E-Gift Card</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #121212; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #121212; padding: 40px 15px;">
@@ -74,8 +74,8 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
           <!-- Top Header Strip -->
           <tr>
             <td align="center" style="background-color: #141414; padding: 30px 20px 20px; border-bottom: 1px solid rgba(181, 154, 108, 0.2);">
-              <span style="font-size: 10px; letter-spacing: 4px; color: #B59A6C; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 8px;">NMJ ATELIER · SPECIAL GIFT PRESENTATION</span>
-              <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 24px; color: #FFFFFF; letter-spacing: 3px; font-weight: normal;">NEW MONIKA JEWELLERS</h1>
+              <span style="font-size: 10px; letter-spacing: 4px; color: #B59A6C; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 8px;">MJ ATELIER · SPECIAL GIFT PRESENTATION</span>
+              <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 24px; color: #FFFFFF; letter-spacing: 3px; font-weight: normal;">MONIKA JEWELLERS</h1>
               <span style="font-size: 9px; letter-spacing: 3px; color: #888888; text-transform: uppercase;">FINE JEWELLERY</span>
             </td>
           </tr>
@@ -88,7 +88,7 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
                 Dear ${recipientName},
               </h2>
               <p style="font-size: 14px; line-height: 1.6; color: #A0A0A0; margin: 0 auto; max-width: 480px;">
-                <strong style="color: #FFFFFF;">${senderName}</strong> has presented you with an exclusive luxury fine jewelry gift voucher from New Monika Jewellers.
+                <strong style="color: #FFFFFF;">${senderName}</strong> has presented you with an exclusive luxury fine jewelry gift voucher from Monika Jewellers.
               </p>
             </td>
           </tr>
@@ -103,7 +103,7 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
                         <td>
-                          <span style="font-family: 'Georgia', serif; font-size: 18px; color: #B59A6C; letter-spacing: 3px; font-weight: bold; display: block;">NMJ</span>
+                          <span style="font-family: 'Georgia', serif; font-size: 18px; color: #B59A6C; letter-spacing: 3px; font-weight: bold; display: block;">MJ</span>
                           <span style="font-size: 8px; letter-spacing: 2px; color: #777777; text-transform: uppercase;">ATELIER GIFT CARD</span>
                         </td>
                         <td align="right">
@@ -179,7 +179,7 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
           <tr>
             <td align="center" style="padding: 10px 35px 35px;">
               <a href="${storeUrl}/collections" target="_blank" style="background: linear-gradient(135deg, #B59A6C 0%, #9E8357 100%); color: #FFFFFF; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 16px 36px; border-radius: 4px; display: inline-block; box-shadow: 0 6px 20px rgba(181,154,108,0.35);">
-                REDEEM YOUR GIFT AT NEW MONIKA JEWELLERS
+                REDEEM YOUR GIFT AT MONIKA JEWELLERS
               </a>
               <p style="font-size: 12px; color: #777777; margin: 15px 0 0 0;">
                 Simply enter your code <strong>${redeemCode}</strong> at checkout or present it at our Atelier Studio.
@@ -197,7 +197,7 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
                     <span style="color: #B59A6C;">✓ Never Expires</span> &nbsp;•&nbsp; 
                     <span style="color: #B59A6C;">✓ Insured Pan-India Delivery</span>
                     <br><br>
-                    © ${new Date().getFullYear()} New Monika Jewellers Fine Jewellery Atelier. All rights reserved.
+                    © ${new Date().getFullYear()} Monika Jewellers Fine Jewellery Atelier. All rights reserved.
                     <br>
                     Need assistance? Contact our concierge at <a href="mailto:glimmr05@gmail.com" style="color: #B59A6C; text-decoration: none;">glimmr05@gmail.com</a>
                   </td>
@@ -215,9 +215,9 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
   `;
 
   const mailOptions = {
-    from: `"New Monika Jewellers" <${SENDER_EMAIL}>`,
+    from: `"Monika Jewellers" <${SENDER_EMAIL}>`,
     to: recipientEmail,
-    subject: `You've Received a ${formattedAmount} New Monika Jewellers Luxury E-Gift Card from ${senderName}`,
+    subject: `You've Received a ${formattedAmount} Monika Jewellers Luxury E-Gift Card from ${senderName}`,
     html,
   };
 
@@ -236,14 +236,14 @@ const sendLuxuryGiftCardEmail = async ({ recipientName, recipientEmail, senderNa
  */
 const sendAdminBespokeNotification = async (order) => {
   const mailOptions = {
-    from: `"New Monika Jewellers Atelier Studio" <${SENDER_EMAIL}>`,
+    from: `"Monika Jewellers Atelier Studio" <${SENDER_EMAIL}>`,
     to: ADMIN_EMAIL,
     subject: `NEW BESPOKE RING REQUEST: ${order.customOrderId} from ${order.customerName}`,
     html: `
       <div style="font-family: 'Georgia', serif; background-color: #FAF9F7; padding: 30px; color: #222222;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
           <div style="text-align: center; border-bottom: 2px solid #B59A6C; padding-bottom: 20px; margin-bottom: 25px;">
-            <span style="font-size: 11px; letter-spacing: 3px; color: #B59A6C; font-weight: bold; text-transform: uppercase;">NEW MONIKA JEWELLERS LUXURY ATELIER</span>
+            <span style="font-size: 11px; letter-spacing: 3px; color: #B59A6C; font-weight: bold; text-transform: uppercase;">MONIKA JEWELLERS LUXURY ATELIER</span>
             <h1 style="font-size: 24px; color: #222222; margin: 10px 0 5px 0;">New Bespoke Ring Request</h1>
             <p style="font-size: 13px; color: #808080; margin: 0;">Order ID: <strong>${order.customOrderId}</strong></p>
           </div>
@@ -285,14 +285,14 @@ const sendCustomerApprovalNotification = async (order, estimatedCompletionDate, 
   });
 
   const mailOptions = {
-    from: `"New Monika Jewellers Atelier Studio" <${SENDER_EMAIL}>`,
+    from: `"Monika Jewellers Atelier Studio" <${SENDER_EMAIL}>`,
     to: order.customerEmail,
     subject: `YOUR BESPOKE RING HAS BEEN APPROVED! Order ${order.customOrderId}`,
     html: `
       <div style="font-family: 'Georgia', serif; background-color: #FAF9F7; padding: 30px; color: #222222;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
           <div style="text-align: center; border-bottom: 2px solid #B59A6C; padding-bottom: 20px; margin-bottom: 25px;">
-            <span style="font-size: 11px; letter-spacing: 3px; color: #B59A6C; font-weight: bold; text-transform: uppercase;">NEW MONIKA JEWELLERS LUXURY ATELIER</span>
+            <span style="font-size: 11px; letter-spacing: 3px; color: #B59A6C; font-weight: bold; text-transform: uppercase;">MONIKA JEWELLERS LUXURY ATELIER</span>
             <h1 style="font-size: 24px; color: #222222; margin: 10px 0 5px 0;">Bespoke Creation Approved</h1>
             <p style="font-size: 13px; color: #808080; margin: 0;">Order Reference: <strong>${order.customOrderId}</strong></p>
           </div>

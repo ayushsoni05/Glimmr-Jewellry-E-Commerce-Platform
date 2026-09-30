@@ -22,7 +22,7 @@ const PrivacyPolicy = () => {
       title: '1. Client Data Collection',
       icon: UsersIcon,
       subtitle: 'Information collected to deliver Haute Joaillerie experiences.',
-      content: `At New Monika Jewellers, we collect personal information strictly necessary to curate bespoke fine jewelry portfolios, facilitate secure transactions, and fulfill insured shipments.
+      content: `At Monika Jewellers, we collect personal information strictly necessary to curate bespoke fine jewelry portfolios, facilitate secure transactions, and fulfill insured shipments.
 
 We collect:
 • Personal Identifiers: Full legal name, billing and white-glove delivery addresses, phone number, and email address.
@@ -36,7 +36,7 @@ We never sell, rent, or trade your personal data to third-party marketers.`
       title: '2. Atelier Data Encryption',
       icon: LockIcon,
       subtitle: 'Military-grade 256-bit SSL encryption & vault protection.',
-      content: `Your privacy is safeguarded under international encryption standards. All communication between your device and New Monika Jewellers servers is encrypted via 256-bit Secure Sockets Layer (SSL) technology.
+      content: `Your privacy is safeguarded under international encryption standards. All communication between your device and Monika Jewellers servers is encrypted via 256-bit Secure Sockets Layer (SSL) technology.
 
 • Encrypted Vaults: Customer profile data and delivery destinations are stored in isolated, access-controlled database clusters.
 • Multi-Factor Safeguards: Internal access to order portfolios is limited to authorized Atelier white-glove concierges under strict non-disclosure agreements.`
@@ -46,7 +46,7 @@ We never sell, rent, or trade your personal data to third-party marketers.`
       title: '3. Financial & Payment Privacy',
       icon: WalletIcon,
       subtitle: 'Zero raw card storage. PCI-DSS Level 1 payment processing.',
-      content: `New Monika Jewellers never stores full credit card numbers, debit card PINs, or UPI credentials on local servers. 
+      content: `Monika Jewellers never stores full credit card numbers, debit card PINs, or UPI credentials on local servers. 
 
 All financial transactions are tokenized and processed through PCI-DSS Level 1 compliant gateways (Stripe & Razorpay). Payment tokens are encrypted end-to-end, guaranteeing that financial data remains confidential.`
     },
@@ -78,7 +78,7 @@ All shipments are packaged in unbranded outer tamper-evident security boxes to p
       subtitle: 'Full ownership and control over your Atelier personal record.',
       content: `Under the Digital Personal Data Protection (DPDP) Act and international privacy frameworks, you retain complete authority over your personal information:
 
-• Right to Access: Request a digital export of all personal data held by New Monika Jewellers.
+• Right to Access: Request a digital export of all personal data held by Monika Jewellers.
 • Right to Rectification: Update or correct inaccurate shipping addresses or profile records.
 • Right to Erasure: Request permanent deletion of your Atelier profile and historical record (except tax invoice records required under Indian GST law).`
     }
@@ -90,12 +90,12 @@ All shipments are packaged in unbranded outer tamper-evident security boxes to p
       a: 'Under Indian GST tax regulations, sales tax invoice records are securely retained for a minimum of 7 fiscal years. Profile credentials can be deleted upon request.'
     },
     {
-      q: 'Does New Monika Jewellers share client records with external ad networks?',
+      q: 'Does Monika Jewellers share client records with external ad networks?',
       a: 'Never. We strictly prohibit selling or sharing client identity or purchase portfolios with third-party advertising exchanges.'
     },
     {
       q: 'How can I exercise my right to data deletion?',
-      a: 'You can request account erasure directly from your Profile Settings tab or by contacting privacy@newmonikajewellers.com.'
+      a: 'You can request account erasure directly from your Profile Settings tab or by contacting privacy@monikajewellers.com.'
     }
   ];
 
@@ -134,7 +134,7 @@ All shipments are packaged in unbranded outer tamper-evident security boxes to p
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed"
           >
-            Transparent data governance, 256-bit SSL encryption, and white-glove confidentiality for every New Monika Jewellers patron.
+            Transparent data governance, 256-bit SSL encryption, and white-glove confidentiality for every Monika Jewellers patron.
           </motion.p>
 
           <div className="mt-6 flex justify-center items-center gap-4 text-xs text-gray-500 font-mono">

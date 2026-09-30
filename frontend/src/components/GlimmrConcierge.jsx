@@ -54,7 +54,7 @@ const GlimmrConcierge = () => {
               <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
                 <div>
                   <span className="font-mono text-[10px] text-[#B59A6C] font-bold uppercase tracking-widest block">
-                    ● NMJ PERSONAL STYLIST
+                    ● MJ PERSONAL STYLIST
                   </span>
                   <h3 className="font-heading text-xl font-bold text-[#111111] uppercase">
                     VIP Atelier Concierge

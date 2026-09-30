@@ -123,13 +123,13 @@ const AboutUs = () => {
           className="max-w-[1200px] mx-auto text-center relative z-10"
         >
           <span className="font-body text-xs font-semibold uppercase tracking-[0.35em] text-[#B59A6C] mb-4 block">
-            ABOUT NEW MONIKA JEWELLERS LUXURY ATELIER
+            ABOUT MONIKA JEWELLERS LUXURY ATELIER
           </span>
           <h1 className="font-heading text-3xl sm:text-5xl lg:text-6xl text-[#222222] uppercase tracking-[0.2em] font-normal leading-tight max-w-5xl mx-auto">
             Craftsmanship Meets Timeless Elegance
           </h1>
           <p className="font-body text-[#808080] text-sm sm:text-base mt-6 max-w-2xl mx-auto leading-relaxed font-normal">
-            We are not just a jewelry brand; we are the storytellers of your most cherished moments, the keepers of your milestones, and the creators of enduring beauty. Welcome to New Monika Jewellers.
+            We are not just a jewelry brand; we are the storytellers of your most cherished moments, the keepers of your milestones, and the creators of enduring beauty. Welcome to Monika Jewellers.
           </p>
         </motion.div>
       </section>
@@ -151,10 +151,10 @@ const AboutUs = () => {
               A Tale of Relentless Passion & Artistry
             </h2>
             <p>
-              The journey of New Monika Jewellers is a tale of relentless passion and unwavering dedication. It began with a vision—a vision to redefine luxury, to make it more than just a material possession, but a tangible expression of the heart's deepest emotions.
+              The journey of Monika Jewellers is a tale of relentless passion and unwavering dedication. It began with a vision—a vision to redefine luxury, to make it more than just a material possession, but a tangible expression of the heart's deepest emotions.
             </p>
             <p>
-              Founded by a team of master artisans, designers, and visionaries, New Monika Jewellers came to life as a response to the impersonal nature of mass-produced jewelry. We recognized the need for jewelry that tells a story, carrying your memories and milestones across generations.
+              Founded by a team of master artisans, designers, and visionaries, Monika Jewellers came to life as a response to the impersonal nature of mass-produced jewelry. We recognized the need for jewelry that tells a story, carrying your memories and milestones across generations.
             </p>
             <p>
               Today, as we look back on our journey, we remain humbled by the trust placed in our atelier. We continue to explore new horizons, crafting pieces that weave together love, art, and timeless grace.
@@ -171,7 +171,7 @@ const AboutUs = () => {
             <div className="w-full max-w-[430px] aspect-[430/645] bg-[#FAF9F7] overflow-hidden relative shadow-[0_25px_60px_rgba(0,0,0,0.09)] border border-gray-200/60 group mx-auto">
               <img
                 src="https://framerusercontent.com/images/kbOrsOMF8pMkMH6SntJTPO88bQ.png"
-                alt="New Monika Jewellers Fine Jewelry Atelier"
+                alt="Monika Jewellers Fine Jewelry Atelier"
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
               />
             </div>
@@ -210,7 +210,7 @@ const AboutUs = () => {
               Every Creation is a Masterpiece
             </h2>
             <p>
-              At New Monika Jewellers, craftsmanship is an art form. We believe that every piece of jewelry should be a masterpiece, meticulously crafted to stand the test of time and capture the essence of its wearer.
+              At Monika Jewellers, craftsmanship is an art form. We believe that every piece of jewelry should be a masterpiece, meticulously crafted to stand the test of time and capture the essence of its wearer.
             </p>
             <p>
               <strong className="text-[#222222]">The Artisans:</strong> Our artisans are the true guardians of our craft. With years of experience and a profound passion for their work, they bring each design to life with precision and artistry.

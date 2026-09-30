@@ -39,7 +39,7 @@ mailTransport = createMailTransport();
 
 // Initialize Resend client if configured
 const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM_EMAIL = process.env.RESEND_FROM || 'New Monika Jewellers <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.RESEND_FROM || 'Monika Jewellers <onboarding@resend.dev>';
 
 console.log('[MAIL] Resend client initialized:', !!resendClient);
 console.log('[MAIL] FROM_EMAIL configured:', FROM_EMAIL);
@@ -70,7 +70,7 @@ async function sendEmail({ to, subject, html, text }) {
   } else {
     try {
       const result = await mailTransport.sendMail({
-        from: `New Monika Jewellers <${FROM_EMAIL}>`,
+        from: `Monika Jewellers <${FROM_EMAIL}>`,
         to,
         subject,
         html,
@@ -161,7 +161,7 @@ async function sendSignupNotificationToAdmin(user, signupDetails = {}) {
               </div>
             </div>
             <div class="footer">
-              <p>This is an automated notification from New Monika Jewellers Admin Panel.</p>
+              <p>This is an automated notification from Monika Jewellers Admin Panel.</p>
             </div>
           </div>
         </body>
@@ -180,7 +180,7 @@ ${signupDetails.ip ? `IP Address: ${signupDetails.ip}` : ''}
 ${signupDetails.userAgent ? `Device: ${signupDetails.userAgent.substring(0, 100)}...` : ''}
 Email Verified: ${user.emailVerified ? 'Yes' : 'Pending'}
 
-This is an automated notification from New Monika Jewellers Admin Panel.
+This is an automated notification from Monika Jewellers Admin Panel.
     `;
 
     await sendEmail({
@@ -327,7 +327,7 @@ async function sendLoginNotificationToAdmin(user, loginDetails = {}) {
               ` : ''}
             </div>
             <div class="footer">
-              <p>This is an automated notification from New Monika Jewellers Admin Panel.</p>
+              <p>This is an automated notification from Monika Jewellers Admin Panel.</p>
             </div>
           </div>
         </body>
@@ -476,7 +476,7 @@ async function sendOrderNotificationToAdmin(order, user) {
           <div class="container">
             <div class="header">
               <h2 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.3px;">New Order Placed</h2>
-              <p style="margin: 8px 0 0; color: #cbd5e1;">Fresh order alert from New Monika Jewellers storefront</p>
+              <p style="margin: 8px 0 0; color: #cbd5e1;">Fresh order alert from Monika Jewellers storefront</p>
             </div>
             <div class="content">
               <div class="detail-row">
@@ -541,7 +541,7 @@ async function sendOrderNotificationToAdmin(order, user) {
               </div>
             </div>
             <div class="footer">
-              <p>This is an automated notification from New Monika Jewellers Admin Panel.</p>
+              <p>This is an automated notification from Monika Jewellers Admin Panel.</p>
             </div>
           </div>
         </body>
