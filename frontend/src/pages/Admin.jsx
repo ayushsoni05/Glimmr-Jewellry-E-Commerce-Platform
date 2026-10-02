@@ -441,7 +441,7 @@ const Admin = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative py-4 px-6 text-xs font-body tracking-[0.2em] font-bold uppercase transition-colors whitespace-nowrap cursor-pointer ${
+              className={`relative py-4 px-6 text-xs font-heading tracking-[0.2em] font-bold uppercase transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id ? 'text-[#222222]' : 'text-gray-400 hover:text-[#222222]'
               }`}
             >

@@ -6,6 +6,9 @@ import { Calendar, TrendingUp, FileText, CreditCard, AlertTriangle, Users, Downl
 import { downloadGSTR1 } from '../utils/gstrExport';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend, Filler);
+if (ChartJS.defaults && ChartJS.defaults.font) {
+  ChartJS.defaults.font.family = '"Playfair Display", Georgia, serif';
+}
 
 export default function BillingAnalytics({ api }) {
   // State
@@ -147,7 +150,7 @@ export default function BillingAnalytics({ api }) {
   const cardClass = "bg-white border border-gray-100 shadow-sm p-6";
   const headerClass = "font-heading text-[#222222] tracking-wider uppercase mb-4";
   const tableHeaderClass = "text-left text-xs font-heading tracking-wider uppercase text-gray-500 pb-3 border-b border-gray-100";
-  const tableCellClass = "py-3 text-sm font-body border-b border-gray-50";
+  const tableCellClass = "py-3 text-sm font-heading border-b border-gray-50";
 
   const renderOverview = () => {
     const chartData = {
@@ -177,19 +180,19 @@ export default function BillingAnalytics({ api }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Total Revenue</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.totalRevenue)}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.totalRevenue)}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Total Bills</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{periodStats?.billCount || 0}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{periodStats?.billCount || 0}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">GST Collected</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.totalGst)}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.totalGst)}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Avg Ticket Size</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.avgBillValue)}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{formatMoney(periodStats?.avgBillValue)}</div>
           </div>
         </div>
 
@@ -212,26 +215,26 @@ export default function BillingAnalytics({ api }) {
           </div>
           <div className={cardClass}>
             <h3 className={headerClass}>Today's Snapshot</h3>
-            <div className="space-y-4 font-body">
+            <div className="space-y-4 font-heading">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">Revenue</span>
-                <span className="font-mono font-bold text-[#222222]">{formatMoney(todayStats?.totalRevenue)}</span>
+                <span className="font-heading font-bold text-[#222222]">{formatMoney(todayStats?.totalRevenue)}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">Bills Generated</span>
-                <span className="font-mono font-bold text-[#222222]">{todayStats?.billCount || 0}</span>
+                <span className="font-heading font-bold text-[#222222]">{todayStats?.billCount || 0}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">Avg Ticket</span>
-                <span className="font-mono font-bold text-[#222222]">{formatMoney(todayStats?.avgBillValue)}</span>
+                <span className="font-heading font-bold text-[#222222]">{formatMoney(todayStats?.avgBillValue)}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">Top Payment</span>
-                <span className="font-mono font-bold text-[#222222] uppercase">{todayStats?.topPaymentMethod || '-'}</span>
+                <span className="font-heading font-bold text-[#222222] uppercase">{todayStats?.topPaymentMethod || '-'}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-gray-600">GST Collected</span>
-                <span className="font-mono font-bold text-[#222222]">{formatMoney(todayStats?.totalGstCollected)}</span>
+                <span className="font-heading font-bold text-[#222222]">{formatMoney(todayStats?.totalGstCollected)}</span>
               </div>
             </div>
           </div>
@@ -261,21 +264,21 @@ export default function BillingAnalytics({ api }) {
               <div className="p-4 bg-gray-50 border border-gray-100 flex justify-between items-center">
                 <div>
                   <div className="text-sm font-heading uppercase text-gray-500">B2B Sales</div>
-                  <div className="text-lg font-mono font-bold text-[#222222]">{formatMoney(gstSummary?.b2b?.value)}</div>
+                  <div className="text-lg font-heading font-bold text-[#222222]">{formatMoney(gstSummary?.b2b?.value)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-500">{gstSummary?.b2b?.count || 0} Bills</div>
-                  <div className="text-sm font-mono text-[#B59A6C]">GST: {formatMoney(gstSummary?.b2b?.gst)}</div>
+                  <div className="text-xs text-gray-500 font-heading">{gstSummary?.b2b?.count || 0} Bills</div>
+                  <div className="text-sm font-heading text-[#B59A6C]">GST: {formatMoney(gstSummary?.b2b?.gst)}</div>
                 </div>
               </div>
               <div className="p-4 bg-gray-50 border border-gray-100 flex justify-between items-center">
                 <div>
                   <div className="text-sm font-heading uppercase text-gray-500">B2C Sales</div>
-                  <div className="text-lg font-mono font-bold text-[#222222]">{formatMoney(gstSummary?.b2c?.value)}</div>
+                  <div className="text-lg font-heading font-bold text-[#222222]">{formatMoney(gstSummary?.b2c?.value)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-500">{gstSummary?.b2c?.count || 0} Bills</div>
-                  <div className="text-sm font-mono text-[#B59A6C]">GST: {formatMoney(gstSummary?.b2c?.gst)}</div>
+                  <div className="text-xs text-gray-500 font-heading">{gstSummary?.b2c?.count || 0} Bills</div>
+                  <div className="text-sm font-heading text-[#B59A6C]">GST: {formatMoney(gstSummary?.b2c?.gst)}</div>
                 </div>
               </div>
             </div>
@@ -300,18 +303,18 @@ export default function BillingAnalytics({ api }) {
               <tbody>
                 {gstSummary?.rateWise?.map((item, idx) => (
                   <tr key={idx}>
-                    <td className={`${tableCellClass} font-mono`}>{item.gstRate}%</td>
+                    <td className={`${tableCellClass} font-heading`}>{item.gstRate}%</td>
                     <td className={tableCellClass}>{item.billCount}</td>
-                    <td className={`${tableCellClass} font-mono`}>{formatMoney(item.taxableValue)}</td>
-                    <td className={`${tableCellClass} font-mono`}>{formatMoney(item.cgst)}</td>
-                    <td className={`${tableCellClass} font-mono`}>{formatMoney(item.sgst)}</td>
-                    <td className={`${tableCellClass} font-mono font-bold text-[#B59A6C]`}>{formatMoney(item.totalGst)}</td>
-                    <td className={`${tableCellClass} font-mono`}>{formatMoney(item.totalInvoiceValue)}</td>
+                    <td className={`${tableCellClass} font-heading`}>{formatMoney(item.taxableValue)}</td>
+                    <td className={`${tableCellClass} font-heading`}>{formatMoney(item.cgst)}</td>
+                    <td className={`${tableCellClass} font-heading`}>{formatMoney(item.sgst)}</td>
+                    <td className={`${tableCellClass} font-heading font-bold text-[#B59A6C]`}>{formatMoney(item.totalGst)}</td>
+                    <td className={`${tableCellClass} font-heading`}>{formatMoney(item.totalInvoiceValue)}</td>
                   </tr>
                 ))}
                 {(!gstSummary?.rateWise || gstSummary.rateWise.length === 0) && (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-gray-500 font-body">No GST data found for this period.</td>
+                    <td colSpan="7" className="py-8 text-center text-gray-500 font-heading">No GST data found for this period.</td>
                   </tr>
                 )}
               </tbody>
@@ -370,8 +373,8 @@ export default function BillingAnalytics({ api }) {
                     <tr key={idx}>
                       <td className={`${tableCellClass} uppercase`}>{mode.method}</td>
                       <td className={tableCellClass}>{mode.billCount}</td>
-                      <td className={`${tableCellClass} font-mono font-bold`}>{formatMoney(mode.totalRevenue)}</td>
-                      <td className={`${tableCellClass} font-mono`}>
+                      <td className={`${tableCellClass} font-heading font-bold`}>{formatMoney(mode.totalRevenue)}</td>
+                      <td className={`${tableCellClass} font-heading`}>
                         {((mode.totalRevenue / totalRev) * 100).toFixed(1)}%
                       </td>
                     </tr>
@@ -403,7 +406,7 @@ export default function BillingAnalytics({ api }) {
               {metalCategories?.length > 0 ? (
                 <Pie data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
               ) : (
-                <div className="text-gray-400 font-body">No metal data available</div>
+                <div className="text-gray-400 font-heading">No metal data available</div>
               )}
             </div>
           </div>
@@ -425,16 +428,16 @@ export default function BillingAnalytics({ api }) {
                   {metalCategories?.map((cat, idx) => (
                     <tr key={idx}>
                       <td className={`${tableCellClass} capitalize`}>{cat.material}</td>
-                      <td className={`${tableCellClass} font-mono`}>{cat.karat}</td>
+                      <td className={`${tableCellClass} font-heading`}>{cat.karat}</td>
                       <td className={tableCellClass}>{cat.piecesSold}</td>
-                      <td className={`${tableCellClass} font-mono`}>{Number(cat.totalWeight).toFixed(3)}</td>
-                      <td className={`${tableCellClass} font-mono font-bold text-[#B59A6C]`}>{formatMoney(cat.revenue)}</td>
-                      <td className={`${tableCellClass} font-mono`}>{formatMoney(cat.metalCost)}</td>
+                      <td className={`${tableCellClass} font-heading`}>{Number(cat.totalWeight).toFixed(3)}</td>
+                      <td className={`${tableCellClass} font-heading font-bold text-[#B59A6C]`}>{formatMoney(cat.revenue)}</td>
+                      <td className={`${tableCellClass} font-heading`}>{formatMoney(cat.metalCost)}</td>
                     </tr>
                   ))}
                   {(!metalCategories || metalCategories.length === 0) && (
                     <tr>
-                      <td colSpan="6" className="py-8 text-center text-gray-500 font-body">No metal categories found.</td>
+                      <td colSpan="6" className="py-8 text-center text-gray-500 font-heading">No metal categories found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -467,11 +470,11 @@ export default function BillingAnalytics({ api }) {
               {topCustomers?.map((c, idx) => (
                 <tr key={idx}>
                   <td className={`${tableCellClass} font-medium`}>{c.name}</td>
-                  <td className={`${tableCellClass} font-mono`}>{c.phone}</td>
+                  <td className={`${tableCellClass} font-heading`}>{c.phone}</td>
                   <td className={tableCellClass}>{c.visits}</td>
-                  <td className={`${tableCellClass} font-mono`}>{formatMoney(c.totalSpent)}</td>
-                  <td className={`${tableCellClass} font-mono`}>{formatMoney(c.totalPaid)}</td>
-                  <td className={`${tableCellClass} font-mono font-bold ${c.totalOutstanding > 0 ? 'text-[#DC2626]' : 'text-[#059669]'}`}>
+                  <td className={`${tableCellClass} font-heading`}>{formatMoney(c.totalSpent)}</td>
+                  <td className={`${tableCellClass} font-heading`}>{formatMoney(c.totalPaid)}</td>
+                  <td className={`${tableCellClass} font-heading font-bold ${c.totalOutstanding > 0 ? 'text-[#DC2626]' : 'text-[#059669]'}`}>
                     {formatMoney(c.totalOutstanding)}
                   </td>
                   <td className={tableCellClass}>{formatDate(c.lastVisit)}</td>
@@ -479,7 +482,7 @@ export default function BillingAnalytics({ api }) {
               ))}
               {(!topCustomers || topCustomers.length === 0) && (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-gray-500 font-body">No customers found.</td>
+                  <td colSpan="7" className="py-8 text-center text-gray-500 font-heading">No customers found.</td>
                 </tr>
               )}
             </tbody>
@@ -495,19 +498,19 @@ export default function BillingAnalytics({ api }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Total Outstanding</div>
-            <div className="font-mono text-2xl font-bold text-[#DC2626]">{formatMoney(outstandingStats?.totalOutstanding)}</div>
+            <div className="font-heading text-2xl font-bold text-[#DC2626]">{formatMoney(outstandingStats?.totalOutstanding)}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Overdue Amount</div>
-            <div className="font-mono text-2xl font-bold text-[#DC2626]">{formatMoney(outstandingStats?.overdueAmount)}</div>
+            <div className="font-heading text-2xl font-bold text-[#DC2626]">{formatMoney(outstandingStats?.overdueAmount)}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Pending Bills</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{outstandingStats?.billCount || 0}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{outstandingStats?.billCount || 0}</div>
           </div>
           <div className={cardClass}>
             <div className="text-gray-500 text-sm font-heading uppercase mb-1">Overdue Bills</div>
-            <div className="font-mono text-2xl font-bold text-[#222222]">{outstandingStats?.overdueCount || 0}</div>
+            <div className="font-heading text-2xl font-bold text-[#222222]">{outstandingStats?.overdueCount || 0}</div>
           </div>
         </div>
 
@@ -532,11 +535,11 @@ export default function BillingAnalytics({ api }) {
                   const rowColor = isOverdue ? 'bg-red-50/30' : '';
                   return (
                     <tr key={bill._id} className={rowColor}>
-                      <td className={`${tableCellClass} font-mono`}>{bill.invoiceNumber}</td>
+                      <td className={`${tableCellClass} font-heading`}>{bill.invoiceNumber}</td>
                       <td className={tableCellClass}>{bill.customerName}</td>
-                      <td className={`${tableCellClass} font-mono`}>{bill.customerPhone}</td>
-                      <td className={`${tableCellClass} font-mono`}>{formatMoney(bill.totalAmount)}</td>
-                      <td className={`${tableCellClass} font-mono font-bold text-[#DC2626]`}>{formatMoney(bill.balance)}</td>
+                      <td className={`${tableCellClass} font-heading`}>{bill.customerPhone}</td>
+                      <td className={`${tableCellClass} font-heading`}>{formatMoney(bill.totalAmount)}</td>
+                      <td className={`${tableCellClass} font-heading font-bold text-[#DC2626]`}>{formatMoney(bill.balance)}</td>
                       <td className={`${tableCellClass} ${isOverdue ? 'text-[#DC2626]' : ''}`}>{formatDate(bill.dueDate)}</td>
                       <td className={tableCellClass}>
                         <div className="flex space-x-2">
@@ -560,7 +563,7 @@ export default function BillingAnalytics({ api }) {
                 })}
                 {(!pendingBills || pendingBills.length === 0) && (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-gray-500 font-body">No pending bills found.</td>
+                    <td colSpan="7" className="py-8 text-center text-gray-500 font-heading">No pending bills found.</td>
                   </tr>
                 )}
               </tbody>
@@ -581,7 +584,7 @@ export default function BillingAnalytics({ api }) {
                     required 
                     value={payAmount} 
                     onChange={e => setPayAmount(e.target.value)}
-                    className="w-full border border-gray-300 p-2 font-mono focus:border-[#B59A6C] focus:outline-none"
+                    className="w-full border border-gray-300 p-2 font-heading focus:border-[#B59A6C] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -589,7 +592,7 @@ export default function BillingAnalytics({ api }) {
                   <select 
                     value={payMethod} 
                     onChange={e => setPayMethod(e.target.value)}
-                    className="w-full border border-gray-300 p-2 font-body focus:border-[#B59A6C] focus:outline-none"
+                    className="w-full border border-gray-300 p-2 font-heading focus:border-[#B59A6C] focus:outline-none"
                   >
                     <option value="cash">Cash</option>
                     <option value="card">Card</option>
@@ -603,7 +606,7 @@ export default function BillingAnalytics({ api }) {
                     type="text" 
                     value={payRef} 
                     onChange={e => setPayRef(e.target.value)}
-                    className="w-full border border-gray-300 p-2 font-mono focus:border-[#B59A6C] focus:outline-none"
+                    className="w-full border border-gray-300 p-2 font-heading focus:border-[#B59A6C] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -611,7 +614,7 @@ export default function BillingAnalytics({ api }) {
                   <textarea 
                     value={payNote} 
                     onChange={e => setPayNote(e.target.value)}
-                    className="w-full border border-gray-300 p-2 font-body focus:border-[#B59A6C] focus:outline-none"
+                    className="w-full border border-gray-300 p-2 font-heading focus:border-[#B59A6C] focus:outline-none"
                     rows="2"
                   ></textarea>
                 </div>
@@ -643,7 +646,7 @@ export default function BillingAnalytics({ api }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7] p-6 font-body text-[#222222]">
+    <div className="min-h-screen bg-[#FAF9F7] p-6 font-heading text-[#222222]">
       {/* Header Toolbar */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
         <h1 className="font-heading text-2xl uppercase tracking-wider text-[#222222]">Billing Analytics</h1>
@@ -674,20 +677,20 @@ export default function BillingAnalytics({ api }) {
             ))}
           </div>
 
-          <div className="flex items-center space-x-2 bg-white px-3 py-2 border border-gray-200 text-sm">
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 border border-gray-200 text-sm font-heading">
             <span className="font-heading uppercase text-gray-500">Custom</span>
             <input 
               type="date" 
               value={customFrom}
               onChange={e => setCustomFrom(e.target.value)}
-              className="font-mono text-xs focus:outline-none" 
+              className="font-heading text-xs focus:outline-none" 
             />
             <span>-</span>
             <input 
               type="date" 
               value={customTo}
               onChange={e => setCustomTo(e.target.value)}
-              className="font-mono text-xs focus:outline-none" 
+              className="font-heading text-xs focus:outline-none" 
             />
           </div>
         </div>
