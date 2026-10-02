@@ -400,7 +400,7 @@ const ProductDetail = () => {
 
             {/* Description Excerpt */}
             <p className="font-body text-[#808080] text-xs sm:text-base leading-relaxed mb-6 sm:mb-8 max-w-2xl">
-              {product.description || 'Celebrate life\'s precious moments with our Golden Birthday Charm Bracelet, a delightful piece adorned with charming symbols of joy and love. Crafted in gleaming gold, this bracelet captures the essence of cherished memories, making it a thoughtful and meaningful gift. Embrace the enchanting journey of life.'}
+              {product.description || 'Handcrafted by master artisans with BIS 916 hallmarked purity. Designed to be cherished as a lifelong family heirloom, celebrating grace, authenticity, and enduring Indian heritage.'}
             </p>
 
             {/* Main Action Button */}
@@ -423,23 +423,23 @@ const ProductDetail = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-[#222222]">Tags:</span>
-                <span className="capitalize text-[#222222]">{product.tags || 'Bracelet, Accessories'}</span>
+                <span className="capitalize text-[#222222]">{product.tags || 'Fine Jewellery, Heritage Collection'}</span>
               </div>
             </div>
 
             {/* Trust Badges Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 p-4 bg-[#FAF9F7] rounded-none border border-gray-100/80">
               <div className="flex flex-col text-left">
-                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Free Shipping</span>
-                <span className="font-body text-[11px] text-[#808080]">Complimentary insured express delivery</span>
+                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Pan-India Transit</span>
+                <span className="font-body text-[11px] text-[#808080]">Complimentary fully insured doorstep delivery</span>
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Authenticity</span>
-                <span className="font-body text-[11px] text-[#808080]">Certified genuine luxury jewelry</span>
+                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Purity Assured</span>
+                <span className="font-body text-[11px] text-[#808080]">100% BIS Hallmarked &amp; IGI/GIA Certified</span>
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Easy Returns</span>
-                <span className="font-body text-[11px] text-[#808080]">30-day hassle-free return policy</span>
+                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Lifetime Value</span>
+                <span className="font-body text-[11px] text-[#808080]">Guaranteed buyback &amp; transparent exchange</span>
               </div>
             </div>
 
@@ -472,13 +472,14 @@ const ProductDetail = () => {
 
               {activeTab === 'description' ? (
                 <p className="font-body text-[#808080] leading-relaxed text-sm">
-                  {product.description || 'Introducing our exquisite jewelry piece. Crafted with meticulous attention to detail, showcasing the timeless beauty of diamonds and fine materials in a breathtaking design.'}
+                  {product.description || 'Handcrafted by master artisans with BIS 916 hallmarked purity. Designed to be cherished as a lifelong family heirloom, celebrating grace, authenticity, and enduring Indian heritage.'}
                 </p>
               ) : (
                 <div className="font-body text-[#808080] text-sm space-y-2">
-                  <p>• Ring Sizes: 5, 6, 7, 8, 9 Standard US sizes.</p>
-                  <p>• Necklace Length: 18 inches + 2-inch extension chain.</p>
-                  <p>• Bracelet Circumference: 7 inches flexible fit.</p>
+                  <p>&bull; Indian Ring Sizes: 9 to 25 (Standard Indian inner diameter 15.6mm &ndash; 20.8mm). Custom sizing available.</p>
+                  <p>&bull; Indian Bangle &amp; Kada Sizes: 2.2, 2.4, 2.6, 2.8, 2.10 (Anna standard).</p>
+                  <p>&bull; Necklace &amp; Choker Length: 16 to 22 inches with adjustable handmade zari dori or 2-inch gold loops.</p>
+                  <p>&bull; Auspicious Mangalsutras: 18&quot;, 24&quot;, 30&quot;, and 36&quot; sacred lengths.</p>
                 </div>
               )}
             </div>

@@ -148,16 +148,16 @@ const AboutUs = () => {
               OUR HERITAGE & JOURNEY
             </span>
             <h2 className="font-heading text-2xl sm:text-4xl text-[#222222] uppercase tracking-[0.15em] font-normal">
-              A Tale of Relentless Passion & Artistry
+              Three Generations of Sacred Heritage
             </h2>
             <p>
-              The journey of Monika Jewellers is a tale of relentless passion and unwavering dedication. It began with a vision—a vision to redefine luxury, to make it more than just a material possession, but a tangible expression of the heart's deepest emotions.
+              The story of Monika Jewellers spans three generations of family dedication in the historic jewellery epicenters of Mumbai. What began as a traditional goldsmithing atelier has flourished into a trusted sanctuary for authentic Indian bridal heirlooms and bespoke modern fine jewellery.
             </p>
             <p>
-              Founded by a team of master artisans, designers, and visionaries, Monika Jewellers came to life as a response to the impersonal nature of mass-produced jewelry. We recognized the need for jewelry that tells a story, carrying your memories and milestones across generations.
+              Collaborating with master karigars from Rajasthan, West Bengal, and Maharashtra, our atelier preserves ancient techniques including Nakshi hand-repousse, imperial Jadau Polki, fine wire filigree, and royal Kundan setting. Every creation is tested on certified non-destructive XRF Karatmeters and hallmarked under the strict supervision of the Bureau of Indian Standards (BIS) with permanent HUID laser engraving.
             </p>
             <p>
-              Today, as we look back on our journey, we remain humbled by the trust placed in our atelier. We continue to explore new horizons, crafting pieces that weave together love, art, and timeless grace.
+              Today, as we welcome the next generation of brides and collectors, our promise remains inviolable: complete price transparency, real-time IBJA gold rates, zero compromise on purity, and jewellery that honors your family&apos;s auspicious milestones.
             </p>
           </motion.div>
 
@@ -298,7 +298,7 @@ const AboutUs = () => {
             START YOUR CUSTOM JOURNEY
           </span>
           <h3 className="font-heading text-3xl sm:text-5xl uppercase tracking-[0.2em] mb-8 font-normal">
-            Let's Work With Us
+            Begin Your Bespoke Journey
           </h3>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link

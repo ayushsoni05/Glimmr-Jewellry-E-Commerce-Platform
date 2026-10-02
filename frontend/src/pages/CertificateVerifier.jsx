@@ -3,26 +3,43 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MJLogo from '../components/GlimmrLogo';
 
 const SAMPLE_CERTIFICATES = {
-  'GLM-999-2026': {
-    certId: 'GLM-999-2026',
+  'MJ-999-2026': {
+    certId: 'MJ-999-2026',
     bisHallmark: 'HM-99924K-IN',
-    lab: 'SGL International Gemological Laboratory',
-    productName: 'Royal Kundan Heritage Necklace (24K Gold)',
-    purity: '24K Gold (99.9% Pure)',
+    huidCode: 'HUID-9K2L8P',
+    lab: 'Central Bureau of Indian Standards (BIS) Approved',
+    productName: 'Royal Kundan Heritage Vivaha Necklace (24K Gold)',
+    purity: '24K Gold (99.9% Pure Gold)',
     netWeight: '45.20 Grams',
     diamondCut: 'Ideal Hearts & Arrows',
     diamondColor: 'D (Colorless)',
     diamondClarity: 'VVS1 (Very Very Slightly Included)',
     caratWeight: '3.50 Carats',
     issueDate: 'August 10, 2026',
-    verifier: 'Central Bureau of Indian Standards (BIS) Approved'
+    verifier: 'Central Bureau of Indian Standards (BIS) & SGL Certified'
+  },
+  'HUID-916-MUM': {
+    certId: 'HUID-916-MUM',
+    bisHallmark: 'HM-91622K-IN',
+    huidCode: 'HUID-6R8W2M',
+    lab: 'Govt. Approved BIS Hallmarking Centre Mumbai',
+    productName: 'Nakshi Temple Antique Gold Kada Bangle',
+    purity: '22K Gold (91.67% Hallmark Gold)',
+    netWeight: '28.60 Grams',
+    diamondCut: 'Polki Uncut Gemstones',
+    diamondColor: 'Natural Lustre',
+    diamondClarity: 'Natural Flawless Polki',
+    caratWeight: '1.20 Carats',
+    issueDate: 'September 15, 2026',
+    verifier: 'BIS 916 Stamped & HUID Verified'
   },
   'BIS-8874-GOLD': {
     certId: 'BIS-8874-GOLD',
     bisHallmark: 'HM-18K750-IN',
-    lab: 'IGI Gemological Institute',
-    productName: 'VVS Solitaire Diamond Engagement Ring',
-    purity: '18K Rose Gold (75.0% Gold)',
+    huidCode: 'HUID-4T7N9Q',
+    lab: 'International Gemological Institute (IGI Mumbai)',
+    productName: 'VVS Solitaire Sagai Engagement Ring',
+    purity: '18K Rose Gold (75.0% Hallmarked Gold)',
     netWeight: '8.40 Grams',
     diamondCut: 'Brilliant Round',
     diamondColor: 'E (Colorless)',
@@ -34,8 +51,8 @@ const SAMPLE_CERTIFICATES = {
 };
 
 const CertificateVerifier = () => {
-  const [certInput, setCertInput] = useState('GLM-999-2026');
-  const [activeCert, setActiveCert] = useState(SAMPLE_CERTIFICATES['GLM-999-2026']);
+  const [certInput, setCertInput] = useState('MJ-999-2026');
+  const [activeCert, setActiveCert] = useState(SAMPLE_CERTIFICATES['MJ-999-2026']);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleVerify = (e) => {
@@ -88,7 +105,7 @@ const CertificateVerifier = () => {
               type="text"
               value={certInput}
               onChange={e => setCertInput(e.target.value)}
-              placeholder="Enter Certificate ID or BIS Hallmark Number (e.g. GLM-999-2026)"
+              placeholder="Enter Certificate ID or BIS Hallmark Number (e.g. MJ-999-2026 or HUID-6R8W2M)"
               className="flex-1 px-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:border-[#B59A6C] font-mono text-sm uppercase"
               required
             />

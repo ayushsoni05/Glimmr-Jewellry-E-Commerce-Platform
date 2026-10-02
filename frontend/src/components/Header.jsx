@@ -121,18 +121,17 @@ const Header = () => {
       <div className="bg-[#FAF9F7] py-2 sm:py-2.5 border-b border-gray-100 text-[11px] sm:text-xs font-body text-[#808080]">
         <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-2 truncate">
-            <span className="truncate">Join the Social Club for exclusive Rewards</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C] inline-block shrink-0" />
+            <span className="truncate font-medium text-[#222222]">Complimentary Insured Pan-India Delivery • 100% BIS 916 Hallmarked Pure Gold &amp; Certified Natural Diamonds</span>
           </div>
           <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
             <Link to="/live-rates" className="hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-colors font-medium">
-              <span>Live Metal Rates:</span>
-              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold ₹{liveRates.gold.toLocaleString('en-IN')}/g • Silver ₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
+              <span className="text-gray-500">IBJA Bullion:</span>
+              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 24K ₹{liveRates.gold.toLocaleString('en-IN')}/g • Silver ₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
             </Link>
-            <span className="hidden sm:inline">+91 (022) 6849 2000</span>
-            <div className="hidden sm:flex items-center space-x-3 text-[#222222]">
-              <a href="#" className="hover:text-black transition-colors font-medium">X</a>
-              <a href="#" className="hover:text-black transition-colors font-medium">IG</a>
-              <a href="#" className="hover:text-black transition-colors font-medium">FB</a>
+            <span className="hidden sm:inline font-mono font-medium">+91 (022) 2345 6789</span>
+            <div className="hidden sm:flex items-center space-x-2 text-[#222222]">
+              <a href="https://wa.me/919820012345" target="_blank" rel="noopener noreferrer" className="hover:text-[#25D366] transition-colors font-mono text-[10px] font-bold">WHATSAPP</a>
             </div>
           </div>
         </div>
