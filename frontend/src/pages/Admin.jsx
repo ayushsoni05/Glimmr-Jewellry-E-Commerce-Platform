@@ -9,6 +9,7 @@ import AdminUsers from './AdminUsers';
 import DiamondPricingManager from '../components/DiamondPricingManager';
 import AdminBespokeOrders from './AdminBespokeOrders';
 import { getProductImage } from '../utils/productImages';
+import BillingAnalytics from '../components/BillingAnalytics';
 
 const Admin = () => {
   const { user, setUser, loading: authLoading } = useAuth();
@@ -435,6 +436,7 @@ const Admin = () => {
             { id: 'orders', label: 'ORDERS' },
             { id: 'custom-orders', label: 'BESPOKE REQUESTS' },
             { id: 'diamond-pricing', label: 'DIAMOND PRICING' },
+            { id: 'billing-analytics', label: 'BILLING ANALYTICS' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1105,6 +1107,17 @@ const Admin = () => {
           transition={{ delay: 0.1 }}
         >
           <DiamondPricingManager />
+        </motion.div>
+      )}
+
+      {/* Billing Analytics Tab */}
+      {activeTab === 'billing-analytics' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <BillingAnalytics api={api} />
         </motion.div>
       )}
 

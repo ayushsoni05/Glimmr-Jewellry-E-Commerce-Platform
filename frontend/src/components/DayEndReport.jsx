@@ -55,9 +55,14 @@ const DayEndReport = ({ isOpen, onClose }) => {
       });
     });
 
+    const totalCollected = bills.reduce((sum, b) => sum + (b.amountPaid !== undefined ? b.amountPaid : (b.totalPayable || 0)), 0);
+    const totalOutstanding = bills.reduce((sum, b) => sum + (b.balanceRemaining || 0), 0);
+
     return {
       billCount: bills.length,
       totalRevenue,
+      totalCollected,
+      totalOutstanding,
       totalMetal,
       totalMaking,
       totalDiamond,
@@ -158,6 +163,12 @@ const DayEndReport = ({ isOpen, onClose }) => {
               <StatRow label="GST Collected" value={dayStats.totalGst} sub />
               {dayStats.totalDiscount > 0 && <StatRow label="Discounts Given" value={dayStats.totalDiscount} sub />}
               {dayStats.totalOldGold > 0 && <StatRow label="Old Gold Exchange" value={dayStats.totalOldGold} sub />}
+              {dayStats.totalOutstanding > 0 && (
+                <div className="flex justify-between items-center py-1.5 pl-3 text-[10px] bg-rose-50/50 text-rose-700 font-bold border border-rose-100 px-2 mt-1">
+                  <span>Pending Balance Dues</span>
+                  <span className="font-mono">Rs.{Number(dayStats.totalOutstanding).toLocaleString('en-IN')}</span>
+                </div>
+              )}
               <div className="border-t border-gray-200 pt-2">
                 <StatRow label="Avg. Ticket Size" value={dayStats.avgTicketSize} />
               </div>
@@ -198,6 +209,7 @@ const DayEndReport = ({ isOpen, onClose }) => {
               <StatRow label="Monthly Revenue" value={monthStats.totalRevenue} highlight />
               <StatRow label="Monthly GST" value={monthStats.totalGst} />
               <StatRow label="Monthly Discounts" value={monthStats.totalDiscount} />
+              {monthStats.totalOutstanding > 0 && <StatRow label="Monthly Outstanding Dues" value={monthStats.totalOutstanding} />}
               <StatRow label="Avg. Ticket Size" value={monthStats.avgTicketSize} />
             </div>
 

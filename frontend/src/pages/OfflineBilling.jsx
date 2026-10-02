@@ -6,11 +6,12 @@ import api from '../api';
 import { getProductImage } from '../utils/productImages';
 import { calculateProductLivePrice, KARAT_PURITY, DIAMOND_CUT_MULTIPLIERS, DIAMOND_COLOR_MULTIPLIERS, DIAMOND_CLARITY_MULTIPLIERS } from '../utils/productPricing';
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
-import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setCachedRates } from '../utils/billingStorage';
+import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setCachedRates, recordPaymentLocally, getPendingBills } from '../utils/billingStorage';
 import BillingInvoice from '../components/BillingInvoice';
 import DayEndReport from '../components/DayEndReport';
 import { createRateLock, getActiveLocks, redeemRateLock, formatLockExpiry } from '../utils/rateLockStorage';
 import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../components/Icons';
+import RecordPaymentDrawer from '../components/RecordPaymentDrawer';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Pieces' },
@@ -262,6 +263,13 @@ const OfflineBilling = () => {
   const [splitCardRef, setSplitCardRef] = useState('');
   const [splitUpiRef, setSplitUpiRef] = useState('');
 
+  // Phase 6: Partial Payment State
+  const [isPartialPayment, setIsPartialPayment] = useState(false);
+  const [advanceAmount, setAdvanceAmount] = useState('');
+  const [advanceMethod, setAdvanceMethod] = useState('cash');
+  const [advanceReference, setAdvanceReference] = useState('');
+  const [dueDate, setDueDate] = useState('');
+
   // Old Gold Exchange / Scrap Buyback (Owner Filled)
   const [hasOldGold, setHasOldGold] = useState(false);
   const [oldGoldWeight, setOldGoldWeight] = useState('');
@@ -368,6 +376,17 @@ const OfflineBilling = () => {
   const [showZReport, setShowZReport] = useState(false);
   const [showRateLockDrawer, setShowRateLockDrawer] = useState(false);
   const [activeLocks, setActiveLocks] = useState(() => getActiveLocks());
+
+  // Phase 2: Bill History Filters
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyDateFrom, setHistoryDateFrom] = useState('');
+  const [historyDateTo, setHistoryDateTo] = useState('');
+  const [historyBillType, setHistoryBillType] = useState('all');
+  const [historyStatus, setHistoryStatus] = useState('all');
+  const [historyPayment, setHistoryPayment] = useState('all');
+  const [historySort, setHistorySort] = useState('newest');
+  const [historyPaymentStatus, setHistoryPaymentStatus] = useState('all');
+  const [recordPaymentBill, setRecordPaymentBill] = useState(null);
 
   // Fetch catalog products (loads full catalog for POS with offline fallback)
   useEffect(() => {
@@ -665,15 +684,24 @@ const OfflineBilling = () => {
     const bd = getLivePrice(product);
     const imgSrc = getProductImage(product);
 
+    const itemMaterial = product.material || 'gold';
+    const itemKarat = Number(product.karat) || 22;
+    const itemWeight = Number(product.metalWeight || product.weight) || 0;
+    const rateUsed = itemMaterial === 'silver' ? liveRates.silver : liveRates.gold;
+    const purityMap = { 24: 99.9, 22: 91.67, 18: 75.0, 14: 58.3, 999: 99.9, 925: 92.5 };
+    const purity = purityMap[itemKarat] || 91.67;
+
     setBillItems(prev => [...prev, {
       id: Date.now().toString(),
       productId: product._id || product.id,
       name: product.name,
-      material: product.material || 'gold',
-      karat: Number(product.karat) || 22,
-      weight: Number(product.metalWeight || product.weight) || 0,
-      netWeight: Number(product.metalWeight || product.weight) || 0,
-      makingCharges: bd.makingCharges, // Flat Rs. amount
+      material: itemMaterial,
+      karat: itemKarat,
+      weight: itemWeight,
+      netWeight: itemWeight,
+      ratePerGram: rateUsed,
+      purityPercent: purity,
+      makingCharges: bd.makingCharges,
       metalCost: bd.rawMetalCost,
       gemstoneCost: bd.gemstoneCost || 0,
       subtotal: bd.subtotal,
@@ -693,6 +721,12 @@ const OfflineBilling = () => {
     const defaultName = `Custom ${customItem.material.charAt(0).toUpperCase() + customItem.material.slice(1)} ${customItem.karat}K`;
     const qty = Math.max(1, parseInt(customItem.quantity, 10) || 1);
 
+    const itemMaterial = customItem.material || 'gold';
+    const itemKarat = Number(customItem.karat) || 22;
+    const rateUsed = itemMaterial === 'silver' ? liveRates.silver : liveRates.gold;
+    const purityMap = { 24: 99.9, 22: 91.67, 18: 75.0, 14: 58.3, 999: 99.9, 925: 92.5 };
+    const purity = purityMap[itemKarat] || 91.67;
+
     setBillItems(prev => [...prev, {
       id: Date.now().toString(),
       productId: null,
@@ -701,6 +735,8 @@ const OfflineBilling = () => {
       karat: Number(customItem.karat),
       weight: parseFloat(customItem.weight),
       netWeight: bd.netWeight,
+      ratePerGram: rateUsed,
+      purityPercent: purity,
       makingCharges: bd.makingCharges, // Exact rupee making charge
       metalCost: bd.rawMetalCost,
       gemstoneCost: bd.gemstoneCost,
@@ -878,6 +914,41 @@ const OfflineBilling = () => {
     };
   }, [billItems, appliedVoucher, appliedCashDiscount, oldGoldDeduction, gstRate, taxSplitMode, makingConcessionPercent]);
 
+  // Phase 2: Filtered Bill History
+  const filteredHistory = useMemo(() => {
+    let bills = [...billHistory];
+    if (historySearch) {
+      const q = historySearch.toLowerCase();
+      bills = bills.filter(b =>
+        (b.billNumber || b.id || '').toLowerCase().includes(q) ||
+        (b.customer?.name || '').toLowerCase().includes(q) ||
+        (b.customer?.phone || '').includes(q)
+      );
+    }
+    if (historyDateFrom) bills = bills.filter(b => new Date(b.date) >= new Date(historyDateFrom));
+    if (historyDateTo) bills = bills.filter(b => new Date(b.date) <= new Date(historyDateTo + 'T23:59:59'));
+    if (historyBillType === 'gst') bills = bills.filter(b => (b.gstRate || 3) > 0);
+    if (historyBillType === 'non_gst') bills = bills.filter(b => (b.gstRate || 3) === 0);
+    if (historyStatus !== 'all') bills = bills.filter(b => (b.status || 'completed') === historyStatus);
+    if (historyPayment !== 'all') bills = bills.filter(b => b.paymentMethod === historyPayment);
+    if (historyPaymentStatus !== 'all') bills = bills.filter(b => (b.paymentStatus || 'paid') === historyPaymentStatus);
+    switch (historySort) {
+      case 'oldest': bills.sort((a, b) => new Date(a.date) - new Date(b.date)); break;
+      case 'highest': bills.sort((a, b) => (b.totalPayable || 0) - (a.totalPayable || 0)); break;
+      case 'lowest': bills.sort((a, b) => (a.totalPayable || 0) - (b.totalPayable || 0)); break;
+      default: bills.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    return bills;
+  }, [billHistory, historySearch, historyDateFrom, historyDateTo, historyBillType, historyStatus, historyPayment, historySort, historyPaymentStatus]);
+
+  const historyStats = useMemo(() => {
+    const total = filteredHistory.reduce((s, b) => s + (b.totalPayable || 0), 0);
+    const gst = filteredHistory.reduce((s, b) => s + (b.totalGst || 0), 0);
+    const pending = filteredHistory.filter(b => b.paymentStatus === 'partially_paid' || b.paymentStatus === 'pending');
+    const outstandingAmt = pending.reduce((s, b) => s + (b.balanceRemaining || 0), 0);
+    return { count: filteredHistory.length, total, gst, avg: filteredHistory.length > 0 ? Math.round(total / filteredHistory.length) : 0, pendingCount: pending.length, outstanding: outstandingAmt };
+  }, [filteredHistory]);
+
   // Split payment logic
   const splitTotal = (parseFloat(splitCashAmount) || 0) + (parseFloat(splitCardAmount) || 0) + (parseFloat(splitUpiAmount) || 0);
   const splitBalanceRemaining = billTotals.totalPayable - splitTotal;
@@ -960,7 +1031,28 @@ const OfflineBilling = () => {
 
   // Generate and save invoice
   const handleGenerateInvoice = useCallback(() => {
-    if (billItems.length === 0) return;
+    if (billItems.length === 0) {
+      setCatalogAlert('Cannot generate invoice: No items in bill.');
+      setTimeout(() => setCatalogAlert(''), 3500);
+      return;
+    }
+
+    // Phase 5: Zero-mistake validation checks
+    if (billItems.some(bi => bi.totalPrice <= 0)) {
+      setCatalogAlert('Error: Found an item with zero or negative price. Please review bill items.');
+      setTimeout(() => setCatalogAlert(''), 4000);
+      return;
+    }
+    if (paymentMethod === 'mixed' && !isSplitBalanced) {
+      setCatalogAlert('Error: Split payment allocation does not match total payable.');
+      setTimeout(() => setCatalogAlert(''), 4000);
+      return;
+    }
+    if (customerGstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(customerGstin)) {
+      setCatalogAlert('Error: Invalid GSTIN format. Expected 15-character Indian GSTIN.');
+      setTimeout(() => setCatalogAlert(''), 4000);
+      return;
+    }
 
     const billNumber = getNextBillNumber();
     const now = new Date().toISOString();
@@ -986,6 +1078,7 @@ const OfflineBilling = () => {
       cgst: billTotals.cgst,
       sgst: billTotals.sgst,
       igst: billTotals.igst,
+      billType: gstRate > 0 ? 'gst' : 'non_gst',
       discountAmount: billTotals.totalDiscount,
       couponCode: appliedVoucher?.code || (billTotals.directDiscount > 0 ? 'STORE_DISCOUNT' : ''),
       oldGoldDeduction: billTotals.oldGoldDeduction,
@@ -995,10 +1088,23 @@ const OfflineBilling = () => {
         rate: parseFloat(oldGoldRate) || liveRates.gold
       } : {},
       totalPayable: billTotals.totalPayable,
-      paymentMethod,
-      paymentReference: paymentMethod === 'mixed' ? `Cash: Rs.${splitCashAmount || 0} | Card: Rs.${splitCardAmount || 0} | UPI: Rs.${splitUpiAmount || 0} | Ref: ${splitCardRef || splitUpiRef || 'N/A'}` : paymentReference,
+      paymentMethod: isPartialPayment ? advanceMethod : paymentMethod,
+      paymentReference: paymentMethod === 'mixed' ? `Cash: Rs.${splitCashAmount || 0} | Card: Rs.${splitCardAmount || 0} | UPI: Rs.${splitUpiAmount || 0} | Ref: ${splitCardRef || splitUpiRef || 'N/A'}` : isPartialPayment ? advanceReference : paymentReference,
       cashReceived: paymentMethod === 'cash' ? (parseFloat(cashReceived) || 0) : paymentMethod === 'mixed' ? (parseFloat(splitCashAmount) || 0) : 0,
-      changeReturned: paymentMethod === 'cash' ? changeToReturn : 0,
+      changeReturned: paymentMethod === 'cash' && !isPartialPayment ? changeToReturn : 0,
+      // Phase 6: Partial Payment
+      paymentStatus: isPartialPayment ? ((parseFloat(advanceAmount) || 0) <= 0 ? 'pending' : (parseFloat(advanceAmount) || 0) >= billTotals.totalPayable ? 'paid' : 'partially_paid') : 'paid',
+      amountPaid: isPartialPayment ? (parseFloat(advanceAmount) || 0) : billTotals.totalPayable,
+      balanceRemaining: isPartialPayment ? Math.max(0, billTotals.totalPayable - (parseFloat(advanceAmount) || 0)) : 0,
+      dueDate: isPartialPayment && dueDate ? new Date(dueDate).toISOString() : null,
+      paymentEntries: [{
+        amount: isPartialPayment ? (parseFloat(advanceAmount) || 0) : billTotals.totalPayable,
+        method: isPartialPayment ? advanceMethod : paymentMethod,
+        reference: isPartialPayment ? advanceReference : paymentReference,
+        date: now,
+        operator: operatorName || 'Owner',
+        note: isPartialPayment ? 'Advance payment at billing' : 'Full payment'
+      }],
       goldRateUsed: liveRates.gold,
       silverRateUsed: liveRates.silver,
       operator: operatorName || 'Owner',
@@ -1018,7 +1124,8 @@ const OfflineBilling = () => {
     billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin,
     operatorName, billNotes, paymentMethod, paymentReference, cashReceived, changeToReturn,
     liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate, taxSplitMode,
-    splitCashAmount, splitCardAmount, splitUpiAmount, splitCardRef, splitUpiRef, isSplitBalanced
+    splitCashAmount, splitCardAmount, splitUpiAmount, splitCardRef, splitUpiRef, isSplitBalanced,
+    isPartialPayment, advanceAmount, advanceMethod, advanceReference, dueDate
   ]);
 
   const handleClearBill = useCallback(() => {
@@ -1034,6 +1141,11 @@ const OfflineBilling = () => {
     setSplitUpiAmount('');
     setSplitCardRef('');
     setSplitUpiRef('');
+    setIsPartialPayment(false);
+    setAdvanceAmount('');
+    setAdvanceMethod('cash');
+    setAdvanceReference('');
+    setDueDate('');
     setCashDiscountInput('');
     setAppliedCashDiscount(0);
     setAppliedVoucher(null);
@@ -1367,7 +1479,7 @@ const OfflineBilling = () => {
       </div>
 
       {showHistory ? (
-        /* BILL HISTORY VIEW */
+        /* BILL HISTORY VIEW - Phase 2: Enhanced with Filters */
         <div className="max-w-[1520px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -1382,63 +1494,206 @@ const OfflineBilling = () => {
             </button>
           </div>
 
-          {billHistory.length === 0 ? (
+          {/* Filter Toolbar */}
+          <div className="bg-white border border-gray-200 p-4 mb-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Search bill #, customer, phone..."
+                className="px-3 py-2 border border-gray-200 text-xs font-body focus:outline-none focus:border-[#222222] bg-[#FAF9F7]"
+              />
+              <div className="flex gap-2">
+                <input type="date" value={historyDateFrom} onChange={(e) => setHistoryDateFrom(e.target.value)} className="flex-1 px-2 py-2 border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#222222] bg-[#FAF9F7]" />
+                <input type="date" value={historyDateTo} onChange={(e) => setHistoryDateTo(e.target.value)} className="flex-1 px-2 py-2 border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#222222] bg-[#FAF9F7]" />
+              </div>
+              <select value={historyBillType} onChange={(e) => setHistoryBillType(e.target.value)} className="px-3 py-2 border border-gray-200 text-xs font-body focus:outline-none focus:border-[#222222] bg-[#FAF9F7] cursor-pointer">
+                <option value="all">All Bill Types</option>
+                <option value="gst">GST Bills Only</option>
+                <option value="non_gst">Non-GST / Exempt</option>
+              </select>
+              <select value={historyPaymentStatus} onChange={(e) => setHistoryPaymentStatus(e.target.value)} className="px-3 py-2 border border-gray-200 text-xs font-body focus:outline-none focus:border-[#222222] bg-[#FAF9F7] cursor-pointer">
+                <option value="all">All Payment Status</option>
+                <option value="paid">Fully Paid</option>
+                <option value="partially_paid">Partially Paid</option>
+                <option value="pending">Pending</option>
+                <option value="settled">Settled</option>
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select value={historyStatus} onChange={(e) => setHistoryStatus(e.target.value)} className="px-3 py-1.5 border border-gray-200 text-[10px] font-body focus:outline-none bg-[#FAF9F7] cursor-pointer">
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select value={historyPayment} onChange={(e) => setHistoryPayment(e.target.value)} className="px-3 py-1.5 border border-gray-200 text-[10px] font-body focus:outline-none bg-[#FAF9F7] cursor-pointer">
+                <option value="all">All Payment Methods</option>
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="upi">UPI</option>
+                <option value="mixed">Mixed</option>
+              </select>
+              <select value={historySort} onChange={(e) => setHistorySort(e.target.value)} className="px-3 py-1.5 border border-gray-200 text-[10px] font-body focus:outline-none bg-[#FAF9F7] cursor-pointer">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="highest">Highest Amount</option>
+                <option value="lowest">Lowest Amount</option>
+              </select>
+              {(historySearch || historyDateFrom || historyDateTo || historyBillType !== 'all' || historyStatus !== 'all' || historyPayment !== 'all' || historyPaymentStatus !== 'all') && (
+                <button onClick={() => { setHistorySearch(''); setHistoryDateFrom(''); setHistoryDateTo(''); setHistoryBillType('all'); setHistoryStatus('all'); setHistoryPayment('all'); setHistorySort('newest'); setHistoryPaymentStatus('all'); }} className="px-3 py-1.5 text-[10px] font-body font-bold text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 cursor-pointer">
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Summary Stats Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-gray-400 block">Bills Found</span>
+              <span className="font-mono text-lg font-bold text-[#222222]">{historyStats.count}</span>
+            </div>
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-gray-400 block">Total Revenue</span>
+              <span className="font-mono text-sm font-bold text-[#222222]">Rs.{historyStats.total.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-gray-400 block">GST Collected</span>
+              <span className="font-mono text-sm font-bold text-[#B59A6C]">Rs.{historyStats.gst.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-gray-400 block">Avg Ticket</span>
+              <span className="font-mono text-sm font-bold text-[#222222]">Rs.{historyStats.avg.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-amber-600 block">Pending Bills</span>
+              <span className="font-mono text-lg font-bold text-amber-700">{historyStats.pendingCount}</span>
+            </div>
+            <div className="bg-white border border-gray-200 p-3 text-center">
+              <span className="text-[8px] font-body font-bold uppercase tracking-widest text-rose-500 block">Outstanding</span>
+              <span className="font-mono text-sm font-bold text-rose-700">Rs.{historyStats.outstanding.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          {filteredHistory.length === 0 ? (
             <div className="text-center py-20 bg-white border border-gray-200 text-gray-400 font-body">
-              No bills recorded yet. Create and generate your first invoice to view it here.
+              {billHistory.length === 0 ? 'No bills recorded yet. Create and generate your first invoice to view it here.' : 'No bills match your current filters.'}
             </div>
           ) : (
             <div className="space-y-3">
-              {billHistory.map((bill) => (
+              {filteredHistory.map((bill) => (
                 <motion.div
-                  key={bill.id}
+                  key={bill.id || bill.billNumber}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white border border-gray-200 p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-[#B59A6C] transition-all shadow-card"
+                  className={`bg-white border p-4 sm:p-5 flex flex-col gap-3 hover:border-[#B59A6C] transition-all shadow-card ${
+                    (bill.status || 'completed') === 'cancelled' ? 'border-rose-200 bg-rose-50/30' : 'border-gray-200'
+                  }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-[#FAF9F7] border border-gray-200 flex items-center justify-center font-mono font-bold text-[#B59A6C] text-sm shrink-0">
-                      INV
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-base font-extrabold text-[#111111]">{bill.billNumber || bill.id}</span>
-                        <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-700">
-                          {bill.operator || 'Owner'}
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-[#FAF9F7] border border-gray-200 flex items-center justify-center font-mono font-bold text-[#B59A6C] text-sm shrink-0">
+                        {(bill.gstRate || 3) > 0 ? 'TAX' : 'BOS'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-base font-extrabold text-[#111111]">{bill.billNumber || bill.id}</span>
+                          <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 bg-gray-100 text-gray-700">{bill.operator || 'Owner'}</span>
+                          {(bill.status || 'completed') === 'cancelled' && <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 bg-rose-100 text-rose-700">CANCELLED</span>}
+                        </div>
+                        <span className="text-[10px] font-body text-gray-500 block mt-0.5">
+                          {new Date(bill.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(bill.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <span className="text-xs font-body text-gray-700 font-medium block mt-1">
+                          Client: {bill.customer?.name || 'Walk-in'} {bill.customer?.phone ? `(${bill.customer.phone})` : ''}
                         </span>
                       </div>
-                      <span className="text-[10px] font-body text-gray-500 block mt-0.5">
-                        {new Date(bill.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(bill.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 self-end md:self-auto">
+                      <div className="text-right">
+                        <span className="text-[10px] font-body text-gray-400 uppercase block">Total Payable</span>
+                        <span className="font-mono text-xl font-extrabold text-[#111111]">
+                          Rs.{Number(bill.totalPayable).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-1 border ${
+                        bill.paymentMethod === 'cash' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                        bill.paymentMethod === 'card' ? 'bg-blue-50 text-blue-800 border-blue-200' :
+                        bill.paymentMethod === 'upi' ? 'bg-purple-50 text-purple-800 border-purple-200' :
+                        'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {bill.paymentMethod}
                       </span>
-                      <span className="text-xs font-body text-gray-700 font-medium block mt-1">
-                        Client: {bill.customer?.name || 'Walk-in'} {bill.customer?.phone ? `(${bill.customer.phone})` : ''}
-                      </span>
+
+                      <button
+                        onClick={() => { setInvoiceBillData(bill); setShowInvoice(true); }}
+                        className="px-4 py-2 border border-[#222222] text-[#222222] text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                      >
+                        View Invoice
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 self-end md:self-auto">
-                    <div className="text-right">
-                      <span className="text-[10px] font-body text-gray-400 uppercase block">Total Payable</span>
-                      <span className="font-mono text-xl font-extrabold text-[#111111]">
-                        Rs.{Number(bill.totalPayable).toLocaleString('en-IN')}
-                      </span>
+                  {/* Partial Payment Progress Bar */}
+                  {(bill.paymentStatus === 'partially_paid' || bill.paymentStatus === 'pending') && (
+                    <div className="border-t border-gray-100 pt-3">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 ${
+                          bill.paymentStatus === 'pending' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {bill.paymentStatus === 'pending' ? 'PAYMENT PENDING' : 'PARTIALLY PAID'}
+                        </span>
+                        <span className="text-[10px] font-mono text-gray-600">
+                          Paid Rs.{(bill.amountPaid || 0).toLocaleString('en-IN')} / Rs.{(bill.totalPayable || 0).toLocaleString('en-IN')}
+                          {' | Balance: '}
+                          <span className="font-bold text-rose-700">Rs.{(bill.balanceRemaining || 0).toLocaleString('en-IN')}</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 h-2">
+                        <div
+                          className="h-2 bg-[#B59A6C] transition-all"
+                          style={{ width: `${Math.min(100, ((bill.amountPaid || 0) / (bill.totalPayable || 1)) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => setRecordPaymentBill(bill)}
+                          className="px-3 py-1.5 bg-[#222222] text-white text-[10px] font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer"
+                        >
+                          Record Payment
+                        </button>
+                        {bill.customer?.phone && (
+                          <button
+                            onClick={() => {
+                              const phone = bill.customer.phone.replace(/\D/g, '');
+                              const msg = [
+                                '*MONIKA JEWELLERS*', 'Payment Reminder', '',
+                                `Dear ${bill.customer.name || 'Customer'},`, '',
+                                `Your balance of *Rs.${(bill.balanceRemaining || 0).toLocaleString('en-IN')}* for Bill ${bill.billNumber || bill.id} is pending.`, '',
+                                `Total Bill: Rs.${(bill.totalPayable || 0).toLocaleString('en-IN')}`,
+                                `Paid: Rs.${(bill.amountPaid || 0).toLocaleString('en-IN')}`,
+                                `*Balance: Rs.${(bill.balanceRemaining || 0).toLocaleString('en-IN')}*`, '',
+                                'Please visit our store to arrange payment.', '', 'Monika Jewellers'
+                              ].join('%0a');
+                              window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
+                            }}
+                            className="px-3 py-1.5 bg-[#25D366] text-white text-[10px] font-body font-bold uppercase tracking-wider hover:bg-[#128C7E] transition-colors cursor-pointer"
+                          >
+                            Send Reminder
+                          </button>
+                        )}
+                      </div>
                     </div>
-
-                    <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-1 border ${
-                      bill.paymentMethod === 'cash' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                      bill.paymentMethod === 'card' ? 'bg-blue-50 text-blue-800 border-blue-200' :
-                      bill.paymentMethod === 'upi' ? 'bg-purple-50 text-purple-800 border-purple-200' :
-                      'bg-amber-50 text-amber-800 border-amber-200'
-                    }`}>
-                      {bill.paymentMethod}
-                    </span>
-
-                    <button
-                      onClick={() => { setInvoiceBillData(bill); setShowInvoice(true); }}
-                      className="px-4 py-2 border border-[#222222] text-[#222222] text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
-                    >
-                      View Invoice
-                    </button>
-                  </div>
+                  )}
+                  {bill.paymentStatus === 'settled' && (
+                    <div className="border-t border-gray-100 pt-2">
+                      <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 bg-emerald-100 text-emerald-700">FULLY SETTLED</span>
+                      <span className="text-[10px] font-mono text-gray-500 ml-2">({(bill.paymentEntries || []).length} payments)</span>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -2191,7 +2446,7 @@ const OfflineBilling = () => {
                                 {!isEditing && (
                                   <div className="mt-1.5 space-y-1 text-[9px] text-gray-500">
                                     <div className="flex justify-between">
-                                      <span>Metal Value ({bi.weight}g)</span>
+                                      <span>Metal ({bi.weight}g x Rs.{(bi.ratePerGram || 0).toLocaleString('en-IN')}/g x {(bi.purityPercent || 91.67).toFixed(1)}%)</span>
                                       <span className="font-mono text-gray-700">Rs.{(bi.metalCost * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
 
@@ -2223,8 +2478,13 @@ const OfflineBilling = () => {
                                       </div>
                                     )}
 
+                                    <div className="flex justify-between text-[9px] text-gray-500 border-t border-dashed border-gray-200 pt-1 mt-1">
+                                      <span>Taxable Subtotal</span>
+                                      <span className="font-mono">Rs.{(bi.subtotal * bi.quantity).toLocaleString('en-IN')}</span>
+                                    </div>
+
                                     <div className="flex justify-between font-medium">
-                                      <span>GST ({gstRate}%)</span>
+                                      <span>GST ({gstRate}%){taxSplitMode === 'split' ? ` [CGST ${(gstRate/2).toFixed(1)}% + SGST ${(gstRate/2).toFixed(1)}%]` : ''}</span>
                                       <span className="font-mono text-gray-700">Rs.{(bi.gstTax * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
                                   </div>
@@ -2781,6 +3041,77 @@ const OfflineBilling = () => {
                         </div>
                       )}
 
+                      {/* Phase 6: Partial Payment Toggle */}
+                      <div className="bg-[#FAF9F7] p-3 border border-gray-200">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isPartialPayment}
+                            onChange={(e) => setIsPartialPayment(e.target.checked)}
+                            className="w-4 h-4 accent-[#B59A6C] cursor-pointer"
+                          />
+                          <span className="text-[10px] font-body font-bold uppercase tracking-wider text-gray-700">This is a partial / advance payment</span>
+                        </label>
+
+                        {isPartialPayment && (
+                          <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Advance Amount (Rs.)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={billTotals.totalPayable}
+                                  value={advanceAmount}
+                                  onChange={(e) => setAdvanceAmount(e.target.value)}
+                                  placeholder="Enter advance amount"
+                                  className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold focus:outline-none focus:border-[#222222]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Payment Method</label>
+                                <select
+                                  value={advanceMethod}
+                                  onChange={(e) => setAdvanceMethod(e.target.value)}
+                                  className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-body focus:outline-none focus:border-[#222222] cursor-pointer"
+                                >
+                                  <option value="cash">Cash</option>
+                                  <option value="card">Card</option>
+                                  <option value="upi">UPI</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Reference (optional)</label>
+                                <input
+                                  type="text"
+                                  value={advanceReference}
+                                  onChange={(e) => setAdvanceReference(e.target.value)}
+                                  placeholder="Slip / UTR ref"
+                                  className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#222222]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[8px] font-mono text-gray-500 uppercase mb-0.5">Due Date (optional)</label>
+                                <input
+                                  type="date"
+                                  value={dueDate}
+                                  onChange={(e) => setDueDate(e.target.value)}
+                                  className="w-full px-2 py-1.5 bg-white border border-gray-200 text-xs font-mono focus:outline-none focus:border-[#222222]"
+                                />
+                              </div>
+                            </div>
+                            <div className="bg-amber-50 border border-amber-200 p-2 flex justify-between items-center">
+                              <span className="text-[10px] font-body font-bold text-amber-800 uppercase">Remaining Balance</span>
+                              <span className="font-mono font-extrabold text-amber-900">
+                                Rs.{Math.max(0, billTotals.totalPayable - (parseFloat(advanceAmount) || 0)).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* INVOICE REMARKS / NOTES */}
                       <div>
                         <input
@@ -2879,6 +3210,26 @@ const OfflineBilling = () => {
         isOpen={showZReport}
         onClose={() => setShowZReport(false)}
       />
+
+      {/* Phase 6: Record Payment Drawer */}
+      {recordPaymentBill && (
+        <RecordPaymentDrawer
+          bill={recordPaymentBill}
+          onClose={() => setRecordPaymentBill(null)}
+          onPaymentRecorded={(updatedBill, paymentData) => {
+            recordPaymentLocally(updatedBill.billNumber || updatedBill.id, {
+              amount: paymentData?.amount || updatedBill._lastPayment?.amount || 0,
+              method: (paymentData?.method || updatedBill._lastPayment?.method || 'cash').toLowerCase(),
+              reference: paymentData?.reference || updatedBill._lastPayment?.reference || '',
+              operator: operatorName || 'Owner',
+              note: paymentData?.note || updatedBill._lastPayment?.note || ''
+            });
+            setBillHistory(getSavedBills());
+            setRecordPaymentBill(null);
+          }}
+          api={api}
+        />
+      )}
       {/* Hidden file input for line item photo upload */}
       <input
         type="file"

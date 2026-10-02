@@ -1,4 +1,22 @@
 // Bill counter management
+// Phase 5: Try server-synced counter first, fall back to localStorage
+export async function getNextBillNumberFromServer(apiClient) {
+  try {
+    const response = await apiClient.get('/billing/next-number');
+    if (response.data && response.data.billNumber) {
+      // Also update local counter to stay in sync
+      const match = response.data.billNumber.match(/BILL-\d{4}-(\d+)/);
+      if (match) {
+        localStorage.setItem('glimmr_bill_counter', parseInt(match[1], 10));
+      }
+      return response.data.billNumber;
+    }
+  } catch {
+    // Server unreachable, fall back to local
+  }
+  return getNextBillNumber();
+}
+
 export function getNextBillNumber() {
   let counter = localStorage.getItem('glimmr_bill_counter');
   counter = counter ? parseInt(counter, 10) : 0;
@@ -75,4 +93,46 @@ export function getCachedRates() {
 export function setCachedRates(rates) {
   const rateData = { ...rates, fetchedAt: new Date().toISOString() };
   localStorage.setItem('glimmr_cached_rates', JSON.stringify(rateData));
+}
+
+// ============================================================
+// Phase 6: Partial Payment - Local recording for offline support
+// ============================================================
+
+export function recordPaymentLocally(billId, paymentEntry) {
+  const allBills = JSON.parse(localStorage.getItem('glimmr_bills') || '[]');
+  const idx = allBills.findIndex(b => b.id === billId || b.billNumber === billId);
+  if (idx < 0) return null;
+
+  const bill = allBills[idx];
+  bill.paymentEntries = bill.paymentEntries || [];
+  bill.paymentEntries.push({
+    ...paymentEntry,
+    date: new Date().toISOString()
+  });
+
+  bill.amountPaid = bill.paymentEntries.reduce((sum, p) => sum + (p.amount || 0), 0);
+  bill.balanceRemaining = Math.max(0, (bill.totalPayable || 0) - bill.amountPaid);
+  bill.paymentStatus = bill.balanceRemaining <= 0 ? 'settled' : 'partially_paid';
+  bill.synced = false; // Mark for re-sync
+
+  allBills[idx] = bill;
+  localStorage.setItem('glimmr_bills', JSON.stringify(allBills));
+  return bill;
+}
+
+export function getPendingBills() {
+  return getSavedBills().filter(b =>
+    b.paymentStatus === 'partially_paid' || b.paymentStatus === 'pending'
+  );
+}
+
+export function updateBillLocally(billId, updates) {
+  const allBills = JSON.parse(localStorage.getItem('glimmr_bills') || '[]');
+  const idx = allBills.findIndex(b => b.id === billId || b.billNumber === billId);
+  if (idx < 0) return null;
+
+  allBills[idx] = { ...allBills[idx], ...updates, synced: false };
+  localStorage.setItem('glimmr_bills', JSON.stringify(allBills));
+  return allBills[idx];
 }

@@ -34,7 +34,13 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     gstRate = 3,
     taxSplitMode = 'split',
     totalGst = 0,
-    igst = 0
+    igst = 0,
+    paymentStatus = 'paid',
+    amountPaid = 0,
+    balanceRemaining = 0,
+    dueDate,
+    paymentEntries = [],
+    billType = 'gst'
   } = billData;
 
   const safeItems = Array.isArray(items) ? items : [];
@@ -115,7 +121,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(181, 154, 108);
-    doc.text('STORE BILLING INVOICE', 195, 18, { align: 'right' });
+    doc.text(rateNum > 0 ? 'TAX INVOICE' : 'BILL OF SUPPLY', 195, 18, { align: 'right' });
 
     doc.setFontSize(11);
     doc.setTextColor(17, 17, 17);
@@ -213,7 +219,9 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       if (d.weight > 0) {
         doc.setFontSize(6.5);
         doc.setTextColor(120, 120, 120);
-        const breakdownParts = [`Metal: Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')}`, `Making: Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}`];
+        const rPg = d.ratePerGram ? `Rs.${d.ratePerGram.toLocaleString('en-IN')}/g` : '';
+        const pur = d.purityPercent ? `${d.purityPercent.toFixed(1)}%` : '';
+        const breakdownParts = [`${d.weight}g x ${rPg} x ${pur} = Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')}`, `Making: Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}`];
         if (d.gemstoneCost > 0) breakdownParts.push(`Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}`);
         doc.text(breakdownParts.join('  |  '), textX, y + 13.5);
       }
@@ -319,6 +327,34 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       doc.text(`Rs. ${changeReturned.toLocaleString('en-IN')}`, 190, currentYOffset + 5, { align: 'right' });
     }
 
+    // Phase 6: Partial Payment Status in PDF
+    if (paymentStatus && paymentStatus !== 'paid') {
+      currentYOffset += 8;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(paymentStatus === 'settled' ? 20 : 180, paymentStatus === 'settled' ? 120 : 100, paymentStatus === 'settled' ? 50 : 20);
+      const statusLabel = paymentStatus === 'settled' ? 'FULLY SETTLED' : paymentStatus === 'pending' ? 'PAYMENT PENDING' : 'PARTIALLY PAID';
+      doc.text(statusLabel, 140, currentYOffset);
+      if (paymentStatus !== 'settled') {
+        currentYOffset += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        doc.text(`Amount Paid: Rs.${amountPaid.toLocaleString('en-IN')}`, 140, currentYOffset);
+        currentYOffset += 4;
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(200, 50, 50);
+        doc.text(`Balance Due: Rs.${balanceRemaining.toLocaleString('en-IN')}`, 140, currentYOffset);
+        if (dueDate) {
+          currentYOffset += 4;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(120, 120, 120);
+          doc.text(`Due By: ${new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, 140, currentYOffset);
+        }
+      }
+    }
+
     const footerY = Math.max(currentYOffset + 20, y + 38);
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.3);
@@ -385,6 +421,12 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       `---`,
       `Gold Rate: Rs.${Number(goldRateUsed).toLocaleString('en-IN')}/g`,
       `BIS Hallmarked | GSTIN: 27AAAAA0000A1Z5`,
+      paymentStatus && paymentStatus !== 'paid' && paymentStatus !== 'settled' ? `---` : '',
+      paymentStatus === 'partially_paid' ? `*PARTIALLY PAID*` : '',
+      paymentStatus === 'pending' ? `*PAYMENT PENDING*` : '',
+      paymentStatus && paymentStatus !== 'paid' && paymentStatus !== 'settled' ? `Paid: Rs.${amountPaid.toLocaleString('en-IN')}` : '',
+      paymentStatus && paymentStatus !== 'paid' && paymentStatus !== 'settled' ? `*Balance Due: Rs.${balanceRemaining.toLocaleString('en-IN')}*` : '',
+      dueDate && paymentStatus !== 'paid' && paymentStatus !== 'settled' ? `Due By: ${new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : '',
       `Thank you for choosing Monika Jewellers.`
     ].filter(Boolean).join('%0a');
     
@@ -447,6 +489,13 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       <div class="total-row"><span>TOTAL:</span><span>Rs.${totalPayable.toLocaleString('en-IN')}</span></div>
       <div class="summary-row"><span>Payment:</span><span class="bold">${paymentMethod.toUpperCase()}</span></div>
       ${cashLine}
+      ${paymentStatus && paymentStatus !== 'paid' && paymentStatus !== 'settled' ? `
+      <div class="divider"></div>
+      <div class="summary-row bold" style="color:#B00;"><span>${paymentStatus === 'pending' ? 'PAYMENT PENDING' : 'PARTIALLY PAID'}</span><span></span></div>
+      <div class="summary-row"><span>Paid:</span><span>Rs.${amountPaid.toLocaleString('en-IN')}</span></div>
+      <div class="summary-row bold"><span>Balance:</span><span>Rs.${balanceRemaining.toLocaleString('en-IN')}</span></div>
+      ${dueDate ? '<div class="summary-row"><span>Due:</span><span>' + new Date(dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + '</span></div>' : ''}
+      ` : ''}
       <div class="divider"></div>
       <div class="summary-row"><span>Gold Rate:</span><span>Rs.${Number(goldRateUsed).toLocaleString('en-IN')}/g</span></div>
       <div class="summary-row"><span>Silver Rate:</span><span>Rs.${Number(silverRateUsed).toLocaleString('en-IN')}/g</span></div>
@@ -488,7 +537,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                 <p className="text-[9px] font-body text-gray-400">Atelier Tower, BKC, Mumbai 400051</p>
               </div>
               <div className="text-right">
-                <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">Store Billing Invoice</span>
+                <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">{rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</span>
                 <span className="font-mono text-lg font-extrabold text-[#111111] block mt-0.5">{billNumber}</span>
                 <span className="text-[10px] font-body text-gray-500 block mt-0.5">{invoiceDate} | {invoiceTime}</span>
                 <span className="text-[10px] font-body font-bold text-emerald-700 uppercase block mt-0.5">Payment: {paymentMethod.toUpperCase()}</span>
@@ -539,7 +588,8 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                               <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider block mt-0.5">HSN: 7113 | BIS Hallmarked</span>
                               {d.weight > 0 && (
                                 <div className="mt-1 text-[9px] text-gray-500">
-                                  <span className="block">Metal: Rs.{(d.metalCost * d.quantity).toLocaleString('en-IN')} | Making: Rs.{(d.makingCharges * d.quantity).toLocaleString('en-IN')}{d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</span>
+                                  <span className="block">{d.weight}g x Rs.{(d.ratePerGram || 0).toLocaleString('en-IN')}/g x {(d.purityPercent || 91.67).toFixed(1)}% = Rs.{(d.metalCost * d.quantity).toLocaleString('en-IN')}</span>
+                                  <span className="block">Making: Rs.{(d.makingCharges * d.quantity).toLocaleString('en-IN')}{d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</span>
                                 </div>
                               )}
                             </div>
@@ -613,6 +663,45 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                       <span className="font-mono font-bold text-emerald-700">Rs.{changeReturned.toLocaleString('en-IN')}</span>
                     </div>
                   </>
+                )}
+                {/* Phase 6: Partial Payment Status */}
+                {paymentStatus && paymentStatus !== 'paid' && (
+                  <div className={`mt-2 p-2.5 border ${paymentStatus === 'settled' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className={`text-[10px] font-mono font-bold uppercase ${paymentStatus === 'settled' ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        {paymentStatus === 'settled' ? 'FULLY SETTLED' : paymentStatus === 'pending' ? 'PAYMENT PENDING' : 'PARTIALLY PAID'}
+                      </span>
+                    </div>
+                    {paymentStatus !== 'settled' && (
+                      <>
+                        <div className="flex justify-between items-center text-xs mt-1">
+                          <span>Amount Paid:</span>
+                          <span className="font-mono font-bold text-[#111111]">Rs.{amountPaid.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold">Balance Due:</span>
+                          <span className="font-mono font-extrabold text-rose-700">Rs.{balanceRemaining.toLocaleString('en-IN')}</span>
+                        </div>
+                        {dueDate && (
+                          <div className="flex justify-between items-center text-[10px] mt-0.5">
+                            <span>Due By:</span>
+                            <span className="font-mono font-bold">{new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {paymentEntries.length > 0 && (
+                      <div className="mt-2 border-t border-gray-200 pt-1.5">
+                        <span className="text-[9px] font-body font-bold text-gray-500 uppercase block mb-1">Payment History</span>
+                        {paymentEntries.map((pe, idx) => (
+                          <div key={idx} className="flex justify-between text-[10px] font-mono text-gray-600">
+                            <span>{new Date(pe.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} | {(pe.method || 'cash').toUpperCase()}</span>
+                            <span className="font-bold">Rs.{(pe.amount || 0).toLocaleString('en-IN')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
