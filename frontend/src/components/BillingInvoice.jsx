@@ -157,7 +157,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(80, 80, 80);
-    doc.text(`Phone: ${customer.phone || 'N/A'}`, 20, 58);
+    doc.text(`Phone: ${customer.phone || 'N/A'}${customer.panNumber ? '  |  PAN: ' + customer.panNumber : ''}`, 20, 58);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -477,7 +477,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       </div>
       <div class="divider"></div>
       <div class="item-row"><span>Bill: ${billNumber}</span><span>${invoiceDate}</span></div>
-      <div class="item-row"><span>${customer.name || 'Walk-in'}</span><span>${customer.phone || ''}</span></div>
+      <div class="item-row"><span>${customer.name || 'Walk-in'}</span><span>${customer.phone || ''}${customer.panNumber ? ' | PAN: ' + customer.panNumber : ''}</span></div>
       <div class="divider"></div>
       ${itemsHtml}
       <div class="divider"></div>
@@ -550,6 +550,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block mb-1">Customer Details</span>
                 <p className="font-heading font-bold text-sm text-[#111111]">{customer.name || 'Walk-in Customer'}</p>
                 <p className="text-[10px] font-body text-gray-500 mt-0.5">Phone: {customer.phone || 'N/A'}</p>
+                {customer.panNumber && <p className="text-[10px] font-mono text-[#B59A6C] font-bold mt-0.5">PAN (Rule 114B): {customer.panNumber}</p>}
                 {customer.address && <p className="text-[10px] font-body text-gray-500 mt-0.5">Address: {customer.address}</p>}
                 {customer.gstin && <p className="text-[10px] font-mono text-[#B59A6C] font-bold mt-0.5">GSTIN: {customer.gstin}</p>}
               </div>

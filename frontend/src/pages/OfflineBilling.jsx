@@ -249,7 +249,34 @@ const OfflineBilling = () => {
   const [customerPhone, setCustomerPhone] = useState(''); // Strict 10-digit limit
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerGstin, setCustomerGstin] = useState(''); // Strict 15-char limit
+  const [customerPan, setCustomerPan] = useState(''); // 10-char PAN for Rule 114B
+  const [recognizedPatron, setRecognizedPatron] = useState(null);
   const [billNotes, setBillNotes] = useState('');
+
+  // Fast customer CRM lookup on 10-digit phone
+  useEffect(() => {
+    const clean = customerPhone.replace(/\D/g, '');
+    if (clean.length === 10) {
+      let isSubscribed = true;
+      api.get(`/customers/lookup/${clean}`)
+        .then(res => {
+          if (!isSubscribed || !res.data?.customer) return;
+          const c = res.data.customer;
+          setRecognizedPatron(c);
+          if (!customerName || customerName === 'Walk-in Customer') setCustomerName(c.name || '');
+          if (!customerAddress) setCustomerAddress(c.address || '');
+          if (!customerGstin) setCustomerGstin(c.gstin || '');
+          if (!customerPan) setCustomerPan(c.panNumber || '');
+        })
+        .catch(() => {
+          if (isSubscribed) setRecognizedPatron(null);
+        });
+
+      return () => { isSubscribed = false; };
+    } else {
+      setRecognizedPatron(null);
+    }
+  }, [customerPhone]);
 
   // Payment Method & Tracking
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'card' | 'upi' | 'mixed'
@@ -1053,6 +1080,12 @@ const OfflineBilling = () => {
       setTimeout(() => setCatalogAlert(''), 4000);
       return;
     }
+    // Income Tax Rule 114B: Mandatory PAN for high-value sales (>Rs. 2,00,000)
+    if (billTotals.totalPayable > 200000 && (!customerPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(customerPan.trim().toUpperCase()))) {
+      setCatalogAlert('Statutory Requirement (Rule 114B): Valid 10-character PAN is mandatory for sales exceeding Rs. 2,00,000.');
+      setTimeout(() => setCatalogAlert(''), 5000);
+      return;
+    }
 
     const billNumber = getNextBillNumber();
     const now = new Date().toISOString();
@@ -1065,7 +1098,8 @@ const OfflineBilling = () => {
         name: customerName || 'Walk-in Customer',
         phone: customerPhone,
         address: customerAddress,
-        gstin: customerGstin
+        gstin: customerGstin,
+        panNumber: customerPan ? customerPan.trim().toUpperCase() : ''
       },
       items: billItems.map(bi => ({ ...bi })),
       totalMetal: billTotals.totalMetal,
@@ -1121,7 +1155,7 @@ const OfflineBilling = () => {
     setInvoiceBillData(billData);
     setShowInvoice(true);
   }, [
-    billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin,
+    billItems, billTotals, customerName, customerPhone, customerAddress, customerGstin, customerPan,
     operatorName, billNotes, paymentMethod, paymentReference, cashReceived, changeToReturn,
     liveRates, appliedVoucher, hasOldGold, oldGoldWeight, oldGoldKarat, oldGoldRate, gstRate, taxSplitMode,
     splitCashAmount, splitCardAmount, splitUpiAmount, splitCardRef, splitUpiRef, isSplitBalanced,
@@ -1134,6 +1168,8 @@ const OfflineBilling = () => {
     setCustomerPhone('');
     setCustomerAddress('');
     setCustomerGstin('');
+    setCustomerPan('');
+    setRecognizedPatron(null);
     setCashReceived('');
     setPaymentReference('');
     setSplitCashAmount('');
@@ -2145,6 +2181,24 @@ const OfflineBilling = () => {
                             className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
                           />
+                          {/* Stock level badge */}
+                          <div className="absolute top-2 right-2">
+                            {product.stock !== undefined && (
+                              product.stock <= 0 ? (
+                                <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200 shadow-xs">
+                                  Out of Stock
+                                </span>
+                              ) : product.stock <= (product.lowStockThreshold || 2) ? (
+                                <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 shadow-xs">
+                                  Stock: {product.stock}
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs">
+                                  Stock: {product.stock}
+                                </span>
+                              )
+                            )}
+                          </div>
                           <div className="absolute bottom-2 inset-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className="bg-[#222222] text-white text-center py-1.5 text-[9px] font-body font-bold uppercase tracking-wider">
                               + Add to Bill
@@ -2240,6 +2294,21 @@ const OfflineBilling = () => {
                       </div>
                     </div>
 
+                    {/* Patron Auto-Recognition Pill */}
+                    {recognizedPatron && (
+                      <div className="bg-emerald-50 border border-emerald-200 p-2.5 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 uppercase px-1.5 py-0.5 bg-white border border-emerald-300">
+                            {recognizedPatron.patronTier} Patron
+                          </span>
+                          <span className="font-bold text-emerald-950">{recognizedPatron.name}</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-mono">
+                          LTV: Rs.{(recognizedPatron.totalSpent || 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
                         <label className="block text-[8px] font-body font-bold uppercase tracking-wider text-gray-500 mb-0.5">Customer Name</label>
@@ -2309,6 +2378,39 @@ const OfflineBilling = () => {
                           }`}
                         />
                       </div>
+                    </div>
+
+                    {/* STRICT 10-CHAR PAN WITH RULE 114B STATUTORY ENFORCEMENT */}
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-[8px] font-body font-bold uppercase tracking-wider text-gray-500">
+                            Customer PAN (Income Tax)
+                          </label>
+                          {billTotals.totalPayable > 200000 && (
+                            <span className="text-[8px] font-mono font-bold text-rose-700 bg-rose-50 px-1 border border-rose-200 uppercase">
+                              Rule 114B Required (&gt;2L)
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-[8px] font-mono font-bold ${customerPan.length === 10 ? 'text-emerald-700' : 'text-gray-400'}`}>
+                          [{customerPan.length}/10]
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        maxLength={10}
+                        value={customerPan}
+                        onChange={(e) => setCustomerPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                        placeholder="10-digit PAN (e.g. ABCDE1234F)"
+                        className={`w-full px-2.5 py-1.5 bg-white border text-xs font-mono uppercase text-[#222222] focus:outline-none transition-all ${
+                          billTotals.totalPayable > 200000 && customerPan.length !== 10
+                            ? 'border-rose-400 bg-rose-50/20 ring-1 ring-rose-300'
+                            : customerPan.length === 10
+                              ? 'border-emerald-500 ring-1 ring-emerald-400/40 font-bold'
+                              : 'border-gray-200 focus:border-[#222222]'
+                        }`}
+                      />
                     </div>
                   </div>
 

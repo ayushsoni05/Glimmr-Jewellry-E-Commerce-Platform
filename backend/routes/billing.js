@@ -2,14 +2,36 @@ const express = require('express');
 const router = express.Router();
 const OfflineBill = require('../models/OfflineBill');
 const BillCounter = require('../models/BillCounter');
+const { staffAuth, managerOrAdminAuth } = require('../middleware/admin');
+const {
+  deductInventoryForBill,
+  restoreInventoryForBill,
+  syncCustomerFromBill,
+  updateCustomerOnPayment
+} = require('../utils/inventoryAndCrmSync');
+
+// Enforce staff authorization across all billing router endpoints
+router.use(staffAuth);
 
 // ============================================================
 // 1. POST / - Save a single bill
 // ============================================================
 router.post('/', async (req, res) => {
   try {
-    const bill = new OfflineBill(req.body);
+    const billData = req.body;
+
+    // Statutory Rule 114B check: verify PAN card for bills > Rs. 2,00,000
+    if ((billData.totalPayable || 0) > 200000 && (!billData.customer?.panNumber || billData.customer.panNumber.length !== 10)) {
+      console.warn(`[COMPLIANCE] High-value bill ${billData.billNumber} (>Rs. 2L) generated without valid PAN`);
+    }
+
+    const bill = new OfflineBill(billData);
     const savedBill = await bill.save();
+
+    // Deduct physical inventory & update Customer CRM profile
+    await deductInventoryForBill(savedBill);
+    await syncCustomerFromBill(savedBill);
+
     res.status(201).json(savedBill);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -19,7 +41,7 @@ router.post('/', async (req, res) => {
 // ============================================================
 // 2. POST /sync - Batch sync offline bills
 // ============================================================
-router.post('/sync', async (req, res) => {
+router.post('/sync', staffAuth, async (req, res) => {
   try {
     const { bills } = req.body;
     if (!bills || !Array.isArray(bills)) {
@@ -30,9 +52,17 @@ router.post('/sync', async (req, res) => {
     }
     try {
       const result = await OfflineBill.insertMany(bills, { ordered: false });
+      for (const b of bills) {
+        await deductInventoryForBill(b);
+        await syncCustomerFromBill(b);
+      }
       res.json({ synced: result.length });
     } catch (insertError) {
       if (insertError.code === 11000 && insertError.insertedDocs) {
+        for (const b of insertError.insertedDocs) {
+          await deductInventoryForBill(b);
+          await syncCustomerFromBill(b);
+        }
         res.json({ synced: insertError.insertedDocs.length });
       } else {
         throw insertError;
@@ -42,6 +72,7 @@ router.post('/sync', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // ============================================================
 // 3. GET / - List all bills (paginated, filtered)
@@ -523,23 +554,30 @@ router.get('/:billNumber', async (req, res) => {
 });
 
 // ============================================================
-// 15. PATCH /:id/cancel - Cancel a bill
+// 15. PATCH /:id/cancel - Cancel a bill (Manager or Admin only)
 // ============================================================
-router.patch('/:id/cancel', async (req, res) => {
+router.patch('/:id/cancel', managerOrAdminAuth, async (req, res) => {
   try {
     const bill = await OfflineBill.findById(req.params.id);
     if (!bill) return res.status(404).json({ error: 'Bill not found' });
+
+    const operator = req.user?.name || req.body.operator || 'Manager';
+    const reason = req.body.reason || 'Cancelled by manager';
 
     bill.status = 'cancelled';
     bill.auditLog = bill.auditLog || [];
     bill.auditLog.push({
       action: 'cancelled',
       timestamp: new Date(),
-      operator: req.body.operator || 'Owner',
-      reason: req.body.reason || 'Cancelled by owner'
+      operator,
+      reason
     });
 
     await bill.save();
+
+    // Automatically restore jewellery inventory back to stock
+    await restoreInventoryForBill(bill, reason, operator);
+
     res.json(bill);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -549,7 +587,7 @@ router.patch('/:id/cancel', async (req, res) => {
 // ============================================================
 // 16. PATCH /:id/payment - Record a payment on a partially-paid bill
 // ============================================================
-router.patch('/:id/payment', async (req, res) => {
+router.patch('/:id/payment', staffAuth, async (req, res) => {
   try {
     const { amount, method, reference, note, operator } = req.body;
     if (!amount || amount <= 0) {
@@ -559,6 +597,8 @@ router.patch('/:id/payment', async (req, res) => {
     const bill = await OfflineBill.findById(req.params.id);
     if (!bill) return res.status(404).json({ success: false, message: 'Bill not found.' });
 
+    const opName = req.user?.name || operator || 'Owner';
+
     // Append payment entry
     bill.paymentEntries = bill.paymentEntries || [];
     bill.paymentEntries.push({
@@ -566,7 +606,7 @@ router.patch('/:id/payment', async (req, res) => {
       method: method || 'cash',
       reference: reference || '',
       date: new Date(),
-      operator: operator || 'Owner',
+      operator: opName,
       note: note || ''
     });
 
@@ -586,11 +626,17 @@ router.patch('/:id/payment', async (req, res) => {
     bill.auditLog.push({
       action: 'payment_recorded',
       timestamp: new Date(),
-      operator: operator || 'Owner',
+      operator: opName,
       reason: `Payment of Rs.${amount} via ${method || 'cash'}. Balance: Rs.${bill.balanceRemaining}`
     });
 
     await bill.save();
+
+    // Update customer CRM dues & total paid ledger
+    if (bill.customer?.phone) {
+      await updateCustomerOnPayment(bill.customer.phone, amount);
+    }
+
     res.json({ success: true, bill });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -600,7 +646,7 @@ router.patch('/:id/payment', async (req, res) => {
 // ============================================================
 // 17. PATCH /:id/reminder - Track WhatsApp reminder sent
 // ============================================================
-router.patch('/:id/reminder', async (req, res) => {
+router.patch('/:id/reminder', staffAuth, async (req, res) => {
   try {
     const bill = await OfflineBill.findById(req.params.id);
     if (!bill) return res.status(404).json({ error: 'Bill not found' });
@@ -612,7 +658,7 @@ router.patch('/:id/reminder', async (req, res) => {
     bill.auditLog.push({
       action: 'reprinted',
       timestamp: new Date(),
-      operator: req.body.operator || 'Owner',
+      operator: req.user?.name || req.body.operator || 'Owner',
       reason: `WhatsApp payment reminder #${bill.reminderCount} sent`
     });
 

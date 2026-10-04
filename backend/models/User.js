@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
     defaultBillingAddressId: { type: mongoose.Schema.Types.ObjectId, ref: 'User.addresses' },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'customer', 'cashier', 'manager', 'admin'],
       default: 'user',
     },
     adminKey: {
@@ -144,7 +144,8 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-userSchema.index({ email: 1 }, { sparse: true });
+// Email index is declared via unique: true in schema definition
+// userSchema.index({ email: 1 }, { sparse: true });
 // Phone index removed - handle uniqueness in application logic to avoid E11000 errors
 // userSchema.index({ phone: 1 }, { sparse: true });
 

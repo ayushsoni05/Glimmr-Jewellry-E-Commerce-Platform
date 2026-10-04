@@ -37,10 +37,44 @@ const productSchema = new mongoose.Schema({
   variants: [{ type: String }], // e.g., sizes, colors
   rating: { type: Number, default: 0 },
   reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
+  // Jewellery Inventory & Stock Tracking
+  sku: { type: String, trim: true, index: true }, // e.g. MJ-RN-22K-0012
+  barcode: { type: String, trim: true, index: true },
+  huid: { type: String, trim: true }, // BIS 6-character Hallmark Unique ID
+  grossWeight: { type: Number, default: 0 }, // Gross weight in grams (metal + stones)
+  netWeight: { type: Number, default: 0 }, // Net pure metal weight in grams
+  stoneWeight: { type: Number, default: 0 }, // Diamond/gemstone weight in carats/grams
   stock: { type: Number, default: 1 },
+  lowStockThreshold: { type: Number, default: 2 },
+  location: { type: String, default: 'Showroom Floor' }, // Showroom Floor, Vault A, Display Counter
+  stockStatus: { 
+    type: String, 
+    enum: ['in_stock', 'low_stock', 'out_of_stock', 'reserved'], 
+    default: 'in_stock' 
+  },
   isActive: { type: Boolean, default: true },
   // Stored price breakdown for transparency (computed server-side)
   priceBreakdown: { type: mongoose.Schema.Types.Mixed },
 }, { timestamps: true });
+
+// Pre-save hook to automatically compute stockStatus and weights if omitted
+productSchema.pre('save', function(next) {
+  if (this.stock <= 0) {
+    this.stockStatus = 'out_of_stock';
+  } else if (this.stock <= (this.lowStockThreshold || 2)) {
+    this.stockStatus = 'low_stock';
+  } else {
+    this.stockStatus = 'in_stock';
+  }
+
+  // Default gross and net weights from weight if not explicitly specified
+  if (!this.netWeight && this.weight) {
+    this.netWeight = this.metalWeight || this.weight;
+  }
+  if (!this.grossWeight && this.weight) {
+    this.grossWeight = this.weight;
+  }
+  next();
+});
 
 module.exports = mongoose.model('Product', productSchema);

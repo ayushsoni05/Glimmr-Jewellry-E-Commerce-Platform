@@ -46,7 +46,8 @@ const offlineBillSchema = new mongoose.Schema({
     name:    { type: String, default: '' },
     phone:   { type: String, default: '' },
     address: { type: String, default: '' },
-    gstin:   { type: String, default: '' }
+    gstin:   { type: String, default: '' },
+    panNumber: { type: String, default: '' }
   },
   items:          [billItemSchema],
 

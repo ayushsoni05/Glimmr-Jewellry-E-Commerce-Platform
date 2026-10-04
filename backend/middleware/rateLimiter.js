@@ -27,8 +27,29 @@ const verifyLimiter = rateLimit({
   message: { error: 'Too many verification attempts. Please try again later.' },
 });
 
+// Rate limiter for POS billing endpoints (120 req/min for fast checkout counter)
+const billingLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Billing transaction rate limit reached. Please wait a moment.' },
+});
+
+// Rate limiter for Customer CRM queries to prevent bulk data scraping
+const crmLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Customer directory query limit reached. Please try again shortly.' },
+});
+
 module.exports = {
   authLimiter,
   otpRequestLimiter,
   verifyLimiter,
+  billingLimiter,
+  crmLimiter,
 };
+

@@ -124,7 +124,7 @@ async function connectDB() {
     
     const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/glimmr';
     await mongoose.connect(mongoURI);
-    console.log('✅ MongoDB Connected');
+    console.log('[DB] MongoDB Connected');
       
       if (process.env.AUTO_DROP_LEGACY_INDEX === 'true') {
         try {
@@ -238,14 +238,16 @@ connectDB().then(() => {
       try {
         const User = require('./models/User');
         const bcrypt = require('bcryptjs');
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        const adminKey = 'GLIMMR-ADMIN-DEFAULT';
+        const adminEmail = process.env.ADMIN_EMAIL || 'glimmr05@gmail.com';
+        const rawAdminPass = process.env.ADMIN_PASSWORD || 'admin123';
+        const hashedPassword = await bcrypt.hash(rawAdminPass, 10);
+        const adminKey = process.env.ADMIN_KEY || 'GLIMMR-ADMIN-DEFAULT';
         const hashedAdminKey = await bcrypt.hash(adminKey, 10);
-        const existingAdmin = await User.findOneAndUpdate(
-          { email: 'glimmr05@gmail.com' },
+        await User.findOneAndUpdate(
+          { email: adminEmail },
           {
-            name: 'Admin User',
-            email: 'glimmr05@gmail.com',
+            name: 'Monika Jewellers Admin',
+            email: adminEmail,
             password: hashedPassword,
             phone: '9999999999',
             role: 'admin',
@@ -254,12 +256,9 @@ connectDB().then(() => {
           },
           { upsert: true, new: true }
         );
-        console.log('Admin user ensured successfully');
-        console.log('Admin Email: glimmr05@gmail.com');
-        console.log('Admin Password: admin123');
-        console.log('Admin Key: GLIMMR-ADMIN-DEFAULT');
+        console.log(`[SECURITY] Administrative account verified for ${adminEmail}`);
       } catch (adminErr) {
-        console.warn('Admin user creation/update failed:', adminErr && adminErr.message ? adminErr.message : adminErr);
+        console.warn('[SECURITY] Admin user verification failed:', adminErr && adminErr.message ? adminErr.message : adminErr);
       }
     } catch (err) {
       console.warn('Post-connect tasks failed:', err && err.message ? err.message : err);
@@ -279,7 +278,11 @@ app.use('/api/prices', priceRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/custom-orders', customOrderRoutes);
 app.use('/api/gift-cards', giftCardRoutes);
-app.use('/api/billing', require('./routes/billing'));
+const { billingLimiter, crmLimiter } = require('./middleware/rateLimiter');
+app.use('/api/billing', billingLimiter, require('./routes/billing'));
+app.use('/api/stock', require('./routes/stock'));
+app.use('/api/customers', crmLimiter, require('./routes/customers'));
+
 
 // Root endpoint - Useful for Render and deployment platforms
 app.get('/', (req, res) => {
@@ -408,7 +411,7 @@ app.get('/', (req, res) => {
       frontend: 'https://glimmr-jewellry-e-commerce-platform.vercel.app',
       backend: 'https://glimmr-jewellry-e-commerce-platform-5.onrender.com',
       database: 'MongoDB Atlas',
-      status: '✅ All systems operational'
+      status: 'All systems operational'
     }
   });
 });

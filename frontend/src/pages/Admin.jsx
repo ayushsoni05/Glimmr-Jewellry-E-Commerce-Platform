@@ -8,8 +8,9 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import AdminUsers from './AdminUsers';
 import DiamondPricingManager from '../components/DiamondPricingManager';
 import AdminBespokeOrders from './AdminBespokeOrders';
-import { getProductImage } from '../utils/productImages';
 import BillingAnalytics from '../components/BillingAnalytics';
+import StockManagement from '../components/StockManagement';
+import CustomerCRM from '../components/CustomerCRM';
 
 const Admin = () => {
   const { user, setUser, loading: authLoading } = useAuth();
@@ -432,11 +433,13 @@ const Admin = () => {
         <div className="flex border-b border-gray-200 mb-10 overflow-x-auto">
           {[
             { id: 'products', label: 'PRODUCTS' },
-            { id: 'users', label: 'USERS' },
+            { id: 'stock-management', label: 'STOCK / INVENTORY' },
+            { id: 'customers-crm', label: 'CUSTOMERS CRM' },
+            { id: 'billing-analytics', label: 'BILLING ANALYTICS' },
             { id: 'orders', label: 'ORDERS' },
             { id: 'custom-orders', label: 'BESPOKE REQUESTS' },
             { id: 'diamond-pricing', label: 'DIAMOND PRICING' },
-            { id: 'billing-analytics', label: 'BILLING ANALYTICS' },
+            { id: 'users', label: 'USERS' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1107,6 +1110,28 @@ const Admin = () => {
           transition={{ delay: 0.1 }}
         >
           <DiamondPricingManager />
+        </motion.div>
+      )}
+
+      {/* Stock & Vault Inventory Tab */}
+      {activeTab === 'stock-management' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <StockManagement api={api} />
+        </motion.div>
+      )}
+
+      {/* Customer CRM Directory Tab */}
+      {activeTab === 'customers-crm' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <CustomerCRM api={api} />
         </motion.div>
       )}
 
