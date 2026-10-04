@@ -13,6 +13,17 @@ import { createRateLock, getActiveLocks, redeemRateLock, formatLockExpiry } from
 import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../components/Icons';
 import RecordPaymentDrawer from '../components/RecordPaymentDrawer';
 
+export const calculateItemMakingAmount = (type, value, rawMetalCost, netWeight) => {
+  const numVal = Math.max(0, parseFloat(value) || 0);
+  if (type === 'percent') {
+    return Math.round((rawMetalCost || 0) * (numVal / 100));
+  } else if (type === 'per_gram') {
+    return Math.round((netWeight || 0) * numVal);
+  } else {
+    return Math.round(numVal);
+  }
+};
+
 const CATEGORIES = [
   { id: 'all', label: 'All Pieces' },
   { id: 'rings', label: 'Rings' },
@@ -227,9 +238,11 @@ const OfflineBilling = () => {
   const [customGstInput, setCustomGstInput] = useState('3');
   const [taxSplitMode, setTaxSplitMode] = useState('split'); // 'split' = CGST+SGST, 'single' = Unified GST / IGST
 
-  // Dynamic Making Charges Controls (Owner Configurable)
-  const [defaultMakingRate, setDefaultMakingRate] = useState(1500); // Default lump-sum making charges
-  const [bulkMakingRateInput, setBulkMakingRateInput] = useState('1500');
+  // Dynamic Making Charges Controls (Owner Configurable: Percentage %, Per-Gram Rs./g, or Flat Rs.)
+  const [defaultMakingMode, setDefaultMakingMode] = useState('percent'); // 'percent' | 'per_gram' | 'flat'
+  const [defaultMakingRate, setDefaultMakingRate] = useState(12); // Default 12%
+  const [bulkMakingModeInput, setBulkMakingModeInput] = useState('percent');
+  const [bulkMakingRateInput, setBulkMakingRateInput] = useState('12');
   const [makingConcessionPercent, setMakingConcessionPercent] = useState(0); // 0, 25, 50, 100
   const [showMakingTools, setShowMakingTools] = useState(false);
 
@@ -319,7 +332,9 @@ const OfflineBilling = () => {
     karat: 22,
     weight: '',
     stoneWeight: '',
-    makingCharges: '1500', // Direct flat rupee making charge
+    makingChargeType: 'percent', // 'percent' | 'per_gram' | 'flat'
+    makingChargeValue: '12',      // custom percentage or rate
+    makingCharges: '0',
     quantity: 1,
     hasDiamond: false,
     diamondCarat: '',
@@ -327,6 +342,7 @@ const OfflineBilling = () => {
     diamondColor: 'G',
     diamondClarity: 'VS1',
     diamondPrice: '',
+    huid: '',
     image: IMAGE_PRESETS[0].url
   });
 
@@ -596,16 +612,20 @@ const OfflineBilling = () => {
     }));
   };
 
-  // Making Charges Handlers (Direct Rupee Amount)
-  const handleUpdateItemMakingCharges = (itemId, newAmount) => {
-    const amountNum = Math.max(0, parseFloat(newAmount) || 0);
+  // Dynamic Making Charges Handlers (Percentage %, Per-Gram Rs./g, or Flat Rs.)
+  const handleUpdateItemMaking = (itemId, type, value) => {
     setBillItems(prev => prev.map(item => {
       if (item.id !== itemId) return item;
-      const subtotal = item.metalCost + amountNum + (item.gemstoneCost || 0);
+      const targetType = type || item.makingChargeType || 'percent';
+      const targetValue = value !== undefined ? value : (item.makingChargeValue ?? 12);
+      const computedCharges = calculateItemMakingAmount(targetType, targetValue, item.metalCost, item.netWeight || item.weight);
+      const subtotal = item.metalCost + computedCharges + (item.gemstoneCost || 0);
       const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
-        makingCharges: amountNum,
+        makingChargeType: targetType,
+        makingChargeValue: targetValue,
+        makingCharges: computedCharges,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax
@@ -613,21 +633,31 @@ const OfflineBilling = () => {
     }));
   };
 
+  const handleUpdateItemMakingCharges = (itemId, newAmount) => {
+    handleUpdateItemMaking(itemId, 'flat', newAmount);
+  };
+
   const handleApplyGlobalMakingRate = () => {
     const amountNum = Math.max(0, parseFloat(bulkMakingRateInput) || 0);
+    setDefaultMakingMode(bulkMakingModeInput);
     setDefaultMakingRate(amountNum);
     setBillItems(prev => prev.map(item => {
-      const subtotal = item.metalCost + amountNum + (item.gemstoneCost || 0);
+      const charge = calculateItemMakingAmount(bulkMakingModeInput, amountNum, item.metalCost, item.netWeight || item.weight);
+      const subtotal = item.metalCost + charge + (item.gemstoneCost || 0);
       const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
-        makingCharges: amountNum,
+        makingChargeType: bulkMakingModeInput,
+        makingChargeValue: amountNum,
+        makingCharges: charge,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax
       };
     }));
     setShowMakingTools(false);
+    setCatalogAlert(`Applied ${bulkMakingModeInput === 'percent' ? amountNum + '%' : bulkMakingModeInput === 'per_gram' ? 'Rs.' + amountNum + '/g' : 'Rs.' + amountNum + ' Flat'} making charges to all items.`);
+    setTimeout(() => setCatalogAlert(''), 3500);
   };
 
   // Calculate live price for catalog product
@@ -648,20 +678,24 @@ const OfflineBilling = () => {
     };
   }, [liveRates, gstRate]);
 
-  // Calculate custom item price with flat making charges
+  // Calculate custom item price with dynamic making charges
   const calculateCustomItemPrice = useCallback((item) => {
     const grossWeight = parseFloat(item.weight) || 0;
     const stoneWeight = parseFloat(item.stoneWeight) || 0;
     const netWeight = Math.max(0, grossWeight - stoneWeight);
-    const makingCharges = parseFloat(item.makingCharges) !== undefined && item.makingCharges !== ''
-      ? Math.max(0, parseFloat(item.makingCharges) || 0)
-      : defaultMakingRate;
-    const material = item.material;
-    const karat = Number(item.karat);
+    const material = item.material || 'gold';
+    const karat = Number(item.karat) || 22;
 
     const baseRate = material === 'silver' ? liveRates.silver : liveRates.gold;
     const purityMult = KARAT_PURITY[karat] || (karat / 24);
     const rawMetalCost = Math.round(netWeight * baseRate * purityMult);
+
+    const chargeType = item.makingChargeType || defaultMakingMode || 'percent';
+    const chargeVal = item.makingChargeValue !== undefined && item.makingChargeValue !== ''
+      ? parseFloat(item.makingChargeValue) || 0
+      : (chargeType === 'percent' ? 12 : chargeType === 'per_gram' ? 500 : 1500);
+
+    const makingCharges = calculateItemMakingAmount(chargeType, chargeVal, rawMetalCost, netWeight);
 
     let gemstoneCost = 0;
     if (item.diamondPrice && parseFloat(item.diamondPrice) > 0) {
@@ -681,6 +715,8 @@ const OfflineBilling = () => {
 
     return {
       rawMetalCost,
+      makingChargeType: chargeType,
+      makingChargeValue: chargeVal,
       makingCharges,
       gemstoneCost,
       subtotal,
@@ -691,7 +727,7 @@ const OfflineBilling = () => {
       karat,
       material
     };
-  }, [liveRates, defaultMakingRate, gstRate]);
+  }, [liveRates, defaultMakingMode, gstRate]);
 
   // Add catalog product to bill
   const addProductToBill = useCallback((product) => {
@@ -718,6 +754,14 @@ const OfflineBilling = () => {
     const purityMap = { 24: 99.9, 22: 91.67, 18: 75.0, 14: 58.3, 999: 99.9, 925: 92.5 };
     const purity = purityMap[itemKarat] || 91.67;
 
+    // Use defaultMakingMode (e.g. 'percent', 12%) or fallback
+    const mType = defaultMakingMode || 'percent';
+    const mVal = defaultMakingRate || 12;
+    const calculatedMaking = calculateItemMakingAmount(mType, mVal, bd.rawMetalCost, itemWeight);
+    const subtotal = bd.rawMetalCost + calculatedMaking + (bd.gemstoneCost || 0);
+    const gstTax = Math.round(subtotal * (gstRate / 100));
+    const totalPrice = subtotal + gstTax;
+
     setBillItems(prev => [...prev, {
       id: Date.now().toString(),
       productId: product._id || product.id,
@@ -728,17 +772,20 @@ const OfflineBilling = () => {
       netWeight: itemWeight,
       ratePerGram: rateUsed,
       purityPercent: purity,
-      makingCharges: bd.makingCharges,
+      makingChargeType: mType,
+      makingChargeValue: mVal,
+      makingCharges: calculatedMaking,
       metalCost: bd.rawMetalCost,
       gemstoneCost: bd.gemstoneCost || 0,
-      subtotal: bd.subtotal,
-      gstTax: bd.gstTax,
-      totalPrice: bd.totalLivePrice,
+      subtotal,
+      gstTax,
+      totalPrice,
       quantity: 1,
       image: imgSrc,
-      isCustomItem: false
+      isCustomItem: false,
+      huid: product.huid || ''
     }]);
-  }, [billItems, getLivePrice]);
+  }, [billItems, getLivePrice, defaultMakingMode, defaultMakingRate, liveRates]);
 
   // Add bespoke custom item
   const addCustomItemToBill = useCallback(() => {
@@ -764,7 +811,9 @@ const OfflineBilling = () => {
       netWeight: bd.netWeight,
       ratePerGram: rateUsed,
       purityPercent: purity,
-      makingCharges: bd.makingCharges, // Exact rupee making charge
+      makingChargeType: bd.makingChargeType || 'percent',
+      makingChargeValue: bd.makingChargeValue !== undefined ? bd.makingChargeValue : 12,
+      makingCharges: bd.makingCharges,
       metalCost: bd.rawMetalCost,
       gemstoneCost: bd.gemstoneCost,
       subtotal: bd.subtotal,
@@ -772,7 +821,8 @@ const OfflineBilling = () => {
       totalPrice: bd.totalLivePrice,
       quantity: qty,
       image: customItem.image || IMAGE_PRESETS[0].url,
-      isCustomItem: true
+      isCustomItem: true,
+      huid: customItem.huid ? customItem.huid.trim().toUpperCase() : ''
     }]);
 
     setCustomItem({
@@ -781,7 +831,9 @@ const OfflineBilling = () => {
       karat: 22,
       weight: '',
       stoneWeight: '',
-      makingCharges: '1500',
+      makingChargeType: 'percent',
+      makingChargeValue: '12',
+      makingCharges: '0',
       quantity: 1,
       hasDiamond: false,
       diamondCarat: '',
@@ -789,10 +841,11 @@ const OfflineBilling = () => {
       diamondColor: 'G',
       diamondClarity: 'VS1',
       diamondPrice: '',
+      huid: '',
       image: IMAGE_PRESETS[0].url
     });
     setShowCustomForm(false);
-  }, [customItem, calculateCustomItemPrice]);
+  }, [customItem, calculateCustomItemPrice, liveRates]);
 
   // Edit line item modal/drawer
   const handleStartEditItem = (item) => {
@@ -802,9 +855,12 @@ const OfflineBilling = () => {
       weight: item.weight,
       karat: item.karat,
       material: item.material,
+      makingChargeType: item.makingChargeType || 'percent',
+      makingChargeValue: item.makingChargeValue !== undefined ? item.makingChargeValue : 12,
       makingCharges: item.makingCharges ?? 0,
       gemstoneCost: item.gemstoneCost || 0,
-      image: item.image
+      image: item.image,
+      huid: item.huid || ''
     });
   };
 
@@ -813,9 +869,6 @@ const OfflineBilling = () => {
       if (item.id !== itemId) return item;
 
       const weight = parseFloat(editItemForm.weight) || item.weight;
-      const makingCharges = parseFloat(editItemForm.makingCharges) !== undefined && !isNaN(parseFloat(editItemForm.makingCharges))
-        ? Math.max(0, parseFloat(editItemForm.makingCharges))
-        : (item.makingCharges || 0);
       const karat = Number(editItemForm.karat) || item.karat;
       const material = editItemForm.material || item.material;
       const gemstoneCost = parseFloat(editItemForm.gemstoneCost) || 0;
@@ -823,6 +876,11 @@ const OfflineBilling = () => {
       const baseRate = material === 'silver' ? liveRates.silver : liveRates.gold;
       const purityMult = KARAT_PURITY[karat] || (karat / 24);
       const rawMetalCost = Math.round(weight * baseRate * purityMult);
+
+      const mType = editItemForm.makingChargeType || item.makingChargeType || 'percent';
+      const mVal = editItemForm.makingChargeValue !== undefined ? parseFloat(editItemForm.makingChargeValue) || 0 : (item.makingChargeValue ?? 12);
+      const makingCharges = calculateItemMakingAmount(mType, mVal, rawMetalCost, weight);
+
       const subtotal = rawMetalCost + makingCharges + gemstoneCost;
       const gstTax = Math.round(subtotal * (gstRate / 100));
 
@@ -833,13 +891,16 @@ const OfflineBilling = () => {
         netWeight: weight,
         karat,
         material,
+        makingChargeType: mType,
+        makingChargeValue: mVal,
         makingCharges,
         gemstoneCost,
         metalCost: rawMetalCost,
         subtotal,
         gstTax,
         totalPrice: subtotal + gstTax,
-        image: editItemForm.image || item.image
+        image: editItemForm.image || item.image,
+        huid: editItemForm.huid !== undefined ? editItemForm.huid.trim().toUpperCase() : (item.huid || '')
       };
     }));
     setEditingItemId(null);
@@ -1084,6 +1145,19 @@ const OfflineBilling = () => {
     if (billTotals.totalPayable > 200000 && (!customerPan || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(customerPan.trim().toUpperCase()))) {
       setCatalogAlert('Statutory Requirement (Rule 114B): Valid 10-character PAN is mandatory for sales exceeding Rs. 2,00,000.');
       setTimeout(() => setCatalogAlert(''), 5000);
+      return;
+    }
+
+    // Statutory Restriction (Section 269ST Income Tax Act): Prohibition of cash receipts >= Rs. 2,00,000
+    const cashPortion = paymentMethod === 'cash'
+      ? (parseFloat(cashReceived) || billTotals.totalPayable)
+      : paymentMethod === 'mixed'
+        ? (parseFloat(splitCashAmount) || 0)
+        : 0;
+
+    if (cashPortion >= 200000) {
+      setCatalogAlert('Statutory Restriction (Section 269ST): Accepting cash of Rs. 2,00,000 or more is strictly prohibited under Income Tax Act. Please collect payment via Card, UPI, or Bank Transfer.');
+      setTimeout(() => setCatalogAlert(''), 6000);
       return;
     }
 
@@ -1399,22 +1473,83 @@ const OfflineBilling = () => {
               className="overflow-hidden border-t border-white/10 mt-3 pt-3"
             >
               <div className="max-w-[1520px] mx-auto flex flex-wrap items-center justify-between gap-4 py-2 text-xs">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-[#B59A6C] font-bold uppercase tracking-wider text-[10px]">
-                    Store-wide Flat Making Charge:
+                    Store-wide Default Making:
                   </span>
+
+                  {/* Mode selector */}
+                  <div className="flex border border-white/20 bg-black/40 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => { setBulkMakingModeInput('percent'); setBulkMakingRateInput('12'); }}
+                      className={`px-2 py-1 text-[9px] font-mono font-bold cursor-pointer transition-colors ${
+                        bulkMakingModeInput === 'percent' ? 'bg-[#B59A6C] text-black' : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      % Percentage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setBulkMakingModeInput('per_gram'); setBulkMakingRateInput('500'); }}
+                      className={`px-2 py-1 text-[9px] font-mono font-bold cursor-pointer transition-colors border-l border-r border-white/20 ${
+                        bulkMakingModeInput === 'per_gram' ? 'bg-[#B59A6C] text-black' : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      Rs./g Per Gram
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setBulkMakingModeInput('flat'); setBulkMakingRateInput('1500'); }}
+                      className={`px-2 py-1 text-[9px] font-mono font-bold cursor-pointer transition-colors ${
+                        bulkMakingModeInput === 'flat' ? 'bg-[#B59A6C] text-black' : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      Flat Rs.
+                    </button>
+                  </div>
+
+                  {/* Value input */}
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white/60 text-[10px]">Rs.</span>
+                    {bulkMakingModeInput !== 'percent' && <span className="text-white/60 text-[10px]">Rs.</span>}
                     <input
                       type="number"
+                      step={bulkMakingModeInput === 'percent' ? '0.1' : '10'}
+                      min="0"
                       value={bulkMakingRateInput}
                       onChange={(e) => setBulkMakingRateInput(e.target.value)}
-                      className="w-24 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
+                      className="w-20 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs font-bold text-white focus:outline-none focus:border-[#B59A6C]"
                     />
-                    <span className="text-white/60 text-[10px]">(flat/item)</span>
+                    <span className="text-white/60 text-[10px]">
+                      {bulkMakingModeInput === 'percent' ? '%' : bulkMakingModeInput === 'per_gram' ? '/g' : 'flat'}
+                    </span>
+
+                    {/* Quick Preset Buttons */}
+                    <div className="flex gap-1 ml-1">
+                      {(bulkMakingModeInput === 'percent'
+                        ? [8, 10, 12, 14, 16, 18, 20]
+                        : bulkMakingModeInput === 'per_gram'
+                          ? [350, 450, 550, 650, 750]
+                          : [500, 1000, 1500, 2500]
+                      ).map(val => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setBulkMakingRateInput(String(val))}
+                          className={`px-1.5 py-0.5 text-[8px] font-mono cursor-pointer border transition-colors ${
+                            String(val) === String(bulkMakingRateInput)
+                              ? 'bg-[#B59A6C] text-black font-bold border-[#B59A6C]'
+                              : 'bg-black/50 text-white/70 border-white/20 hover:border-white'
+                          }`}
+                        >
+                          {bulkMakingModeInput === 'percent' ? `${val}%` : val}
+                        </button>
+                      ))}
+                    </div>
+
                     <button
                       onClick={handleApplyGlobalMakingRate}
-                      className="px-3 py-1 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors ml-1 cursor-pointer"
+                      className="px-3 py-1 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors ml-2 cursor-pointer"
                     >
                       Update All Items
                     </button>
@@ -1784,7 +1919,28 @@ const OfflineBilling = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search jewelry catalog by name, code, material..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        e.preventDefault();
+                        const query = searchQuery.trim().toLowerCase();
+                        const matched = products.find(p =>
+                          (p.sku && p.sku.toLowerCase() === query) ||
+                          (p.barcode && p.barcode.toLowerCase() === query) ||
+                          (p.huid && p.huid.toLowerCase() === query) ||
+                          (p.name && p.name.toLowerCase() === query)
+                        );
+                        if (matched) {
+                          addProductToBill(matched);
+                          setSearchQuery('');
+                          setCatalogAlert(`Barcode Scanned: Added "${matched.name}" to bill.`);
+                          setTimeout(() => setCatalogAlert(''), 3000);
+                        } else {
+                          setCatalogAlert(`No exact barcode/SKU match for "${searchQuery.trim()}". Showing search results.`);
+                          setTimeout(() => setCatalogAlert(''), 3000);
+                        }
+                      }
+                    }}
+                    placeholder="Search catalog or scan physical barcode / SKU / HUID..."
                     className="w-full px-4 py-3 bg-white border border-gray-200 text-sm font-body text-[#222222] placeholder-gray-400 focus:outline-none focus:border-[#222222] transition-all shadow-sm"
                   />
                 </div>
@@ -2001,38 +2157,146 @@ const OfflineBilling = () => {
 
                       {/* Making Charges & Diamond */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-1.5">
+                        <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-2">
                           <div className="flex justify-between items-center">
-                            <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-700">Making Charges (Flat Rs.)</label>
-                            <span className="text-[8px] font-mono text-[#B59A6C] font-bold">Lump Sum</span>
-                          </div>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-gray-400">Rs.</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={customItem.makingCharges}
-                              onChange={(e) => setCustomItem(prev => ({ ...prev, makingCharges: e.target.value }))}
-                              placeholder="e.g. 1500"
-                              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
-                            />
-                          </div>
-                          <div className="flex gap-1 flex-wrap pt-0.5">
-                            {[0, 500, 1000, 1500, 2500, 5000].map(amt => (
+                            <label className="block text-[9px] font-body font-bold uppercase tracking-wider text-gray-700">Making Charges</label>
+                            {/* Mode selector */}
+                            <div className="flex border border-gray-300 overflow-hidden bg-white text-[8px] font-mono font-bold">
                               <button
-                                key={amt}
                                 type="button"
-                                onClick={() => setCustomItem(prev => ({ ...prev, makingCharges: String(amt) }))}
-                                className={`px-2 py-0.5 border text-[8px] font-mono font-bold cursor-pointer transition-colors ${
-                                  customItem.makingCharges === String(amt)
-                                    ? 'bg-[#222222] text-white border-[#222222]'
-                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#B59A6C]'
+                                onClick={() => setCustomItem(prev => ({ ...prev, makingChargeType: 'percent', makingChargeValue: '12' }))}
+                                className={`px-1.5 py-0.5 cursor-pointer ${
+                                  (customItem.makingChargeType || 'percent') === 'percent'
+                                    ? 'bg-[#222222] text-white'
+                                    : 'text-gray-600 hover:text-black'
                                 }`}
                               >
-                                {amt === 0 ? 'Free' : `Rs.${amt}`}
+                                % Rate
                               </button>
-                            ))}
+                              <button
+                                type="button"
+                                onClick={() => setCustomItem(prev => ({ ...prev, makingChargeType: 'per_gram', makingChargeValue: '500' }))}
+                                className={`px-1.5 py-0.5 cursor-pointer border-l border-r border-gray-300 ${
+                                  customItem.makingChargeType === 'per_gram'
+                                    ? 'bg-[#222222] text-white'
+                                    : 'text-gray-600 hover:text-black'
+                                }`}
+                              >
+                                Rs./g
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setCustomItem(prev => ({ ...prev, makingChargeType: 'flat', makingChargeValue: '1500' }))}
+                                className={`px-1.5 py-0.5 cursor-pointer ${
+                                  customItem.makingChargeType === 'flat'
+                                    ? 'bg-[#222222] text-white'
+                                    : 'text-gray-600 hover:text-black'
+                                }`}
+                              >
+                                Flat Rs.
+                              </button>
+                            </div>
                           </div>
+
+                          {(customItem.makingChargeType || 'percent') === 'percent' ? (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[8px] font-mono text-gray-500 uppercase">Custom %:</span>
+                                <div className="flex items-center border border-gray-300 px-2 py-1 bg-white flex-1">
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="100"
+                                    value={customItem.makingChargeValue ?? 12}
+                                    onChange={(e) => setCustomItem(prev => ({ ...prev, makingChargeValue: e.target.value }))}
+                                    placeholder="12"
+                                    className="w-full text-xs font-mono font-bold text-[#222222] focus:outline-none"
+                                  />
+                                  <span className="text-[10px] font-mono text-gray-400 font-bold ml-1">%</span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 flex-wrap">
+                                {[8, 10, 12, 14, 16, 18, 20].map(pct => (
+                                  <button
+                                    key={pct}
+                                    type="button"
+                                    onClick={() => setCustomItem(prev => ({ ...prev, makingChargeValue: String(pct) }))}
+                                    className={`px-1.5 py-0.5 border text-[8px] font-mono font-bold cursor-pointer transition-colors ${
+                                      String(customItem.makingChargeValue ?? 12) === String(pct)
+                                        ? 'bg-[#B59A6C] text-black border-[#B59A6C]'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    {pct}%
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : customItem.makingChargeType === 'per_gram' ? (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[8px] font-mono text-gray-500 uppercase">Rate/g:</span>
+                                <div className="flex items-center border border-gray-300 px-2 py-1 bg-white flex-1">
+                                  <span className="text-[10px] font-mono text-gray-400 mr-1">Rs.</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={customItem.makingChargeValue ?? 500}
+                                    onChange={(e) => setCustomItem(prev => ({ ...prev, makingChargeValue: e.target.value }))}
+                                    placeholder="500"
+                                    className="w-full text-xs font-mono font-bold text-[#222222] focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-1 flex-wrap">
+                                {[350, 450, 550, 650, 750].map(amt => (
+                                  <button
+                                    key={amt}
+                                    type="button"
+                                    onClick={() => setCustomItem(prev => ({ ...prev, makingChargeValue: String(amt) }))}
+                                    className={`px-1.5 py-0.5 border text-[8px] font-mono font-bold cursor-pointer transition-colors ${
+                                      String(customItem.makingChargeValue ?? 500) === String(amt)
+                                        ? 'bg-[#B59A6C] text-black border-[#B59A6C]'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    Rs.{amt}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5">
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-gray-400">Rs.</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={customItem.makingChargeValue ?? 1500}
+                                  onChange={(e) => setCustomItem(prev => ({ ...prev, makingChargeValue: e.target.value }))}
+                                  placeholder="e.g. 1500"
+                                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 text-xs font-mono font-bold text-[#222222] focus:outline-none focus:border-[#222222]"
+                                />
+                              </div>
+                              <div className="flex gap-1 flex-wrap">
+                                {[0, 500, 1000, 1500, 2500].map(amt => (
+                                  <button
+                                    key={amt}
+                                    type="button"
+                                    onClick={() => setCustomItem(prev => ({ ...prev, makingChargeValue: String(amt) }))}
+                                    className={`px-1.5 py-0.5 border text-[8px] font-mono font-bold cursor-pointer transition-colors ${
+                                      String(customItem.makingChargeValue) === String(amt)
+                                        ? 'bg-[#222222] text-white border-[#222222]'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                                    }`}
+                                  >
+                                    {amt === 0 ? 'Free' : `Rs.${amt}`}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="bg-[#FAF9F7] p-3 border border-gray-200 space-y-1.5">
@@ -2517,13 +2781,25 @@ const OfflineBilling = () => {
                                         />
                                       </div>
                                       <div>
-                                        <label className="text-[8px] font-mono text-gray-400 uppercase">Making (Flat Rs.)</label>
-                                        <input
-                                          type="number"
-                                          value={editItemForm.makingCharges}
-                                          onChange={(e) => setEditItemForm(prev => ({ ...prev, makingCharges: e.target.value }))}
-                                          className="w-full px-1.5 py-1 border border-gray-200 font-mono text-xs"
-                                        />
+                                        <label className="text-[8px] font-mono text-gray-400 uppercase">Making ({editItemForm.makingChargeType || 'percent'})</label>
+                                        <div className="flex gap-1">
+                                          <select
+                                            value={editItemForm.makingChargeType || 'percent'}
+                                            onChange={(e) => setEditItemForm(prev => ({ ...prev, makingChargeType: e.target.value }))}
+                                            className="px-1 py-1 border border-gray-200 font-mono text-[9px] bg-white"
+                                          >
+                                            <option value="percent">%</option>
+                                            <option value="per_gram">Rs/g</option>
+                                            <option value="flat">Flat</option>
+                                          </select>
+                                          <input
+                                            type="number"
+                                            step={editItemForm.makingChargeType === 'percent' ? '0.1' : '10'}
+                                            value={editItemForm.makingChargeValue !== undefined ? editItemForm.makingChargeValue : 12}
+                                            onChange={(e) => setEditItemForm(prev => ({ ...prev, makingChargeValue: e.target.value }))}
+                                            className="w-full px-1.5 py-1 border border-gray-200 font-mono text-xs"
+                                          />
+                                        </div>
                                       </div>
                                       <div>
                                         <label className="text-[8px] font-mono text-gray-400 uppercase">Diamond Cost (Rs.)</label>
@@ -2544,33 +2820,160 @@ const OfflineBilling = () => {
                                   </div>
                                 )}
 
-                                {/* Mathematical Breakdown with Direct Flat Making Charge Adjuster */}
+                                {/* Mathematical Breakdown with Dynamic Making Charge Controls */}
                                 {!isEditing && (
-                                  <div className="mt-1.5 space-y-1 text-[9px] text-gray-500">
+                                  <div className="mt-1.5 space-y-1.5 text-[9px] text-gray-500">
                                     <div className="flex justify-between">
                                       <span>Metal ({bi.weight}g x Rs.{(bi.ratePerGram || 0).toLocaleString('en-IN')}/g x {(bi.purityPercent || 91.67).toFixed(1)}%)</span>
                                       <span className="font-mono text-gray-700">Rs.{(bi.metalCost * bi.quantity).toLocaleString('en-IN')}</span>
                                     </div>
 
-                                    {/* INLINE EDITABLE MAKING CHARGE FIELD (FLAT RUPEE AMOUNT) */}
-                                    <div className="flex items-center justify-between bg-white/70 p-1.5 border border-gray-200/60">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-medium text-gray-600">Making Charges:</span>
-                                        <div className="flex items-center border border-gray-300 px-1.5 py-0.5 bg-white">
-                                          <span className="text-[8px] font-mono text-gray-400 mr-1">Rs.</span>
-                                          <input
-                                            type="number"
-                                            min="0"
-                                            value={bi.makingCharges}
-                                            onChange={(e) => handleUpdateItemMakingCharges(bi.id, e.target.value)}
-                                            className="w-16 text-[10px] font-mono font-bold text-[#111111] focus:outline-none"
-                                            placeholder="0"
-                                          />
+                                    {/* DYNAMIC MAKING CHARGES SELECTOR (PERCENTAGE, PER-GRAM, FLAT) */}
+                                    <div className="bg-white/90 p-2 border border-gray-200/80 space-y-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-body font-bold text-[8.5px] uppercase tracking-wider text-gray-700">Making:</span>
+                                          <div className="flex border border-gray-300 overflow-hidden bg-gray-50 text-[8px] font-mono font-bold">
+                                            <button
+                                              type="button"
+                                              onClick={() => handleUpdateItemMaking(bi.id, 'percent', bi.makingChargeType === 'percent' ? (bi.makingChargeValue ?? 12) : 12)}
+                                              className={`px-1.5 py-0.5 cursor-pointer transition-colors ${
+                                                (bi.makingChargeType || 'percent') === 'percent'
+                                                  ? 'bg-[#222222] text-white'
+                                                  : 'text-gray-600 hover:text-black'
+                                              }`}
+                                            >
+                                              % Rate
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleUpdateItemMaking(bi.id, 'per_gram', bi.makingChargeType === 'per_gram' ? (bi.makingChargeValue ?? 500) : 500)}
+                                              className={`px-1.5 py-0.5 cursor-pointer border-l border-r border-gray-300 transition-colors ${
+                                                bi.makingChargeType === 'per_gram'
+                                                  ? 'bg-[#222222] text-white'
+                                                  : 'text-gray-600 hover:text-black'
+                                              }`}
+                                            >
+                                              Rs./g
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleUpdateItemMaking(bi.id, 'flat', bi.makingCharges || 1500)}
+                                              className={`px-1.5 py-0.5 cursor-pointer transition-colors ${
+                                                bi.makingChargeType === 'flat'
+                                                  ? 'bg-[#222222] text-white'
+                                                  : 'text-gray-600 hover:text-black'
+                                              }`}
+                                            >
+                                              Flat
+                                            </button>
+                                          </div>
                                         </div>
+
+                                        <span className="font-mono font-bold text-[10px] text-gray-800">
+                                          Total: Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}
+                                        </span>
                                       </div>
-                                      <span className="font-mono font-bold text-gray-800">
-                                        Total: Rs.{(bi.makingCharges * bi.quantity).toLocaleString('en-IN')}
-                                      </span>
+
+                                      {/* Active Mode Input & Quick Presets */}
+                                      {(bi.makingChargeType || 'percent') === 'percent' ? (
+                                        <div className="space-y-1">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[8px] font-mono text-gray-500 uppercase">Write %:</span>
+                                            <div className="flex items-center border border-gray-300 px-1.5 py-0.5 bg-white flex-1 max-w-[85px]">
+                                              <input
+                                                type="number"
+                                                step="0.1"
+                                                min="0"
+                                                max="100"
+                                                value={bi.makingChargeValue ?? 12}
+                                                onChange={(e) => handleUpdateItemMaking(bi.id, 'percent', e.target.value)}
+                                                className="w-full text-[10px] font-mono font-bold text-[#111111] focus:outline-none"
+                                                placeholder="12"
+                                              />
+                                              <span className="text-[9px] font-mono text-gray-400 font-bold ml-0.5">%</span>
+                                            </div>
+                                            <span className="text-[8px] font-mono text-gray-500">
+                                              ({bi.makingChargeValue ?? 12}% of metal)
+                                            </span>
+                                          </div>
+
+                                          {/* Preset % Chips */}
+                                          <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                            <span className="text-[7.5px] font-mono text-gray-400 uppercase">Presets:</span>
+                                            {[8, 10, 12, 14, 16, 18, 20].map(pct => (
+                                              <button
+                                                key={pct}
+                                                type="button"
+                                                onClick={() => handleUpdateItemMaking(bi.id, 'percent', pct)}
+                                                className={`px-1.5 py-0.2 text-[8px] font-mono cursor-pointer border transition-colors ${
+                                                  Number(bi.makingChargeValue ?? 12) === pct
+                                                    ? 'bg-[#B59A6C] text-black font-bold border-[#B59A6C]'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                                }`}
+                                              >
+                                                {pct}%
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ) : bi.makingChargeType === 'per_gram' ? (
+                                        <div className="space-y-1">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[8px] font-mono text-gray-500 uppercase">Rate/g:</span>
+                                            <div className="flex items-center border border-gray-300 px-1.5 py-0.5 bg-white flex-1 max-w-[95px]">
+                                              <span className="text-[8px] font-mono text-gray-400 mr-1">Rs.</span>
+                                              <input
+                                                type="number"
+                                                step="10"
+                                                min="0"
+                                                value={bi.makingChargeValue ?? 500}
+                                                onChange={(e) => handleUpdateItemMaking(bi.id, 'per_gram', e.target.value)}
+                                                className="w-full text-[10px] font-mono font-bold text-[#111111] focus:outline-none"
+                                                placeholder="500"
+                                              />
+                                            </div>
+                                            <span className="text-[8px] font-mono text-gray-500">
+                                              ({bi.netWeight || bi.weight}g x Rs.{bi.makingChargeValue ?? 500})
+                                            </span>
+                                          </div>
+
+                                          <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                            <span className="text-[7.5px] font-mono text-gray-400 uppercase">Presets:</span>
+                                            {[350, 450, 550, 650, 750].map(rate => (
+                                              <button
+                                                key={rate}
+                                                type="button"
+                                                onClick={() => handleUpdateItemMaking(bi.id, 'per_gram', rate)}
+                                                className={`px-1.5 py-0.2 text-[8px] font-mono cursor-pointer border transition-colors ${
+                                                  Number(bi.makingChargeValue ?? 500) === rate
+                                                    ? 'bg-[#B59A6C] text-black font-bold border-[#B59A6C]'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                                }`}
+                                              >
+                                                {rate}/g
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[8px] font-mono text-gray-500 uppercase">Lump Sum:</span>
+                                            <div className="flex items-center border border-gray-300 px-1.5 py-0.5 bg-white">
+                                              <span className="text-[8px] font-mono text-gray-400 mr-1">Rs.</span>
+                                              <input
+                                                type="number"
+                                                min="0"
+                                                value={bi.makingCharges}
+                                                onChange={(e) => handleUpdateItemMaking(bi.id, 'flat', e.target.value)}
+                                                className="w-20 text-[10px] font-mono font-bold text-[#111111] focus:outline-none"
+                                                placeholder="0"
+                                              />
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
 
                                     {bi.gemstoneCost > 0 && (

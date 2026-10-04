@@ -2194,6 +2194,14 @@ img {
   max-width: 75%;
 }
 
+.max-w-\[85px\]{
+  max-width: 85px;
+}
+
+.max-w-\[95px\]{
+  max-width: 95px;
+}
+
 .max-w-full{
   max-width: 100%;
 }
@@ -4893,8 +4901,16 @@ img {
   font-size: 6px;
 }
 
+.text-\[7\.5px\]{
+  font-size: 7.5px;
+}
+
 .text-\[7px\]{
   font-size: 7px;
+}
+
+.text-\[8\.5px\]{
+  font-size: 8.5px;
 }
 
 .text-\[8px\]{

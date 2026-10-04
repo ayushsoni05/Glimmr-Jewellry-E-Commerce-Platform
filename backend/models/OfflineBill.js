@@ -28,6 +28,8 @@ const billItemSchema = new mongoose.Schema({
   ratePerGram:    { type: Number, default: 0 },
   purityPercent:  { type: Number, default: 91.67 },
   metalCost:      { type: Number, default: 0 },
+  makingChargeType:  { type: String, enum: ['percent', 'per_gram', 'flat'], default: 'percent' },
+  makingChargeValue: { type: Number, default: 12 },
   makingCharges:  { type: Number, default: 0 },
   gemstoneCost:   { type: Number, default: 0 },
   subtotal:       { type: Number, default: 0 },
@@ -36,7 +38,8 @@ const billItemSchema = new mongoose.Schema({
   quantity:       { type: Number, default: 1 },
   image:          { type: String, default: '' },
   productId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-  isCustomItem:   { type: Boolean, default: false }
+  isCustomItem:   { type: Boolean, default: false },
+  huid:           { type: String, default: '' }
 });
 
 // -- Main Bill schema --
