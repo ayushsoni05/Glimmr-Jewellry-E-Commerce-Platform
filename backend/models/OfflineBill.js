@@ -37,7 +37,9 @@ const billItemSchema = new mongoose.Schema({
   totalPrice:     { type: Number, default: 0 },
   quantity:       { type: Number, default: 1 },
   image:          { type: String, default: '' },
-  productId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  productId:      { type: mongoose.Schema.Types.Mixed, default: null },
+  sku:            { type: String, default: '' },
+  barcode:        { type: String, default: '' },
   isCustomItem:   { type: Boolean, default: false },
   huid:           { type: String, default: '' }
 });

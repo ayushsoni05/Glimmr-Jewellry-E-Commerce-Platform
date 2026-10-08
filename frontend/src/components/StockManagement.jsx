@@ -15,8 +15,18 @@ import {
   ShieldCheck, 
   X,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  QrCode,
+  Zap,
+  Globe
 } from 'lucide-react';
+import { 
+  generateQRCodeDataUrl, 
+  generateBarcodeDataUrl, 
+  playScannerSound, 
+  printJewelleryThermalTag 
+} from '../utils/barcodeTagGenerator';
+import { useBarcodeScanner } from '../utils/useBarcodeScanner';
 
 export default function StockManagement({ api }) {
   const [products, setProducts] = useState([]);
@@ -53,6 +63,17 @@ export default function StockManagement({ api }) {
   const [loadingLogs, setLoadingLogs] = useState(false);
 
   const [notification, setNotification] = useState('');
+
+  // Real Scannable Tag Data URLs
+  const [tagQrDataUrl, setTagQrDataUrl] = useState(null);
+  const [tagBarcodeDataUrl, setTagBarcodeDataUrl] = useState(null);
+
+  // Hardware Scanner Machine Integration State
+  const [scannerMode, setScannerMode] = useState('increment'); // 'increment' (+1) | 'set' (exact) | 'decrement' (-1)
+  const [scannerInput, setScannerInput] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [lastScannedItem, setLastScannedItem] = useState(null);
+  const [isScannerGunActive, setIsScannerGunActive] = useState(true);
 
   const fetchVaultSummary = useCallback(async () => {
     try {
@@ -102,6 +123,43 @@ export default function StockManagement({ api }) {
       setLoadingLogs(false);
     }
   }, [api]);
+
+  const handleExecuteScan = useCallback(async (code, mode = scannerMode) => {
+    const targetCode = String(code || '').trim();
+    if (!targetCode) return;
+    setIsScanning(true);
+    try {
+      const res = await api.post('/stock/scan', {
+        code: targetCode,
+        mode,
+        quantity: 1,
+        operator: 'Store Manager'
+      });
+      if (res.data?.success) {
+        playScannerSound('success');
+        setLastScannedItem(res.data.product);
+        setNotification(`${res.data.product?.name} (Stock: ${res.data.product?.stock} pcs) updated & listed live on website.`);
+        fetchStockList();
+        fetchVaultSummary();
+        setTimeout(() => setNotification(''), 5000);
+      }
+    } catch (err) {
+      playScannerSound('error');
+      setNotification(`Scan failed: ${err.response?.data?.error || err.message}`);
+      setTimeout(() => setNotification(''), 5000);
+    } finally {
+      setIsScanning(false);
+      setScannerInput('');
+    }
+  }, [api, scannerMode, fetchStockList, fetchVaultSummary]);
+
+  // Global Hardware Scanner Listener
+  useBarcodeScanner({
+    onScan: (scannedCode) => {
+      handleExecuteScan(scannedCode, scannerMode);
+    },
+    enabled: isScannerGunActive
+  });
 
   useEffect(() => {
     fetchStockList();
@@ -154,63 +212,32 @@ export default function StockManagement({ api }) {
     }
   };
 
-  const handlePrintTag = (product) => {
+  const handlePrintTag = async (product) => {
     setSelectedProductForTag(product);
+    const sku = product.sku || `MJ-${(product._id || '').slice(-6).toUpperCase()}`;
+    const payload = JSON.stringify({
+      sku,
+      huid: product.huid || '',
+      wt: (product.netWeight || product.weight || 0).toFixed(3),
+      k: product.karat || 22,
+      id: product._id
+    });
+    try {
+      const [qr, bar] = await Promise.all([
+        generateQRCodeDataUrl(payload, { width: 140 }),
+        generateBarcodeDataUrl(product.barcode || sku, { width: 1.6, height: 32 })
+      ]);
+      setTagQrDataUrl(qr);
+      setTagBarcodeDataUrl(bar);
+    } catch (e) {
+      console.error('Failed to generate tag codes:', e);
+    }
   };
 
   const triggerDirectTagPrint = () => {
-    const printWindow = window.open('', '_blank', 'width=450,height=300');
-    if (!printWindow || !selectedProductForTag) return;
-
-    const p = selectedProductForTag;
-    const sku = p.sku || `MJ-${p._id.slice(-6).toUpperCase()}`;
-    const karatStr = p.material === 'gold' ? `${p.karat || 22}K 916` : '925 Silver';
-    const wt = (p.netWeight || p.weight || 0).toFixed(3);
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Jewellery Tag - ${sku}</title>
-          <style>
-            @page { size: 50mm 25mm; margin: 0; }
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              margin: 0;
-              padding: 2mm 3mm;
-              font-size: 8px;
-              color: #111;
-              line-height: 1.2;
-            }
-            .brand { font-size: 9px; font-weight: bold; letter-spacing: 0.1em; text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 1px; margin-bottom: 2px; }
-            .sku { font-family: monospace; font-size: 10px; font-weight: bold; text-align: center; }
-            .row { display: flex; justify-content: space-between; margin-top: 1px; font-size: 8px; }
-            .huid { font-size: 7px; color: #444; text-align: center; margin-top: 2px; }
-            .barcode { letter-spacing: 3px; font-family: monospace; font-size: 11px; text-align: center; margin-top: 2px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="brand">NEW MONIKA JEWELLERS</div>
-          <div class="sku">${sku}</div>
-          <div class="row">
-            <span><strong>Purity:</strong> ${karatStr}</span>
-            <span><strong>Net Wt:</strong> ${wt}g</span>
-          </div>
-          <div class="row">
-            <span><strong>Cat:</strong> ${(p.category || 'Jewellery').toUpperCase()}</span>
-            <span><strong>BIS:</strong> Hallmarked</span>
-          </div>
-          ${p.huid ? `<div class="huid">HUID: ${p.huid}</div>` : ''}
-          <div class="barcode">||| |||| || |||</div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 400);
+    if (selectedProductForTag) {
+      printJewelleryThermalTag(selectedProductForTag);
+    }
   };
 
   const getStatusBadge = (status, stock) => {
@@ -337,6 +364,116 @@ export default function StockManagement({ api }) {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* HARDWARE QR / BARCODE SCANNER TOOLBAR */}
+      <div className="bg-white border-2 border-[#B59A6C]/40 p-4 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-28 h-28 bg-[#B59A6C]/5 rounded-full pointer-events-none" />
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#222222] text-[#B59A6C] flex items-center justify-center shrink-0 shadow-xs">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#B59A6C]">Hardware Scanner Engine</span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[8px] font-mono font-bold uppercase border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Scanner Gun Listening
+                </span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-blue-50 text-blue-700 text-[8px] font-mono font-bold uppercase border border-blue-200">
+                  <Globe className="w-2.5 h-2.5" />
+                  Auto-Lists on Website
+                </span>
+              </div>
+              <p className="text-xs text-gray-700 font-bold mt-0.5">
+                Scan any jewellery tag with scanner machine to update stock and instantly list online
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Mode Selector */}
+            <div className="flex items-center bg-[#FAF9F7] border border-gray-200 p-0.5">
+              <button
+                type="button"
+                onClick={() => setScannerMode('increment')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                  scannerMode === 'increment' ? 'bg-[#222222] text-white' : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                +1 Stock Intake
+              </button>
+              <button
+                type="button"
+                onClick={() => setScannerMode('set')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                  scannerMode === 'set' ? 'bg-[#222222] text-white' : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                Audit Count
+              </button>
+              <button
+                type="button"
+                onClick={() => setScannerMode('decrement')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${
+                  scannerMode === 'decrement' ? 'bg-[#222222] text-white' : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                -1 Sold / Reduce
+              </button>
+            </div>
+
+            {/* Direct Input & Execute Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleExecuteScan(scannerInput, scannerMode);
+              }}
+              className="flex items-center gap-1.5"
+            >
+              <input
+                type="text"
+                placeholder="Scan or type SKU / Barcode / HUID..."
+                value={scannerInput}
+                onChange={(e) => setScannerInput(e.target.value)}
+                className="w-56 px-3 py-1.5 bg-[#FAF9F7] border border-gray-300 text-xs font-mono font-bold text-[#111111] focus:outline-none focus:border-[#222222]"
+              />
+              <button
+                type="submit"
+                disabled={isScanning || !scannerInput.trim()}
+                className="px-3.5 py-1.5 bg-[#222222] hover:bg-[#B59A6C] text-white text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {isScanning ? 'Updating...' : 'Commit'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Last Scanned Item Banner */}
+        {lastScannedItem && (
+          <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs bg-[#FAF9F7] p-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono text-[#B59A6C] font-bold uppercase tracking-wider">Latest Scan:</span>
+              <span className="font-bold text-[#111111]">{lastScannedItem.name}</span>
+              <span className="font-mono text-gray-500">[{lastScannedItem.sku || lastScannedItem.barcode || 'NO-SKU'}]</span>
+              {lastScannedItem.huid && (
+                <span className="px-1.5 py-0.2 bg-[#B59A6C]/10 text-[#B59A6C] border border-[#B59A6C]/30 text-[9px] font-mono font-bold">
+                  HUID: {lastScannedItem.huid}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-extrabold text-emerald-800">
+                New Stock: {lastScannedItem.stock} pcs
+              </span>
+              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase tracking-widest border border-emerald-300">
+                Listed Live on Website
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -703,12 +840,23 @@ export default function StockManagement({ api }) {
                     HUID: {selectedProductForTag.huid}
                   </div>
                 )}
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="font-mono text-sm tracking-widest font-bold">
-                    |||||| | |||| || |||
+                <div className="pt-2 border-t border-gray-200 space-y-2">
+                  <div className="flex items-center justify-center gap-3">
+                    {tagQrDataUrl && (
+                      <div className="bg-white p-1 border border-gray-200 shadow-xs">
+                        <img src={tagQrDataUrl} alt="QR Code" className="w-16 h-16 object-contain" />
+                        <span className="text-[7px] font-mono text-gray-400 block mt-0.5">2D QR TAG</span>
+                      </div>
+                    )}
+                    {tagBarcodeDataUrl && (
+                      <div className="bg-white p-1 border border-gray-200 shadow-xs flex-1 flex flex-col items-center">
+                        <img src={tagBarcodeDataUrl} alt="Barcode" className="h-8 max-w-full object-contain" />
+                        <span className="text-[7px] font-mono text-gray-500 block mt-0.5 tracking-wider">{selectedProductForTag.barcode || selectedProductForTag.sku}</span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[8px] text-gray-400 uppercase tracking-widest">
-                    Standard 50x25mm BIS Thermal Label
+                  <span className="text-[8px] text-gray-400 uppercase tracking-widest block">
+                    Scannable 50x25mm BIS Thermal Label
                   </span>
                 </div>
               </div>

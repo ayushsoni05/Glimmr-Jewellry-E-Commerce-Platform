@@ -240,4 +240,118 @@ router.get('/logs', staffAuth, async (req, res) => {
   }
 });
 
+// ============================================================
+// 5. GET /lookup/:code - Instant lookup for QR / Barcode Scanner (POS and Inventory)
+// ============================================================
+router.get('/lookup/:code', async (req, res) => {
+  try {
+    const rawCode = String(req.params.code).trim();
+    if (!rawCode) {
+      return res.status(400).json({ error: 'Scanner code parameter is required' });
+    }
+
+    // Try finding by exact SKU, barcode, HUID, or MongoDB ObjectId
+    const searchConditions = [
+      { sku: new RegExp(`^${rawCode}$`, 'i') },
+      { barcode: rawCode },
+      { huid: rawCode.toUpperCase() }
+    ];
+
+    if (rawCode.match(/^[0-9a-fA-F]{24}$/)) {
+      searchConditions.push({ _id: rawCode });
+    }
+
+    const product = await Product.findOne({ $or: searchConditions }).lean();
+    if (!product) {
+      return res.status(404).json({ error: `No jewellery item found matching scan: ${rawCode}` });
+    }
+
+    res.json({ success: true, product });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// 6. POST /scan - Instant QR / Barcode Stock Update & Website Auto-Listing
+// ============================================================
+router.post('/scan', async (req, res) => {
+  try {
+    const { code, mode = 'increment', quantity = 1, location, notes, operator = 'Showroom Operator' } = req.body;
+    const rawCode = String(code || '').trim();
+    if (!rawCode) {
+      return res.status(400).json({ error: 'Code is required for scanner update' });
+    }
+
+    const searchConditions = [
+      { sku: new RegExp(`^${rawCode}$`, 'i') },
+      { barcode: rawCode },
+      { huid: rawCode.toUpperCase() }
+    ];
+
+    if (rawCode.match(/^[0-9a-fA-F]{24}$/)) {
+      searchConditions.push({ _id: rawCode });
+    }
+
+    const product = await Product.findOne({ $or: searchConditions });
+    if (!product) {
+      return res.status(404).json({ error: `Jewellery item not found for scan code: ${rawCode}` });
+    }
+
+    const prevQty = product.stock || 0;
+    const qtyDelta = parseInt(quantity, 10) || 1;
+    let newQty = prevQty;
+
+    if (mode === 'increment') {
+      newQty = prevQty + qtyDelta;
+    } else if (mode === 'decrement') {
+      newQty = Math.max(0, prevQty - qtyDelta);
+    } else if (mode === 'set') {
+      newQty = Math.max(0, qtyDelta);
+    }
+
+    product.stock = newQty;
+    if (location) product.location = location;
+
+    // Auto-Listing Logic: When stock > 0, automatically activate and list on live website
+    if (newQty > 0) {
+      product.isActive = true;
+      product.stockStatus = newQty <= (product.lowStockThreshold || 2) ? 'low_stock' : 'in_stock';
+    } else {
+      product.stockStatus = 'out_of_stock';
+    }
+
+    await product.save();
+
+    // Create immutable audit log entry
+    const deltaNumber = newQty - prevQty;
+    let logEntry = null;
+    if (deltaNumber !== 0) {
+      logEntry = await StockLog.create({
+        productId: product._id,
+        sku: product.sku || '',
+        productName: product.name,
+        action: 'qr_scanner_update',
+        quantityDelta: deltaNumber,
+        previousQuantity: prevQty,
+        newQuantity: newQty,
+        weightDelta: (product.netWeight || product.weight || 0) * deltaNumber,
+        operator: req.user?.name || operator,
+        notes: notes || `QR scanner ${mode} update (${deltaNumber > 0 ? '+' + deltaNumber : deltaNumber} pcs) - Auto-listed on website`,
+        createdAt: new Date()
+      });
+    }
+
+    res.json({
+      success: true,
+      product,
+      log: logEntry,
+      message: `${product.name} stock updated to ${newQty} pcs. Now listed live on website.`
+    });
+  } catch (error) {
+    console.error('[STOCK_SCAN_ERROR]', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

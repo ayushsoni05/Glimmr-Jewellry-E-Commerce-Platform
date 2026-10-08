@@ -6,12 +6,14 @@ import api from '../api';
 import { getProductImage } from '../utils/productImages';
 import { calculateProductLivePrice, KARAT_PURITY, DIAMOND_CUT_MULTIPLIERS, DIAMOND_COLOR_MULTIPLIERS, DIAMOND_CLARITY_MULTIPLIERS } from '../utils/productPricing';
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
-import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setCachedRates, recordPaymentLocally, getPendingBills } from '../utils/billingStorage';
+import { getNextBillNumber, saveBillLocally, getSavedBills, getCachedRates, setCachedRates, recordPaymentLocally, getPendingBills, fetchBillsWithFallback } from '../utils/billingStorage';
 import BillingInvoice from '../components/BillingInvoice';
 import DayEndReport from '../components/DayEndReport';
 import { createRateLock, getActiveLocks, redeemRateLock, formatLockExpiry } from '../utils/rateLockStorage';
 import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../components/Icons';
 import RecordPaymentDrawer from '../components/RecordPaymentDrawer';
+import { useBarcodeScanner } from '../utils/useBarcodeScanner';
+import { playScannerSound } from '../utils/barcodeTagGenerator';
 
 export const calculateItemMakingAmount = (type, value, rawMetalCost, netWeight) => {
   const numVal = Math.max(0, parseFloat(value) || 0);
@@ -415,10 +417,16 @@ const OfflineBilling = () => {
   const [invoiceBillData, setInvoiceBillData] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [billHistory, setBillHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showZReport, setShowZReport] = useState(false);
   const [showRateLockDrawer, setShowRateLockDrawer] = useState(false);
   const [activeLocks, setActiveLocks] = useState(() => getActiveLocks());
+
+  // Hardware Barcode & QR Scanner Machine State
+  const [lastScannedTag, setLastScannedTag] = useState(null);
+  const [scannerManualInput, setScannerManualInput] = useState('');
+  const [isScannerProcessing, setIsScannerProcessing] = useState(false);
 
   // Phase 2: Bill History Filters
   const [historySearch, setHistorySearch] = useState('');
@@ -514,13 +522,32 @@ const OfflineBilling = () => {
     return () => clearInterval(interval);
   }, [rateStatus]);
 
-  // Load saved bills history
-  useEffect(() => {
-    if (showHistory) {
+  // Load saved bills history from backend MongoDB and offline storage
+  const loadHistory = useCallback(async () => {
+    setIsHistoryLoading(true);
+    try {
+      const bills = await fetchBillsWithFallback(api);
+      setBillHistory(Array.isArray(bills) ? bills : []);
+    } catch (err) {
+      console.warn('loadHistory error, falling back to local storage:', err);
       const saved = getSavedBills();
       setBillHistory(Array.isArray(saved) ? saved : []);
+    } finally {
+      setIsHistoryLoading(false);
     }
-  }, [showHistory]);
+  }, []);
+
+  // Fetch history on initial component mount
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  // Refresh history whenever history view is opened
+  useEffect(() => {
+    if (showHistory) {
+      loadHistory();
+    }
+  }, [showHistory, loadHistory]);
 
   // Filter products safely with category stemming
   const filteredProducts = useMemo(() => {
@@ -552,17 +579,24 @@ const OfflineBilling = () => {
     setLiveRates(newRates);
     setRateStatus('custom');
     setIsEditingRates(false);
+    setCachedRates(newRates);
 
-    // Recalculate existing items with new rates and current GST rate
+    // Recalculate existing items with new rates, purity ratio, and dynamic making charge modes
     setBillItems(prevItems => prevItems.map(item => {
       const rate = item.material === 'silver' ? sRate : gRate;
       const purityMult = KARAT_PURITY[item.karat] || (item.karat / 24);
-      const rawMetalCost = Math.round(item.weight * rate * purityMult);
-      const makingCharges = Math.round(item.weight * (item.makingChargeRate || defaultMakingRate));
+      const netWeight = item.netWeight || item.weight || 0;
+      const rawMetalCost = Math.round(netWeight * rate * purityMult);
+      
+      const mType = item.makingChargeType || defaultMakingMode || 'percent';
+      const mVal = item.makingChargeValue !== undefined ? item.makingChargeValue : (item.makingChargeRate || defaultMakingRate);
+      const makingCharges = calculateItemMakingAmount(mType, mVal, rawMetalCost, netWeight);
+      
       const subtotal = rawMetalCost + makingCharges + (item.gemstoneCost || 0);
       const gstTax = Math.round(subtotal * (gstRate / 100));
       return {
         ...item,
+        ratePerGram: rate,
         metalCost: rawMetalCost,
         makingCharges,
         subtotal,
@@ -570,6 +604,9 @@ const OfflineBilling = () => {
         totalPrice: subtotal + gstTax
       };
     }));
+
+    setCatalogAlert(`Today's Showroom Board Rate Applied: Gold 24K Rs.${gRate.toLocaleString('en-IN')}/g | Silver Rs.${sRate.toLocaleString('en-IN')}/g`);
+    setTimeout(() => setCatalogAlert(''), 4000);
   };
 
   const handleResetToMarketRates = () => {
@@ -786,6 +823,88 @@ const OfflineBilling = () => {
       huid: product.huid || ''
     }]);
   }, [billItems, getLivePrice, defaultMakingMode, defaultMakingRate, liveRates]);
+
+  // Hardware Barcode & QR Scanner Handler (USB / Bluetooth Laser Scanner & 2D QR Scanner)
+  const handleHardwareScan = useCallback(async (scannedCode) => {
+    if (!scannedCode || isScannerProcessing) return;
+    const code = String(scannedCode).trim();
+    if (!code) return;
+
+    setIsScannerProcessing(true);
+    try {
+      const allList = Array.isArray(products) && products.length > 0 ? products : OFFLINE_FALLBACK_PRODUCTS;
+      const lowerCode = code.toLowerCase();
+
+      // 1. Check local catalog by SKU, Barcode, HUID, or ID
+      const localMatch = allList.find(p => {
+        const matchSku = p.sku && p.sku.toLowerCase() === lowerCode;
+        const matchBarcode = p.barcode && p.barcode.toLowerCase() === lowerCode;
+        const matchHuid = p.huid && p.huid.toLowerCase() === lowerCode;
+        const matchId = String(p._id || p.id) === code;
+        return matchSku || matchBarcode || matchHuid || matchId;
+      });
+
+      if (localMatch) {
+        addProductToBill(localMatch);
+        playScannerSound('success');
+        setLastScannedTag({ code, name: localMatch.name, status: 'success', time: new Date() });
+        setCatalogAlert(`Scanner Machine: Added "${localMatch.name}" (${localMatch.sku || code}) to bill.`);
+        setTimeout(() => setCatalogAlert(''), 4000);
+        return;
+      }
+
+      // 2. Query backend stock lookup endpoint
+      try {
+        const res = await api.get(`/stock/lookup/${encodeURIComponent(code)}`);
+        if (res.data?.success && res.data?.product) {
+          const prod = res.data.product;
+          setProducts(prev => {
+            const exists = prev.some(p => String(p._id || p.id) === String(prod._id || prod.id));
+            return exists ? prev : [prod, ...prev];
+          });
+          addProductToBill(prod);
+          playScannerSound('success');
+          setLastScannedTag({ code, name: prod.name, status: 'success', time: new Date() });
+          setCatalogAlert(`Scanner Machine: Fetched "${prod.name}" (${prod.sku || code}) from inventory.`);
+          setTimeout(() => setCatalogAlert(''), 4000);
+          return;
+        }
+      } catch {
+        // Backend lookup not found or network offline
+      }
+
+      // 3. Fallback catalog lookup
+      const fallbackMatch = OFFLINE_FALLBACK_PRODUCTS.find(p =>
+        (p.sku && p.sku.toLowerCase() === lowerCode) ||
+        (p.barcode && p.barcode.toLowerCase() === lowerCode) ||
+        String(p.id) === code
+      );
+      if (fallbackMatch) {
+        addProductToBill(fallbackMatch);
+        playScannerSound('success');
+        setLastScannedTag({ code, name: fallbackMatch.name, status: 'success', time: new Date() });
+        setCatalogAlert(`Scanner Machine: Added "${fallbackMatch.name}" to bill.`);
+        setTimeout(() => setCatalogAlert(''), 4000);
+        return;
+      }
+
+      // 4. Tag not found in catalog
+      playScannerSound('error');
+      setLastScannedTag({ code, status: 'not_found', time: new Date() });
+      setCatalogAlert(`Tag Not Found: No jewellery piece found matching tag "${code}". Verify barcode or add custom item.`);
+      setTimeout(() => setCatalogAlert(''), 5000);
+    } finally {
+      setIsScannerProcessing(false);
+    }
+  }, [products, isScannerProcessing, addProductToBill]);
+
+  // Global hardware scanner listener
+  useBarcodeScanner({
+    onScan: (cleanCode) => {
+      handleHardwareScan(cleanCode);
+    },
+    enabled: !showInvoice && !showHistory
+  });
 
   // Add bespoke custom item
   const addCustomItemToBill = useCallback(() => {
@@ -1222,8 +1341,21 @@ const OfflineBilling = () => {
 
     saveBillLocally(billData);
 
+    // Immediately update billHistory state so the invoice appears in Bill History
+    setBillHistory(prev => [billData, ...prev.filter(b => (b.billNumber || b.id) !== billData.billNumber)]);
+
     try {
-      api.post('/billing', billData).catch(() => {});
+      api.post('/billing', billData)
+        .then(res => {
+          if (res.data) {
+            const serverBill = { ...res.data, synced: true };
+            setBillHistory(prev => prev.map(b => ((b.billNumber || b.id) === billData.billNumber ? serverBill : b)));
+            markBillSynced(billData.billNumber);
+          }
+        })
+        .catch(err => {
+          console.warn('Backend billing sync deferred, bill stored in local cache:', err);
+        });
     } catch { /* offline fallback: saved locally */ }
 
     setInvoiceBillData(billData);
@@ -1413,7 +1545,7 @@ const OfflineBilling = () => {
           </div>
         </div>
 
-        {/* Owner Custom Rate Editor Drawer */}
+        {/* Owner Custom Rate Editor Drawer - Multi-Karat Showroom Board Rates */}
         <AnimatePresence>
           {isEditingRates && (
             <motion.div
@@ -1422,41 +1554,99 @@ const OfflineBilling = () => {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden border-t border-white/10 mt-3 pt-3"
             >
-              <div className="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center gap-4 py-2">
-                <span className="text-xs text-[#B59A6C] font-bold uppercase tracking-widest whitespace-nowrap">
-                  Custom Rates for this Billing Session:
-                </span>
-                <div className="flex items-center gap-2">
-                  <label className="text-[10px] text-white/60 uppercase">Gold (Rs./g):</label>
-                  <input
-                    type="number"
-                    value={customGoldRate}
-                    onChange={(e) => setCustomGoldRate(e.target.value)}
-                    className="w-28 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
-                  />
+              <div className="max-w-[1520px] mx-auto py-2 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-2.5">
+                  <div>
+                    <span className="text-xs text-[#B59A6C] font-bold uppercase tracking-widest block">
+                      Daily Showroom Board Rates (Manual Rate Master)
+                    </span>
+                    <span className="text-[10px] text-white/50 font-body">
+                      Enter today's base rates. Purity rates for 22K (916), 18K (750), 14K, and silver calculate automatically.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleApplyCustomRates}
+                      className="px-4 py-1.5 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
+                    >
+                      Lock Board Rates
+                    </button>
+                    <button
+                      onClick={handleResetToMarketRates}
+                      className="px-3 py-1.5 border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer text-white/70"
+                    >
+                      Reset to Market Feed
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-[10px] text-white/60 uppercase">Silver (Rs./g):</label>
-                  <input
-                    type="number"
-                    value={customSilverRate}
-                    onChange={(e) => setCustomSilverRate(e.target.value)}
-                    className="w-28 px-2 py-1 bg-black/60 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleApplyCustomRates}
-                    className="px-4 py-1.5 bg-[#B59A6C] text-black text-[10px] font-bold uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
-                  >
-                    Apply to Bill
-                  </button>
-                  <button
-                    onClick={handleResetToMarketRates}
-                    className="px-3 py-1.5 border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer text-white/70"
-                  >
-                    Reset to Market
-                  </button>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {/* 24K Pure Gold */}
+                  <div className="bg-black/40 border border-[#B59A6C]/50 p-2.5">
+                    <label className="text-[9px] text-[#B59A6C] font-bold uppercase block mb-1">
+                      Gold 24K (99.9% Pure)
+                    </label>
+                    <div className="flex items-center">
+                      <span className="text-white/40 font-mono text-xs mr-1">Rs.</span>
+                      <input
+                        type="number"
+                        value={customGoldRate}
+                        onChange={(e) => setCustomGoldRate(e.target.value)}
+                        className="w-full px-2 py-1 bg-black/80 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
+                      />
+                      <span className="text-white/40 font-mono text-[10px] ml-1">/g</span>
+                    </div>
+                  </div>
+
+                  {/* 22K (916) Hallmark */}
+                  <div className="bg-black/30 border border-white/10 p-2.5">
+                    <span className="text-[9px] text-white/70 font-bold uppercase block mb-1">
+                      Gold 22K (916 Hallmark)
+                    </span>
+                    <div className="font-mono text-sm font-bold text-white py-1">
+                      Rs.{Math.round((parseFloat(customGoldRate) || 0) * 0.9167).toLocaleString('en-IN')}<span className="text-[10px] text-white/50 font-normal">/g</span>
+                    </div>
+                    <span className="text-[8px] font-mono text-white/40 block">91.67% Purity Ratio</span>
+                  </div>
+
+                  {/* 18K (750) Hallmark */}
+                  <div className="bg-black/30 border border-white/10 p-2.5">
+                    <span className="text-[9px] text-white/70 font-bold uppercase block mb-1">
+                      Gold 18K (750 Hallmark)
+                    </span>
+                    <div className="font-mono text-sm font-bold text-white py-1">
+                      Rs.{Math.round((parseFloat(customGoldRate) || 0) * 0.750).toLocaleString('en-IN')}<span className="text-[10px] text-white/50 font-normal">/g</span>
+                    </div>
+                    <span className="text-[8px] font-mono text-white/40 block">75.0% Purity Ratio</span>
+                  </div>
+
+                  {/* 14K (585) Hallmark */}
+                  <div className="bg-black/30 border border-white/10 p-2.5">
+                    <span className="text-[9px] text-white/70 font-bold uppercase block mb-1">
+                      Gold 14K (585 Hallmark)
+                    </span>
+                    <div className="font-mono text-sm font-bold text-white py-1">
+                      Rs.{Math.round((parseFloat(customGoldRate) || 0) * 0.5833).toLocaleString('en-IN')}<span className="text-[10px] text-white/50 font-normal">/g</span>
+                    </div>
+                    <span className="text-[8px] font-mono text-white/40 block">58.33% Purity Ratio</span>
+                  </div>
+
+                  {/* Silver 925 */}
+                  <div className="bg-black/40 border border-[#B59A6C]/50 p-2.5">
+                    <label className="text-[9px] text-[#B59A6C] font-bold uppercase block mb-1">
+                      Silver (925 Fine)
+                    </label>
+                    <div className="flex items-center">
+                      <span className="text-white/40 font-mono text-xs mr-1">Rs.</span>
+                      <input
+                        type="number"
+                        value={customSilverRate}
+                        onChange={(e) => setCustomSilverRate(e.target.value)}
+                        className="w-full px-2 py-1 bg-black/80 border border-white/20 font-mono text-xs text-white focus:outline-none focus:border-[#B59A6C]"
+                      />
+                      <span className="text-white/40 font-mono text-[10px] ml-1">/g</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1657,12 +1847,21 @@ const OfflineBilling = () => {
               <h2 className="font-heading text-2xl sm:text-3xl font-bold text-[#111111]">Store Bill History</h2>
               <p className="text-xs font-body text-gray-500 mt-1">Audit log of all offline transactions and invoices created by store staff.</p>
             </div>
-            <button
-              onClick={() => setShowHistory(false)}
-              className="px-4 py-2 bg-[#222222] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer"
-            >
-              + Create New Bill
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => loadHistory()}
+                disabled={isHistoryLoading}
+                className="px-3 py-2 border border-gray-300 text-gray-700 text-xs font-body font-bold uppercase tracking-wider hover:bg-gray-100 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isHistoryLoading ? 'Syncing...' : 'Sync & Refresh'}
+              </button>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="px-4 py-2 bg-[#222222] text-white text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer"
+              >
+                + Create New Bill
+              </button>
+            </div>
           </div>
 
           {/* Filter Toolbar */}
@@ -1912,6 +2111,75 @@ const OfflineBilling = () => {
             {/* ==================================================== */}
             <div className={`w-full lg:w-[58%] space-y-4 ${mobileTab === 'catalog' ? 'block' : 'hidden lg:block'}`}>
 
+              {/* HARDWARE SCANNER MACHINE QUICK BAR */}
+              <div className="bg-[#111111] text-white p-3 border border-gray-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white">
+                        Hardware Scanner Gun Ready
+                      </span>
+                      <span className="text-[8px] font-mono px-1.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800">
+                        USB / Bluetooth 2D QR & Barcode
+                      </span>
+                    </div>
+                    <p className="text-[9px] font-body text-white/50">
+                      Scan physical tag with machine gun to fetch piece directly into bill
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <input
+                    type="text"
+                    value={scannerManualInput}
+                    onChange={(e) => setScannerManualInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && scannerManualInput.trim()) {
+                        e.preventDefault();
+                        handleHardwareScan(scannerManualInput.trim());
+                        setScannerManualInput('');
+                      }
+                    }}
+                    placeholder="Scan / Type SKU or Tag..."
+                    className="w-40 sm:w-48 px-2.5 py-1 bg-white/10 border border-white/20 font-mono text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#B59A6C]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (scannerManualInput.trim()) {
+                        handleHardwareScan(scannerManualInput.trim());
+                        setScannerManualInput('');
+                      }
+                    }}
+                    disabled={isScannerProcessing || !scannerManualInput.trim()}
+                    className="px-3 py-1 bg-[#B59A6C] text-black text-[10px] font-mono font-bold uppercase hover:bg-white transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    Scan
+                  </button>
+                </div>
+              </div>
+
+              {/* Latest Scanner Result Banner */}
+              {lastScannedTag && (
+                <div className={`px-3 py-1.5 text-xs font-mono flex items-center justify-between border ${
+                  lastScannedTag.status === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border-rose-200'
+                }`}>
+                  <span>
+                    Last Scan: <strong>{lastScannedTag.code}</strong> {lastScannedTag.name ? `— ${lastScannedTag.name}` : '(Not Found)'}
+                  </span>
+                  <span className="text-[9px] text-gray-500">
+                    {lastScannedTag.time.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+
               {/* Search & Custom Item Action Bar */}
               <div className="flex gap-3">
                 <div className="flex-1 relative">
@@ -1922,22 +2190,8 @@ const OfflineBilling = () => {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && searchQuery.trim()) {
                         e.preventDefault();
-                        const query = searchQuery.trim().toLowerCase();
-                        const matched = products.find(p =>
-                          (p.sku && p.sku.toLowerCase() === query) ||
-                          (p.barcode && p.barcode.toLowerCase() === query) ||
-                          (p.huid && p.huid.toLowerCase() === query) ||
-                          (p.name && p.name.toLowerCase() === query)
-                        );
-                        if (matched) {
-                          addProductToBill(matched);
-                          setSearchQuery('');
-                          setCatalogAlert(`Barcode Scanned: Added "${matched.name}" to bill.`);
-                          setTimeout(() => setCatalogAlert(''), 3000);
-                        } else {
-                          setCatalogAlert(`No exact barcode/SKU match for "${searchQuery.trim()}". Showing search results.`);
-                          setTimeout(() => setCatalogAlert(''), 3000);
-                        }
+                        handleHardwareScan(searchQuery.trim());
+                        setSearchQuery('');
                       }
                     }}
                     placeholder="Search catalog or scan physical barcode / SKU / HUID..."

@@ -61,10 +61,13 @@ const productSchema = new mongoose.Schema({
 productSchema.pre('save', function(next) {
   if (this.stock <= 0) {
     this.stockStatus = 'out_of_stock';
-  } else if (this.stock <= (this.lowStockThreshold || 2)) {
-    this.stockStatus = 'low_stock';
   } else {
-    this.stockStatus = 'in_stock';
+    this.isActive = true;
+    if (this.stock <= (this.lowStockThreshold || 2)) {
+      this.stockStatus = 'low_stock';
+    } else {
+      this.stockStatus = 'in_stock';
+    }
   }
 
   // Default gross and net weights from weight if not explicitly specified

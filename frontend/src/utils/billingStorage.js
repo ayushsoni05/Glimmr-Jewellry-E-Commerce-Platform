@@ -26,23 +26,99 @@ export function getNextBillNumber() {
   return `BILL-${year}-${counter.toString().padStart(4, '0')}`;
 }
 
+// Helper to sanitize bill items so large base64 strings don't crash localStorage
+function sanitizeBillForStorage(billData) {
+  if (!billData) return billData;
+  const sanitizedItems = (billData.items || []).map(item => ({
+    ...item,
+    image: (item.image && typeof item.image === 'string' && item.image.startsWith('data:')) ? '' : item.image
+  }));
+  return {
+    ...billData,
+    items: sanitizedItems
+  };
+}
+
 // Bill CRUD
 export function saveBillLocally(billData) {
-  const bills = getSavedBills();
-  const bill = { ...billData, synced: false };
-  bills.push(bill);
-  localStorage.setItem('glimmr_bills', JSON.stringify(bills));
-  return bill;
+  try {
+    const bills = getSavedBills();
+    const cleanBill = sanitizeBillForStorage(billData);
+    const billNumber = cleanBill.billNumber || cleanBill.id;
+    const existingIndex = bills.findIndex(b => (b.billNumber || b.id) === billNumber);
+    
+    if (existingIndex >= 0) {
+      bills[existingIndex] = { ...cleanBill, synced: cleanBill.synced || false };
+    } else {
+      bills.unshift({ ...cleanBill, synced: cleanBill.synced || false });
+    }
+    
+    // Store up to 200 most recent bills
+    const trimmed = bills.slice(0, 200);
+    localStorage.setItem('glimmr_bills', JSON.stringify(trimmed));
+    return cleanBill;
+  } catch (err) {
+    console.warn('LocalStorage saveBillLocally warning (quota or storage disabled):', err);
+    return billData;
+  }
 }
 
 export function getSavedBills() {
   try {
     const billsJson = localStorage.getItem('glimmr_bills');
     const bills = billsJson ? JSON.parse(billsJson) : [];
-    return Array.isArray(bills) ? bills.sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
-  } catch {
+    return Array.isArray(bills) ? bills.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)) : [];
+  } catch (err) {
+    console.warn('LocalStorage getSavedBills error:', err);
     return [];
   }
+}
+
+// Combined Fetch: Retrieves bills from MongoDB server and merges with local offline cache
+export async function fetchBillsWithFallback(apiClient) {
+  let localBills = getSavedBills();
+  try {
+    const res = await apiClient.get('/billing?limit=100');
+    const serverBills = res.data?.bills || (Array.isArray(res.data) ? res.data : []);
+    
+    if (Array.isArray(serverBills) && serverBills.length > 0) {
+      // Create a map by billNumber
+      const billMap = new Map();
+      
+      // Add server bills first (marked as synced)
+      for (const sb of serverBills) {
+        const num = sb.billNumber || sb.id || sb._id;
+        if (num) {
+          billMap.set(num, { ...sb, synced: true });
+        }
+      }
+      
+      // Overlay any local unsynced bills that might not have reached server yet
+      for (const lb of localBills) {
+        const num = lb.billNumber || lb.id;
+        if (num && (!billMap.has(num) || !lb.synced)) {
+          billMap.set(num, lb);
+        }
+      }
+      
+      const merged = Array.from(billMap.values()).sort(
+        (a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
+      );
+      
+      // Update local storage cache safely
+      try {
+        const sanitized = merged.slice(0, 200).map(sanitizeBillForStorage);
+        localStorage.setItem('glimmr_bills', JSON.stringify(sanitized));
+      } catch {
+        // Ignore quota warnings
+      }
+      
+      return merged;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch bills from server, using local offline cache:', err);
+  }
+  return localBills;
 }
 
 export function getBillByNumber(billNumber) {
@@ -51,17 +127,25 @@ export function getBillByNumber(billNumber) {
 }
 
 export function deleteBill(billId) {
-  let bills = getSavedBills();
-  bills = bills.filter(b => b.id !== billId && b.billNumber !== billId);
-  localStorage.setItem('glimmr_bills', JSON.stringify(bills));
+  try {
+    let bills = getSavedBills();
+    bills = bills.filter(b => b.id !== billId && b.billNumber !== billId);
+    localStorage.setItem('glimmr_bills', JSON.stringify(bills));
+  } catch (err) {
+    console.warn('deleteBill error:', err);
+  }
 }
 
 export function markBillSynced(billId) {
-  const bills = getSavedBills();
-  const billIndex = bills.findIndex(b => b.id === billId || b.billNumber === billId);
-  if (billIndex !== -1) {
-    bills[billIndex].synced = true;
-    localStorage.setItem('glimmr_bills', JSON.stringify(bills));
+  try {
+    const bills = getSavedBills();
+    const billIndex = bills.findIndex(b => b.id === billId || b.billNumber === billId);
+    if (billIndex !== -1) {
+      bills[billIndex].synced = true;
+      localStorage.setItem('glimmr_bills', JSON.stringify(bills));
+    }
+  } catch (err) {
+    console.warn('markBillSynced error:', err);
   }
 }
 
