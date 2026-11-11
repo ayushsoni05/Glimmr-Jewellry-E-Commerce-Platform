@@ -14,18 +14,33 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [liveRates, setLiveRates] = useState({ gold: 15600, silver: 235 });
+  const [liveRates, setLiveRates] = useState({
+    gold: 14492,
+    silver: 192,
+    gold995: 144341,
+    gold22k: 132844,
+    gold18k: 108691,
+    silverPeti: 191910,
+    silverChorsa: 188456,
+    mcxGold: 141426
+  });
   const [isLiveRatesHovered, setIsLiveRatesHovered] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchHeaderRates = () => {
-      api.get('/prices/latest')
+      api.get('/prices/latest?currency=inr')
         .then(res => {
           if (res.data) {
             setLiveRates({
-              gold: res.data.gold?.price || 15600,
-              silver: res.data.silver?.price || 235
+              gold: res.data.gold?.price || 14492,
+              silver: res.data.silver?.price || 192,
+              gold995: res.data.himanshuBullion?.rates?.gold_995_ask || res.data.gold_10g_24k || 144341,
+              gold22k: res.data.gold_10g_22k || 132844,
+              gold18k: res.data.gold_10g_18k || 108691,
+              silverPeti: res.data.himanshuBullion?.rates?.silver_999_1kg || res.data.silver_1kg || 191910,
+              silverChorsa: res.data.himanshuBullion?.rates?.silver_chorsa_1kg || 188456,
+              mcxGold: res.data.himanshuBullion?.rates?.mcx_gold || 141426
             });
           }
         })
@@ -33,7 +48,7 @@ const Header = () => {
     };
 
     fetchHeaderRates();
-    const interval = setInterval(fetchHeaderRates, 60 * 60 * 1000); // 1 hour
+    const interval = setInterval(fetchHeaderRates, 30 * 1000); // 30 seconds
     return () => clearInterval(interval);
   }, []);
   
@@ -140,8 +155,12 @@ const Header = () => {
               <span>DIDWANA MAP</span>
             </button>
             <Link to="/live-rates" className="hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-colors font-medium">
-              <span className="text-gray-500">IBJA:</span>
-              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 24K ₹{liveRates.gold.toLocaleString('en-IN')}/g</span>
+              <span className="text-gray-500 font-mono text-[10px] uppercase font-bold">HB JODHPUR:</span>
+              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 995 ₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g</span>
+              <span className="hidden lg:inline text-gray-400">•</span>
+              <span className="hidden lg:inline font-mono text-xs text-[#222222]">22K ₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}</span>
+              <span className="hidden xl:inline text-gray-400">•</span>
+              <span className="hidden xl:inline font-mono text-xs text-emerald-700">Silver ₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg</span>
             </Link>
             <span className="hidden sm:inline font-mono font-medium">+91 9351214851</span>
             <div className="hidden sm:flex items-center space-x-2 text-[#222222]">
@@ -226,27 +245,35 @@ const Header = () => {
                   >
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                       <span className="font-mono text-[10px] text-[#B59A6C] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        IBJA OFFICIAL TICKER
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        HB JODHPUR REAL-TIME TICKER
                       </span>
-                      <span className="text-[9px] font-mono text-gray-400">1H HOURLY REFRESH</span>
+                      <span className="text-[9px] font-mono text-gray-400">PRIDE STREAM</span>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
                         <div>
-                          <span className="text-[10px] font-mono text-gray-500 block uppercase">24K PURE GOLD</span>
-                          <span className="font-mono font-bold text-xs text-[#222222]">₹{liveRates.gold.toLocaleString('en-IN')}/g</span>
+                          <span className="text-[10px] font-mono text-gray-500 block uppercase">GOLD 995 JDR (READY)</span>
+                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.gold995 || 144341) / 10).toLocaleString('en-IN')}/g</span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{Math.round(liveRates.gold * 10).toLocaleString('en-IN')}/10g</span>
+                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g</span>
                       </div>
 
                       <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
                         <div>
-                          <span className="text-[10px] font-mono text-gray-500 block uppercase">925 STERLING SILVER</span>
-                          <span className="font-mono font-bold text-xs text-[#222222]">₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
+                          <span className="text-[10px] font-mono text-gray-500 block uppercase">22K 916 HALLMARK</span>
+                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.gold22k || 132844) / 10).toLocaleString('en-IN')}/g</span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{Math.round(liveRates.silver * 10).toLocaleString('en-IN')}/10g</span>
+                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}/10g</span>
+                      </div>
+
+                      <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
+                        <div>
+                          <span className="text-[10px] font-mono text-gray-500 block uppercase">SILVER BANK PETI (999.9)</span>
+                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.silverPeti || 191910) / 1000).toLocaleString('en-IN')}/g</span>
+                        </div>
+                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg</span>
                       </div>
                     </div>
 
@@ -254,7 +281,7 @@ const Header = () => {
                       to="/live-rates" 
                       className="block text-center text-[10px] font-mono font-bold text-[#222222] hover:text-[#B59A6C] uppercase tracking-wider pt-1 hover:underline"
                     >
-                      OPEN FULL ANALYTICS DASHBOARD →
+                      OPEN HIMANSHU BULLION DASHBOARD
                     </Link>
                   </motion.div>
                 )}

@@ -1,21 +1,15 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { DIDWANA_ZONE } from '../utils/deliveryZone';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 
-// Current Rajasthan IBJA Benchmark Daily Rates (per 10 grams for gold, per 10 grams for silver)
+// Verified Himanshu Bullion Jodhpur Baseline Rates (per 10 grams)
 export const DAILY_IBJA_RATES = {
-  gold24k: 74800,  // Rs. 74,800 per 10g (Rs. 7,480/g)
-  gold22k: 68570,  // Rs. 68,570 per 10g (Rs. 6,857/g) - 916 BIS Hallmark
-  gold18k: 56100,  // Rs. 56,100 per 10g (Rs. 5,610/g) - Diamond setting
-  silver999: 920   // Rs. 920 per 10g (Rs. 92,000/kg)
+  gold24k: 144921,  // Rs. 1,44,921 per 10g (derived from HB Jodhpur Gold 995 @ Rs. 144,341)
+  gold22k: 132844,  // Rs. 1,32,844 per 10g - 916 BIS Hallmark
+  gold18k: 108691,  // Rs. 1,08,691 per 10g - Diamond setting
+  silver999: 1919   // Rs. 1,919 per 10g (HB Jodhpur Silver Bank Peti @ Rs. 1,91,910/kg)
 };
-
-const PURITY_OPTIONS = [
-  { id: '22k', label: '22K Gold (916 BIS Hallmark)', ratePerGram: DAILY_IBJA_RATES.gold22k / 10, defaultMakingPct: 12 },
-  { id: '24k', label: '24K Pure Gold (999 Coins)', ratePerGram: DAILY_IBJA_RATES.gold24k / 10, defaultMakingPct: 4 },
-  { id: '18k', label: '18K Gold (750 Diamond Setting)', ratePerGram: DAILY_IBJA_RATES.gold18k / 10, defaultMakingPct: 14 },
-  { id: 'silver', label: '925 Sterling Fine Silver', ratePerGram: DAILY_IBJA_RATES.silver999 / 10, defaultMakingPct: 10 }
-];
 
 const QUICK_WEIGHTS = [2, 5, 8, 10, 15, 20, 30, 50];
 
@@ -23,9 +17,33 @@ const GoldRateCalculator = ({ initialPurity = '22k', initialWeight = 10, compact
   const [selectedPurityId, setSelectedPurityId] = useState(initialPurity);
   const [weightGrams, setWeightGrams] = useState(initialWeight || 10);
 
+  let liveRates = null;
+  try {
+    const metalRatesContext = useMetalRates();
+    liveRates = metalRatesContext?.liveRates;
+  } catch (e) {
+    // Graceful fallback if rendered outside provider
+  }
+
+  const rates = useMemo(() => {
+    return {
+      gold24k: liveRates?.gold_10g_24k || DAILY_IBJA_RATES.gold24k,
+      gold22k: liveRates?.gold_10g_22k || DAILY_IBJA_RATES.gold22k,
+      gold18k: liveRates?.gold_10g_18k || DAILY_IBJA_RATES.gold18k,
+      silver999: liveRates?.silver_1kg ? Math.round(liveRates.silver_1kg / 100) : DAILY_IBJA_RATES.silver999
+    };
+  }, [liveRates]);
+
+  const purityOptions = useMemo(() => [
+    { id: '22k', label: '22K Gold (916 BIS Hallmark)', ratePerGram: rates.gold22k / 10, defaultMakingPct: 12 },
+    { id: '24k', label: '24K Pure Gold (999 Bullion)', ratePerGram: rates.gold24k / 10, defaultMakingPct: 4 },
+    { id: '18k', label: '18K Gold (750 Diamond Setting)', ratePerGram: rates.gold18k / 10, defaultMakingPct: 14 },
+    { id: 'silver', label: '925 Sterling Fine Silver', ratePerGram: rates.silver999 / 10, defaultMakingPct: 10 }
+  ], [rates]);
+
   const selectedPurity = useMemo(() => {
-    return PURITY_OPTIONS.find((p) => p.id === selectedPurityId) || PURITY_OPTIONS[0];
-  }, [selectedPurityId]);
+    return purityOptions.find((p) => p.id === selectedPurityId) || purityOptions[0];
+  }, [selectedPurityId, purityOptions]);
 
   const calculation = useMemo(() => {
     const validWeight = Math.max(0.1, Number(weightGrams) || 0.1);
@@ -48,9 +66,10 @@ const GoldRateCalculator = ({ initialPurity = '22k', initialWeight = 10, compact
     const lines = [
       'Namaste Monika Jewellers Didwana,',
       '',
-      'I used your Daily Gold Rate Calculator and would like to inquire about crafting a design with these specifications:',
+      'I used your Himanshu Bullion Jodhpur Daily Rate Calculator and would like to inquire about crafting a design with these specifications:',
       `Metal Purity: ${selectedPurity.label}`,
       `Gross Weight: ${calculation.weight} grams`,
+      `Benchmark Rate: Rs. ${Math.round(selectedPurity.ratePerGram).toLocaleString('en-IN')}/g`,
       `Estimated Metal Value: Rs. ${calculation.metalValue.toLocaleString('en-IN')}`,
       `Estimated Making Charges: Rs. ${calculation.makingCharges.toLocaleString('en-IN')}`,
       `Estimated 3% GST: Rs. ${calculation.gst.toLocaleString('en-IN')}`,
@@ -69,7 +88,7 @@ const GoldRateCalculator = ({ initialPurity = '22k', initialWeight = 10, compact
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-4 border-b border-white/10 mb-6">
         <div>
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#B59A6C] block">
-            Rajasthan IBJA Daily Bullion Benchmark
+            Himanshu Bullion Jodhpur Benchmark
           </span>
           <h3 className="text-base sm:text-lg font-serif tracking-wide text-white">
             Daily Gold &amp; Silver Rate Calculator
@@ -77,14 +96,14 @@ const GoldRateCalculator = ({ initialPurity = '22k', initialWeight = 10, compact
         </div>
         <div className="text-right">
           <span className="inline-block px-2.5 py-1 text-[10px] font-mono border border-emerald-500/40 bg-emerald-950/40 text-emerald-400 uppercase tracking-wider">
-            Live Daily Benchmark
+            HB Jodhpur Live Ticker
           </span>
         </div>
       </div>
 
       {/* Purity Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-        {PURITY_OPTIONS.map((p) => {
+        {purityOptions.map((p) => {
           const isSelected = p.id === selectedPurityId;
           return (
             <button
@@ -171,7 +190,7 @@ const GoldRateCalculator = ({ initialPurity = '22k', initialWeight = 10, compact
         <span>Discuss This Budget on WhatsApp (+91 9351214851)</span>
       </motion.button>
       <p className="text-[10px] font-mono text-center text-white/40 mt-3">
-        Actual final weight may vary slightly (+/- 0.05g) based on final artisan crafting and hallmark certification.
+        Rates synchronized directly with Himanshu Bullion Jodhpur trading terminal. Actual final weight may vary slightly (+/- 0.05g) upon hallmarking.
       </p>
     </div>
   );

@@ -23,8 +23,8 @@ export const MetalRatesProvider = ({ children }) => {
 
   useEffect(() => {
     fetchMetalRates();
-    // Automatically refresh every 1 hour (3,600,000 ms)
-    const interval = setInterval(fetchMetalRates, 60 * 60 * 1000);
+    // Refresh every 30 seconds for live Himanshu Bullion synchronization
+    const interval = setInterval(fetchMetalRates, 30 * 1000);
     return () => clearInterval(interval);
   }, [fetchMetalRates]);
 
@@ -32,13 +32,22 @@ export const MetalRatesProvider = ({ children }) => {
     return calculateProductLivePrice(product, liveRates);
   }, [liveRates]);
 
+  const himanshuBullion = liveRates?.himanshuBullion || null;
+  const hbRates = liveRates?.himanshuBullion?.rates || liveRates?.rates_per_gram || null;
+  const hbProducts = liveRates?.himanshuBullion?.products || [];
+  const hbRefProducts = liveRates?.himanshuBullion?.refProduct || [];
+
   return (
     <MetalRatesContext.Provider 
       value={{ 
         liveRates, 
         loading, 
         fetchMetalRates, 
-        getLiveProductPrice 
+        getLiveProductPrice,
+        himanshuBullion,
+        hbRates,
+        hbProducts,
+        hbRefProducts
       }}
     >
       {children}

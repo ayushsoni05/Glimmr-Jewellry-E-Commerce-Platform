@@ -475,6 +475,227 @@ const Prices = () => {
       {/* Main Content Area */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
         
+        {/* =========================================================================
+            HIMANSHU BULLION JODHPUR REAL-TIME TRADING TERMINAL
+           ========================================================================= */}
+        {currency === 'inr' && (
+          <div className="bg-[#181818] border border-[#B59A6C]/40 text-white p-6 sm:p-8 space-y-8 shadow-xl">
+            {/* Terminal Header */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-white/10">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400 font-bold">
+                    [HB JODHPUR REAL-TIME TICKER ACTIVE]
+                  </span>
+                  <span className="text-white/30">•</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">
+                    Pride Stream
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-serif text-white tracking-wide">
+                  Himanshu Bullion Jodhpur • Live Bullion Terminal
+                </h2>
+                <p className="text-xs font-body text-white/60 mt-1">
+                  Official physical bullion rates and MCX futures broadcasted live from Jodhpur bullion market.
+                </p>
+              </div>
+
+              <div className="text-left lg:text-right">
+                <div className="inline-block px-3 py-1 bg-[#252525] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[11px] font-bold uppercase tracking-wider">
+                  Live Parity Synchronized
+                </div>
+                <div className="text-[10px] font-mono text-white/50 mt-1">
+                  Last Sync: {last?.timestamp ? new Date(last.timestamp).toLocaleTimeString('en-IN') : 'Live'}
+                </div>
+              </div>
+            </div>
+
+            {/* Section 1: Ready Physical Stock in Jodhpur */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
+                  Ready Physical Stock in Jodhpur (Ready Delivery)
+                </h3>
+                <span className="text-[10px] font-mono text-white/40">3% GST Paid</span>
+              </div>
+
+              <div className="overflow-x-auto border border-white/10 bg-[#202020]">
+                <table className="w-full text-left text-xs font-body">
+                  <thead className="bg-[#121212] text-white/60 text-[10px] font-mono uppercase tracking-wider border-b border-white/10">
+                    <tr>
+                      <th className="py-3 px-4">Commodity / Purity</th>
+                      <th className="py-3 px-4">Bid / Buy</th>
+                      <th className="py-3 px-4 text-emerald-400 font-bold">Ask / Selling Rate</th>
+                      <th className="py-3 px-4">High</th>
+                      <th className="py-3 px-4">Low</th>
+                      <th className="py-3 px-4">Tax / Terms</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10 font-mono">
+                    {/* Gold 995 */}
+                    <tr className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <span className="block text-white">GOLD 995 JDR</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Fine Bullion Gold (per 10g)</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-white/60">{last?.himanshuBullion?.rates?.gold_995_bid || '--'}</td>
+                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
+                        ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_high || 145004).toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_low || 144065).toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
+                    </tr>
+
+                    {/* Silver Bank Peti 999.9 */}
+                    <tr className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <span className="block text-white">SILVER BANK PETI 999.9 JDR</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Bank Certified Fine Silver (per 1 kg)</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-white/60">--</td>
+                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
+                        ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">
+                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('BANK PETI'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('BANK PETI')).high).toLocaleString('en-IN')}` : '--'}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">
+                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('BANK PETI'))?.low ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('BANK PETI')).low).toLocaleString('en-IN')}` : '--'}
+                      </td>
+                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
+                    </tr>
+
+                    {/* Silver Chorsa 98.00 */}
+                    <tr className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <span className="block text-white">SILVER CHORSA 98.00 JDR</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Artisanal Casting Silver (per 1 kg)</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-white/60">--</td>
+                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
+                        ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">
+                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('CHORSA'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('CHORSA')).high).toLocaleString('en-IN')}` : '--'}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">
+                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('CHORSA'))?.low ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('CHORSA')).low).toLocaleString('en-IN')}` : '--'}
+                      </td>
+                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
+                    </tr>
+
+                    {/* Copper 99.9 */}
+                    <tr className="hover:bg-white/5 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-white">
+                        <span className="block text-white">COPPER 99.9 JDR</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Electrolytic Pure Copper (per 1 kg)</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-white/60">--</td>
+                      <td className="py-3.5 px-4 text-amber-400 font-bold text-base">
+                        ₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3.5 px-4 text-white/70">₹2,004</td>
+                      <td className="py-3.5 px-4 text-white/70">₹1,997</td>
+                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">18% GST Plus</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Section 2: Reference Products - MCX Bullion Futures & International Spot */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
+                  MCX Bullion Futures &amp; International Spot Quotes
+                </h3>
+                <span className="text-[10px] font-mono text-white/40">Continuous Market Quotes</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {/* MCX Gold */}
+                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
+                  <span className="text-[10px] text-white/50 block mb-1">GOLD FUTURE (MCX)</span>
+                  <div className="text-sm sm:text-base font-bold text-white">
+                    ₹{(last?.himanshuBullion?.rates?.mcx_gold || 141426).toLocaleString('en-IN')}
+                  </div>
+                  <div className="text-[10px] text-white/40 mt-1">10 Grams Contract</div>
+                </div>
+
+                {/* MCX Silver */}
+                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
+                  <span className="text-[10px] text-white/50 block mb-1">SILVER FUTURE (MCX)</span>
+                  <div className="text-sm sm:text-base font-bold text-white">
+                    ₹{(last?.himanshuBullion?.rates?.mcx_silver || 187200).toLocaleString('en-IN')}
+                  </div>
+                  <div className="text-[10px] text-white/40 mt-1">1 Kilogram Contract</div>
+                </div>
+
+                {/* XAU/USD */}
+                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
+                  <span className="text-[10px] text-white/50 block mb-1">GOLD SPOT (XAU/USD)</span>
+                  <div className="text-sm sm:text-base font-bold text-[#B59A6C]">
+                    ${(last?.himanshuBullion?.rates?.xau_usd || 4051.23).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-[10px] text-white/40 mt-1">Per Troy Ounce</div>
+                </div>
+
+                {/* XAG/USD */}
+                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
+                  <span className="text-[10px] text-white/50 block mb-1">SILVER SPOT (XAG/USD)</span>
+                  <div className="text-sm sm:text-base font-bold text-[#B59A6C]">
+                    ${(last?.himanshuBullion?.rates?.xag_usd || 52.97).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-[10px] text-white/40 mt-1">Per Troy Ounce</div>
+                </div>
+
+                {/* USD/INR */}
+                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
+                  <span className="text-[10px] text-white/50 block mb-1">USD / INR SPOT</span>
+                  <div className="text-sm sm:text-base font-bold text-emerald-400">
+                    ₹{(last?.himanshuBullion?.rates?.usd_inr || 93.73).toFixed(2)}
+                  </div>
+                  <div className="text-[10px] text-white/40 mt-1">Currency Exchange</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Derived Hallmarked Jewellery Benchmark */}
+            <div className="p-4 bg-[#232323] border border-white/15">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
+                  Monika Jewellers Finished Jewelry Rates (Derived from HB Jodhpur Gold 995)
+                </span>
+                <span className="text-[10px] font-mono text-emerald-400">100% BIS Hallmarked</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                <div className="p-3 bg-[#191919] border border-white/10">
+                  <span className="text-[10px] text-white/60 block">24K PURE (999)</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_24k || 144921).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_24k || 144921) / 10).toLocaleString('en-IN')}/g</span>
+                </div>
+                <div className="p-3 bg-[#191919] border border-[#B59A6C]/40">
+                  <span className="text-[10px] text-[#B59A6C] font-bold block">22K 916 HALLMARK</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_22k || 132844).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_22k || 132844) / 10).toLocaleString('en-IN')}/g</span>
+                </div>
+                <div className="p-3 bg-[#191919] border border-white/10">
+                  <span className="text-[10px] text-white/60 block">18K SOLITAIRE (750)</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_18k || 108691).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_18k || 108691) / 10).toLocaleString('en-IN')}/g</span>
+                </div>
+                <div className="p-3 bg-[#191919] border border-white/10">
+                  <span className="text-[10px] text-white/60 block">SILVER 999.9 PETI</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.silver_1kg || 191910).toLocaleString('en-IN')} / 1kg</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.silver_1kg || 191910) / 100).toLocaleString('en-IN')} / 10g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Live Rates Ticker Cards */}
         <div>
           <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-8">

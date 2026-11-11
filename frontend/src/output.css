@@ -2757,6 +2757,10 @@ img {
   border-color: rgb(226 232 240 / var(--tw-divide-opacity, 1));
 }
 
+.divide-white\/10 > :not([hidden]) ~ :not([hidden]){
+  border-color: rgb(255 255 255 / 0.1);
+}
+
 .divide-white\/5 > :not([hidden]) ~ :not([hidden]){
   border-color: rgb(255 255 255 / 0.05);
 }
@@ -3562,6 +3566,11 @@ img {
   background-color: rgb(17 17 17 / 0.9);
 }
 
+.bg-\[\#121212\]{
+  --tw-bg-opacity: 1;
+  background-color: rgb(18 18 18 / var(--tw-bg-opacity, 1));
+}
+
 .bg-\[\#121215\]\/95{
   background-color: rgb(18 18 21 / 0.95);
 }
@@ -3616,6 +3625,11 @@ img {
 .bg-\[\#1e1e1e\]{
   --tw-bg-opacity: 1;
   background-color: rgb(30 30 30 / var(--tw-bg-opacity, 1));
+}
+
+.bg-\[\#202020\]{
+  --tw-bg-opacity: 1;
+  background-color: rgb(32 32 32 / var(--tw-bg-opacity, 1));
 }
 
 .bg-\[\#222222\]{
@@ -8808,6 +8822,10 @@ img {
 
   .lg\:text-left{
     text-align: left;
+  }
+
+  .lg\:text-right{
+    text-align: right;
   }
 
   .lg\:text-3xl{

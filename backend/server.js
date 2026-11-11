@@ -26,10 +26,14 @@ const newsletterRoutes = require('./routes/newsletter');
 const customOrderRoutes = require('./routes/customOrders');
 const giftCardRoutes = require('./routes/giftCards');
 const cloudflareSecurity = require('./middleware/cloudflareSecurity');
+const { startBullionService } = require('./services/himanshuBullionService');
 
 const app = express();
 console.log('Starting Glimmr backend...');
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5002;
+
+// Initialize Himanshu Bullion Jodhpur Live Stream Ingestor
+startBullionService();
 
 // Enable reverse proxy trust for Cloudflare Edge & Render
 app.set('trust proxy', 1);

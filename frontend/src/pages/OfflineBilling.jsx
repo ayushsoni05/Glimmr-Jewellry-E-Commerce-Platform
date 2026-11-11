@@ -225,10 +225,10 @@ const OfflineBilling = () => {
   const [catalogAlert, setCatalogAlert] = useState('');
   const [billingViewMode, setBillingViewMode] = useState('busy'); // 'busy' (BUSY Magic Replica) | 'catalog' (Visual Tiles)
 
-  // Metal Rates (Owner Editable)
+  // Metal Rates (Owner Editable, Synchronized with Himanshu Bullion Jodhpur)
   const [liveRates, setLiveRates] = useState(() => {
     const cached = getCachedRates();
-    return cached || { gold: 15600, silver: 235 };
+    return cached || { gold: 14492, silver: 192 };
   });
   const [marketRates, setMarketRates] = useState({ gold: 15600, silver: 235 });
   const [rateStatus, setRateStatus] = useState('cached'); // 'live' | 'cached' | 'custom'
@@ -494,8 +494,8 @@ const OfflineBilling = () => {
         const res = await api.get('/prices/latest');
         if (res.data) {
           const rates = {
-            gold: res.data.gold?.price || 15600,
-            silver: res.data.silver?.price || 235
+            gold: res.data.gold?.price || 14492,
+            silver: res.data.silver?.price || 192
           };
           setMarketRates(rates);
           setCachedRates(rates);
