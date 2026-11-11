@@ -54,6 +54,24 @@ const scannerLimiter = rateLimit({
   message: { error: 'Barcode/QR scanning frequency limit reached. Please wait a moment.' },
 });
 
+// Rate limiter for online order checkout (10 orders/min per IP to prevent order spam)
+const orderLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Order placement rate limit reached. Please wait a moment before trying again.' },
+});
+
+// Rate limiter for public forms (bespoke custom orders, newsletter signup) to prevent mailbox exhaustion
+const formSubmissionLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Form submission frequency limit reached. Please wait a moment before submitting again.' },
+});
+
 module.exports = {
   authLimiter,
   otpRequestLimiter,
@@ -61,5 +79,7 @@ module.exports = {
   billingLimiter,
   crmLimiter,
   scannerLimiter,
+  orderLimiter,
+  formSubmissionLimiter,
 };
 

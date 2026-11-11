@@ -90,6 +90,13 @@ router.post('/', async (req, res) => {
   const { userId, productId, quantity = 1, guestId } = req.body;
   try {
     if (!productId) return res.status(400).json({ error: 'productId is required' });
+
+    // Validate positive integer quantity (defense against negative price/cart exploits)
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty < 1 || qty > 100) {
+      return res.status(400).json({ error: 'Quantity must be a positive integer between 1 and 100.' });
+    }
+
     const query = userId ? { user: userId } : { guestId: guestId || req.ip };
     let cart = await Cart.findOne(query);
     if (!cart) {
@@ -97,9 +104,9 @@ router.post('/', async (req, res) => {
     }
     const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity += quantity;
+      cart.items[itemIndex].quantity = Math.min(100, cart.items[itemIndex].quantity + qty);
     } else {
-      cart.items.push({ product: productId, quantity });
+      cart.items.push({ product: productId, quantity: qty });
     }
     await cart.save();
     
@@ -158,13 +165,23 @@ router.get('/:userId', async (req, res) => {
 router.put('/:userId', async (req, res) => {
   const { productId, quantity } = req.body;
   try {
+    // Validate quantity is safe integer
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty < 0 || qty > 100) {
+      return res.status(400).json({ error: 'Quantity must be a valid integer between 0 and 100.' });
+    }
+
     const cart = await Cart.findOne({ $or: [{ user: req.params.userId }, { guestId: req.params.userId }] });
     if (!cart) {
       return res.status(404).json({ error: 'Cart not found' });
     }
-    const item = cart.items.find(item => item.product.toString() === productId);
-    if (item) {
-      item.quantity = quantity;
+    const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+    if (itemIndex > -1) {
+      if (qty === 0) {
+        cart.items.splice(itemIndex, 1);
+      } else {
+        cart.items[itemIndex].quantity = qty;
+      }
       await cart.save();
     }
     const populated = await Cart.findById(cart._id).populate('items.product');

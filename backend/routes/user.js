@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
+const { addToken } = require('../middleware/tokenBlacklist');
 const Order = require('../models/Order');
 
 const router = express.Router();
@@ -69,13 +70,14 @@ router.put('/profile', authMiddleware, upload.single('profilePhoto'), async (req
     if (gender) user.gender = gender;
     if (dob) user.dob = dob;
     
-    // Handle profile photo removal
+    // Handle profile photo removal (path traversal defense)
+    const profilesDir = path.resolve(__dirname, '..', 'uploads', 'profiles');
     if (removeProfilePhoto === 'true') {
-      // Delete the old file if it exists
       if (user.profilePhoto) {
-        const oldPhotoPath = path.join(__dirname, '..', user.profilePhoto.replace('/api/uploads/', 'uploads/'));
+        const safeFilename = path.basename(user.profilePhoto);
+        const oldPhotoPath = path.join(profilesDir, safeFilename);
         try {
-          if (fs.existsSync(oldPhotoPath)) {
+          if (oldPhotoPath.startsWith(profilesDir) && fs.existsSync(oldPhotoPath)) {
             fs.unlinkSync(oldPhotoPath);
           }
         } catch (err) {
@@ -87,11 +89,11 @@ router.put('/profile', authMiddleware, upload.single('profilePhoto'), async (req
     
     // Handle profile photo upload
     if (req.file) {
-      // Delete old photo if it exists
       if (user.profilePhoto) {
-        const oldPhotoPath = path.join(__dirname, '..', user.profilePhoto.replace('/api/uploads/', 'uploads/'));
+        const safeFilename = path.basename(user.profilePhoto);
+        const oldPhotoPath = path.join(profilesDir, safeFilename);
         try {
-          if (fs.existsSync(oldPhotoPath)) {
+          if (oldPhotoPath.startsWith(profilesDir) && fs.existsSync(oldPhotoPath)) {
             fs.unlinkSync(oldPhotoPath);
           }
         } catch (err) {
@@ -129,7 +131,14 @@ router.put('/change-password', authMiddleware, async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.json({ message: 'Password changed successfully' });
+    // Revoke current active token to force fresh re-authentication
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const currentToken = authHeader.split(' ')[1];
+      addToken(currentToken, Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
+
+    res.json({ message: 'Password changed successfully. Please log in with your new password.' });
   } catch (error) {
     console.error('Password change error:', error);
     res.status(500).json({ error: error.message || 'Server error' });

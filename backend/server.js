@@ -88,16 +88,22 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
 });
-// Serve uploaded product images
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded product images with hardened static sandbox headers (anti-XSS)
+const staticUploadOptions = {
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox");
+  }
+};
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), staticUploadOptions));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads'), staticUploadOptions));
 
-// SMTP health check endpoint to help diagnose OTP send failures
+// SMTP health check endpoint (sanitized against infrastructure leakage)
 app.get('/api/health/smtp', async (req, res) => {
   const required = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS'];
   const missing = required.filter((v) => !process.env[v]);
   if (missing.length) {
-    return res.status(500).json({ ok: false, error: 'Missing SMTP env vars', missing });
+    return res.status(500).json({ ok: false, error: 'SMTP configuration incomplete' });
   }
 
   const transport = nodemailer.createTransport({
@@ -113,9 +119,9 @@ app.get('/api/health/smtp', async (req, res) => {
 
   try {
     await transport.verify();
-    return res.json({ ok: true, host: process.env.SMTP_HOST, secure: process.env.SMTP_SECURE === 'true' });
+    return res.json({ ok: true, status: 'SMTP service operational' });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({ ok: false, error: 'SMTP connection verification failed' });
   }
 });
 
@@ -249,21 +255,31 @@ connectDB().then(() => {
         const User = require('./models/User');
         const bcrypt = require('bcryptjs');
         const adminEmail = process.env.ADMIN_EMAIL || 'glimmr05@gmail.com';
-        const rawAdminPass = process.env.ADMIN_PASSWORD || 'admin123';
-        const hashedPassword = await bcrypt.hash(rawAdminPass, 10);
-        const adminKey = process.env.ADMIN_KEY || 'GLIMMR-ADMIN-DEFAULT';
-        const hashedAdminKey = await bcrypt.hash(adminKey, 10);
+        const rawAdminPass = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === 'production' ? null : 'admin123');
+        const adminKey = process.env.ADMIN_KEY || (process.env.NODE_ENV === 'production' ? null : 'MJ-ADMIN-DEFAULT-KEY');
+
+        if (!process.env.ADMIN_PASSWORD && process.env.NODE_ENV === 'production') {
+          console.warn('[SECURITY WARNING] ADMIN_PASSWORD should be set via environment variables in production.');
+        }
+
+        const updateDoc = {
+          name: 'Monika Jewellers Admin',
+          email: adminEmail,
+          phone: '9351214851',
+          role: 'admin',
+          addresses: []
+        };
+
+        if (rawAdminPass) {
+          updateDoc.password = await bcrypt.hash(rawAdminPass, 10);
+        }
+        if (adminKey) {
+          updateDoc.adminKey = await bcrypt.hash(adminKey, 10);
+        }
+
         await User.findOneAndUpdate(
           { email: adminEmail },
-          {
-            name: 'Monika Jewellers Admin',
-            email: adminEmail,
-            password: hashedPassword,
-            phone: '9999999999',
-            role: 'admin',
-            adminKey: hashedAdminKey,
-            addresses: []
-          },
+          { $set: updateDoc },
           { upsert: true, new: true }
         );
         console.log(`[SECURITY] Administrative account verified for ${adminEmail}`);

@@ -4,13 +4,17 @@ const axios = require('axios');
 
 const router = express.Router();
 
-// Prefer environment variable; fallback to provided key
-const AI_API_KEY = process.env.GOOGLE_AI_KEY || "AIzaSyA5mLdJMNUdxvPIkjRXkkMtBSsWZqy20AY";
+// Access AI API key strictly via environment variables (never hardcoded in source)
+const AI_API_KEY = process.env.GOOGLE_AI_KEY || process.env.GEMINI_API_KEY || '';
 
 // -------------------------------
 //   FIXED GEMINI REQUEST
 // -------------------------------
 async function askAIContent(systemInstruction, historyMessages) {
+  if (!AI_API_KEY) {
+    console.warn('[AI_RECOMMENDER] Google AI key not configured, using heuristic fallback');
+    return null;
+  }
   try {
     // 1. Map messages to Gemini API Format
     // Gemini ONLY accepts roles: 'user' or 'model'.

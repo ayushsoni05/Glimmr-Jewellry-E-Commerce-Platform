@@ -1,4 +1,5 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const User = require('../models/User');
@@ -10,6 +11,7 @@ const { sendOrderNotificationToAdmin } = require('../utils/adminNotification');
 const authMiddleware = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
 const { calculateValidatedDiscount } = require('../utils/voucherValidator');
+const { orderLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -122,8 +124,8 @@ function computeLivePrice(product, perGram) {
   };
 }
 
-// POST /api/orders - create order from cart
-router.post('/', async (req, res) => {
+// POST /api/orders - create order from cart (rate-limited)
+router.post('/', orderLimiter, async (req, res) => {
   const { userId, guestId, paymentMethod, shippingAddress, couponCode, discountAmount } = req.body;
   try {
     console.log('[ORDER] POST request received');
@@ -137,6 +139,28 @@ router.post('/', async (req, res) => {
     // Validate required fields
     if (!userId && !guestId) {
       return res.status(400).json({ error: 'userId or guestId is required' });
+    }
+
+    // Enforce JWT authentication if claiming a registered account (anti-IDOR & order spoofing)
+    let authenticatedUserId = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        authenticatedUserId = payload.id || payload._id || payload.userId;
+      } catch (e) {
+        // Token invalid or expired
+      }
+    }
+
+    if (userId) {
+      if (!authenticatedUserId) {
+        return res.status(401).json({ error: 'Valid authentication token required to place orders under a registered user account.' });
+      }
+      if (authenticatedUserId.toString() !== userId.toString()) {
+        return res.status(403).json({ error: 'Access denied: Token identity does not match specified customer account.' });
+      }
     }
 
     if (!paymentMethod) {

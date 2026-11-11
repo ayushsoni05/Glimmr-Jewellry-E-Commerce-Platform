@@ -720,8 +720,8 @@ router.post('/login', authLimiter, requireTurnstile, async (req, res) => {
           // No 2FA code provided - send one to admin email
           console.log('[AUTH] Sending 2FA code to admin email...');
           
-          // Generate random 16-digit code
-          const twoFACode = Math.floor(Math.random() * 10000000000000000).toString().padStart(16, '0');
+          // Generate cryptographically secure 6-digit code
+          const twoFACode = crypto.randomInt(100000, 999999).toString();
           const expiry = new Date(Date.now() + 10 * 60 * 1000); // Valid for 10 minutes
           
           user.twoFACode = twoFACode;
@@ -1390,8 +1390,8 @@ router.post('/admin-login', authLimiter, requireTurnstile, async (req, res) => {
       // No 2FA code provided - generate and send one
       console.log('[ADMIN_LOGIN] Sending 2FA code to admin email...');
       
-      // Generate random 16-digit code
-      const twoFACode = Math.floor(Math.random() * 10000000000000000).toString().padStart(16, '0');
+      // Generate cryptographically secure 6-digit code
+      const twoFACode = crypto.randomInt(100000, 999999).toString();
       const expiry = new Date(Date.now() + 10 * 60 * 1000); // Valid for 10 minutes
       
       user.twoFACode = twoFACode;
@@ -1577,42 +1577,20 @@ router.get('/config', async (req, res) => {
   }
 });
 
-// Test endpoint to verify email configuration
+// Test endpoint to verify email service availability (sanitized against information leakage)
 router.get('/test-email-config', async (req, res) => {
   try {
-    const hasResendKey = !!process.env.RESEND_API_KEY;
-    const resendKeyPreview = process.env.RESEND_API_KEY 
-      ? process.env.RESEND_API_KEY.substring(0, 7) + '...' 
-      : 'NOT SET';
-    const hasResendClient = !!resendClient;
-    const canCreateDynamicClient = hasResendKey;
-    
-    const hasSmtp = !!mailTransport;
-    const smtpConfig = {
-      host: process.env.SMTP_HOST || 'NOT SET',
-      port: process.env.SMTP_PORT || 'NOT SET',
-      user: process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 3) + '***' : 'NOT SET'
-    };
-    
-    const fromEmail = process.env.RESEND_FROM || process.env.MAIL_FROM || 'Monika Jewellers <onboarding@resend.dev>';
+    const hasResendKey = Boolean(process.env.RESEND_API_KEY);
+    const hasSmtp = Boolean(mailTransport);
     
     return res.json({
-      resend: {
-        apiKeySet: hasResendKey,
-        apiKeyPreview: resendKeyPreview,
-        globalClientInitialized: hasResendClient,
-        canCreateDynamicClient
-      },
-      smtp: {
-        configured: hasSmtp,
-        config: smtpConfig
-      },
-      fromEmail,
+      configured: hasResendKey || hasSmtp,
+      service: hasResendKey ? 'Resend API' : (hasSmtp ? 'SMTP Relay' : 'None'),
       status: hasResendKey || hasSmtp ? 'Email service available' : 'No email service configured'
     });
   } catch (err) {
     console.error('Test email config error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Service check failed' });
   }
 });
 

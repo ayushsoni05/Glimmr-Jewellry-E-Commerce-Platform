@@ -1,6 +1,9 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
 const Subscriber = require('../models/Subscriber');
+const authMiddleware = require('../middleware/auth');
+const adminMiddleware = require('../middleware/admin');
+const { formSubmissionLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -27,8 +30,8 @@ function createMailTransport() {
 
 const mailTransport = createMailTransport();
 
-// POST /api/newsletter/subscribe - Subscribe email to newsletter & dispatch 10% voucher code
-router.post('/subscribe', async (req, res) => {
+// POST /api/newsletter/subscribe - Subscribe email to newsletter & dispatch 10% voucher code (rate-limited)
+router.post('/subscribe', formSubmissionLimiter, async (req, res) => {
   try {
     const { email } = req.body || {};
 
@@ -124,7 +127,7 @@ router.post('/subscribe', async (req, res) => {
 });
 
 // GET /api/newsletter/subscribers - Admin route to list all newsletter subscribers
-router.get('/subscribers', async (req, res) => {
+router.get('/subscribers', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const subscribers = await Subscriber.find().sort({ subscribedAt: -1 });
     res.json({ count: subscribers.length, subscribers });

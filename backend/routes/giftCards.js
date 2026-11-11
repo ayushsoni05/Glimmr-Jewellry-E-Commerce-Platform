@@ -4,9 +4,11 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const GiftCard = require('../models/GiftCard');
 const { sendLuxuryGiftCardEmail } = require('../utils/emailService');
+const authMiddleware = require('../middleware/auth');
+const adminMiddleware = require('../middleware/admin');
 
-// POST /dispatch-preview (Direct dispatch & email delivery for instant preview/testing)
-router.post('/dispatch-preview', async (req, res) => {
+// POST /dispatch-preview - Strictly restricted to administrative clearance
+router.post('/dispatch-preview', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { amount, senderName, senderEmail, recipientName, recipientEmail, giftNote, deliveryDate } = req.body;
 
@@ -148,7 +150,11 @@ router.post('/verify-payment', async (req, res) => {
       .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
+    const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+    const receivedBuf = Buffer.from(String(razorpay_signature || ''), 'utf8');
+    const isValidSignature = expectedBuf.length === receivedBuf.length && crypto.timingSafeEqual(expectedBuf, receivedBuf);
+
+    if (!isValidSignature) {
       giftCard.status = 'failed';
       await giftCard.save();
       return res.status(400).json({ success: false, error: 'Invalid payment signature' });

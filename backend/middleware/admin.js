@@ -2,7 +2,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { isBlacklisted } = require('./tokenBlacklist');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? null : 'secret');
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('[SECURITY CRITICAL] JWT_SECRET environment variable is strictly mandatory in production.');
+}
 
 const extractUserFromToken = async (req) => {
   const auth = req.headers.authorization;

@@ -1,25 +1,45 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const path = require('path');
+const crypto = require('crypto');
 const CustomOrder = require('../models/CustomOrder');
 const { sendAdminBespokeNotification, sendCustomerApprovalNotification } = require('../utils/emailService');
+const authMiddleware = require('../middleware/auth');
+const adminMiddleware = require('../middleware/admin');
+const { formSubmissionLimiter } = require('../middleware/rateLimiter');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/custom-references/');
+    cb(null, path.join(__dirname, '..', 'uploads', 'custom-references'));
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeExt = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext) ? ext : '.jpg';
+    const uniqueName = Date.now() + '-' + crypto.randomUUID() + safeExt;
+    cb(null, uniqueName);
   }
 });
-const upload = multer({ storage: storage });
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPG, PNG, and WebP images are permitted.'));
+    }
+  }
+});
 
 /**
  * @route   POST /api/custom-orders
- * @desc    Submit a new bespoke 3D ring custom creation request
+ * @desc    Submit a new bespoke 3D ring custom creation request (rate-limited)
  * @access  Public
  */
-router.post('/', async (req, res) => {
+router.post('/', formSubmissionLimiter, async (req, res) => {
   try {
     const {
       customerName,
@@ -54,9 +74,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide customer name, email, and phone number.' });
     }
 
-    // Generate unique Tracking ID e.g. GLM-BESPOKE-8492
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
-    const customOrderId = `GLM-BESPOKE-${randomCode}`;
+    // Generate unique Tracking ID e.g. MJ-BESPOKE-8492
+    const randomCode = crypto.randomInt(1000, 9999);
+    const customOrderId = `MJ-BESPOKE-${randomCode}`;
 
     const newCustomOrder = new CustomOrder({
       customOrderId,
@@ -123,10 +143,10 @@ router.post('/upload-references', upload.array('referenceImages', 3), (req, res)
 
 /**
  * @route   GET /api/custom-orders
- * @desc    Get all bespoke orders (Admin portal / Customer tracking)
- * @access  Public / Admin
+ * @desc    Get all bespoke orders (Admin portal clearance strictly required)
+ * @access  Admin
  */
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { email } = req.query;
     let query = {};
@@ -169,7 +189,7 @@ router.get('/:id', async (req, res) => {
  * @desc    Admin endpoint: Update bespoke order status, completion date, and admin message
  * @access  Admin
  */
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { status, estimatedCompletionDate, adminNotes, notifyCustomer } = req.body;
 
