@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
         );
         setPhoneVerified(hasPhone);
 
-        console.log('🔥 Firebase User State:', {
+        console.log('[AUTH] Firebase User State:', {
           email: firebaseUserData.email,
           emailVerified: firebaseUserData.emailVerified,
           phoneVerified: hasPhone,
@@ -90,9 +90,9 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, turnstileToken = '') => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password, turnstileToken });
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);
@@ -109,9 +109,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (name, email, phone, password) => {
+  const signup = async (name, email, phone, password, turnstileToken = '') => {
     try {
-      const response = await api.post('/auth/signup', { name, email, phone, password });
+      const response = await api.post('/auth/signup', { name, email, phone, password, turnstileToken });
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);

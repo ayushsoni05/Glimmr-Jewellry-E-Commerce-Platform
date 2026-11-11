@@ -17,6 +17,7 @@ const { sendOtpViaSms } = require('../utils/fast2sms');
 
 const router = express.Router();
 const { authLimiter, verifyLimiter } = require('../middleware/rateLimiter');
+const requireTurnstile = require('../middleware/turnstileAuth');
 
 const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '10', 10);
 const OTP_MAX_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS || '5', 10);
@@ -521,7 +522,7 @@ async function issueOtp(user, context, channel = CONTACT_TYPES.EMAIL) {
   }
 }
 
-router.post('/signup', authLimiter, async (req, res) => {
+router.post('/signup', authLimiter, requireTurnstile, async (req, res) => {
   try {
     console.log('[AUTH] signup attempt');
     const { name, email, phone, password } = req.body;
@@ -664,7 +665,7 @@ router.post('/signup', authLimiter, async (req, res) => {
   }
 });
 
-router.post('/login', authLimiter, async (req, res) => {
+router.post('/login', authLimiter, requireTurnstile, async (req, res) => {
   try {
     const identity = resolveIdentity(req.body);
     if (!identity) {
@@ -1330,7 +1331,7 @@ router.post('/firebase-login', authLimiter, async (req, res) => {
 // state via `app.locals.firebaseEnabled` and `app.locals.firebaseAdmin`.
 
 // Admin login with key verification
-router.post('/admin-login', authLimiter, async (req, res) => {
+router.post('/admin-login', authLimiter, requireTurnstile, async (req, res) => {
   try {
     const { email, password, twoFACode } = req.body;
     console.log('[ADMIN_LOGIN] Request received:', { 

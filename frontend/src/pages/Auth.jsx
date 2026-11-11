@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { validateEmailFrontend } from '../utils/emailValidator';
 import InvalidEmailModal from '../components/InvalidEmailModal';
+import CloudflareTurnstile from '../components/CloudflareTurnstile';
 import api from '../api';
 import { FRAMER_IMAGES } from '../utils/framerAssets';
 
@@ -21,6 +22,7 @@ const Auth = ({ initialMode = 'login' }) => {
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [twoFACode, setTwoFACode] = useState('');
   const [requiresTwoFA, setRequiresTwoFA] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [invalidEmailModal, setInvalidEmailModal] = useState({
     isOpen: false,
     error: '',
@@ -49,7 +51,8 @@ const Auth = ({ initialMode = 'login' }) => {
 
           const payload = {
             email: email.toLowerCase().trim(),
-            password
+            password,
+            turnstileToken
           };
 
           if (requiresTwoFA && twoFACode) {
@@ -72,8 +75,8 @@ const Auth = ({ initialMode = 'login' }) => {
           setUser(userData);
           navigate('/admin');
         } else {
-          // Regular login
-          const result = await login(email, password);
+          // Regular login with Cloudflare Turnstile token
+          const result = await login(email, password, turnstileToken);
           if (result.success) {
             const from = location.state?.from?.pathname || '/';
             navigate(from, { replace: true });
@@ -102,7 +105,7 @@ const Auth = ({ initialMode = 'login' }) => {
           return;
         }
 
-        const result = await signup(name, email, phone, password);
+        const result = await signup(name, email, phone, password, turnstileToken);
         if (result.success) {
           setMessage('Account created successfully! You can now sign in.');
           setMode('login');
@@ -423,6 +426,13 @@ const Auth = ({ initialMode = 'login' }) => {
                 />
               </motion.div>
             )}
+
+            {/* Cloudflare Turnstile Smart Human & Anti-Bot Verification */}
+            <CloudflareTurnstile
+              onVerify={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken('')}
+              className="my-3"
+            />
 
             {/* Submit Button */}
             <motion.button

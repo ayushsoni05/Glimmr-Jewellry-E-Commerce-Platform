@@ -25,10 +25,14 @@ const priceRoutes = require('./routes/prices');
 const newsletterRoutes = require('./routes/newsletter');
 const customOrderRoutes = require('./routes/customOrders');
 const giftCardRoutes = require('./routes/giftCards');
+const cloudflareSecurity = require('./middleware/cloudflareSecurity');
 
 const app = express();
 console.log('Starting Glimmr backend...');
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5002;
+
+// Enable reverse proxy trust for Cloudflare Edge & Render
+app.set('trust proxy', 1);
 
 // CORS configuration: Restricted strictly to authorized project origins
 const corsOptions = {
@@ -42,8 +46,11 @@ const corsOptions = {
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-showroom-terminal-key', 'x-terminal-key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-showroom-terminal-key', 'x-terminal-key', 'cf-turnstile-token', 'x-cf-origin-token']
 };
+
+// Cloudflare Edge Security & Real-IP Middleware
+app.use(cloudflareSecurity);
 
 // HTTP Security Headers & Cross-Site Protection
 app.use(helmet({
