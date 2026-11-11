@@ -8,6 +8,10 @@ if (API_BASE_URL && !API_BASE_URL.endsWith('/api')) {
   API_BASE_URL = API_BASE_URL.replace(/\/+$/, '') + '/api';
 }
 
+// Dynamically export the backend base origin for media/asset normalization
+export const API_BASE_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+export { API_BASE_URL };
+
 // Debug: surface the resolved base URL
 console.debug('[api] baseURL =', API_BASE_URL);
 

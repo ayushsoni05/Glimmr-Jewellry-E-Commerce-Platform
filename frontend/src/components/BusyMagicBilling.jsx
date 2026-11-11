@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { numberToIndianWords } from '../utils/numberToIndianWords';
 import { calculateItemMakingAmount } from '../pages/OfflineBilling';
 import { KARAT_PURITY } from '../utils/productPricing';
+import { STORE_CONFIG } from '../config/storeConfig';
 import { ShieldCheckIcon, TrashIcon, TagIcon } from './Icons';
 import {
   Printer,
@@ -361,14 +362,14 @@ export default function BusyMagicBilling({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-bold uppercase tracking-wider text-white">
-                NEW MONIKA JEWELLERS
+                {STORE_CONFIG.name.toUpperCase()}
               </h1>
               <span className="text-[10px] text-[#B59A6C] font-mono font-semibold">
                 [Gems & Jewellery ERP Edition v2.0]
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">
-              GSTIN: 07AAAAA0000A1Z5 | State: 07-Delhi | BIS Reg: HM-916-84920
+              GSTIN: {STORE_CONFIG.gstin} | State: {STORE_CONFIG.address.state} | BIS Reg: {STORE_CONFIG.bisLicense}
             </p>
           </div>
         </div>
@@ -380,10 +381,10 @@ export default function BusyMagicBilling({
             <span>Live MongoDB Synced</span>
           </div>
           <div className="bg-[#102A4C] border border-[#1E3A5F] px-2 py-1 rounded text-slate-300">
-            <span>FY: 2026-2027</span>
+            <span>FY: {STORE_CONFIG.financialYear}</span>
           </div>
           <div className="bg-[#102A4C] border border-[#1E3A5F] px-2 py-1 rounded text-[#B59A6C] font-bold">
-            <span>Counter #1</span>
+            <span>{STORE_CONFIG.counterId}</span>
           </div>
           <div className="bg-[#102A4C] border border-[#1E3A5F] px-2 py-1 rounded text-slate-300">
             <span>Staff: {operatorName || 'Admin'}</span>
@@ -749,7 +750,7 @@ export default function BusyMagicBilling({
                 maxLength={15}
                 value={customerGstin}
                 onChange={(e) => setCustomerGstin(e.target.value.toUpperCase())}
-                placeholder="07AAAAA0000A1Z5"
+                placeholder={STORE_CONFIG.gstin}
                 className="w-full px-2 py-1 bg-white border border-slate-300 font-mono text-slate-700 rounded text-xs uppercase focus:outline-none focus:border-[#0B2545]"
               />
             </div>
@@ -1639,7 +1640,7 @@ export default function BusyMagicBilling({
         </div>
 
         <div className="flex items-center gap-3 text-slate-400 text-[10px]">
-          <span>New Monika Jewellers POS</span>
+          <span>{STORE_CONFIG.name} POS</span>
           <span className="text-slate-600">|</span>
           <span className="text-amber-300 font-bold">100% BIS Hallmarked</span>
         </div>

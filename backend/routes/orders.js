@@ -2,7 +2,8 @@ const express = require('express');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const User = require('../models/User');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+const { goldApi, metalPriceApi, stripe: stripeConfig } = require('../config/externalApis');
+const stripe = stripeConfig.secretKey ? require('stripe')(stripeConfig.secretKey) : null;
 const axios = require('axios');
 const { notifyOrderStatusChange } = require('../utils/orderNotification');
 const { sendOrderNotificationToAdmin } = require('../utils/adminNotification');
@@ -24,11 +25,12 @@ async function fetchPerGramRates(currency = 'INR') {
 
   // Source 1: GoldAPI.io (real-time intraday)
   try {
-    const goldApiKey = process.env.GOLDAPI_KEY || 'goldapi-pdixz26mhm8766q-io';
+    const goldApiKey = goldApi.key;
+    if (!goldApiKey) throw new Error('GOLDAPI_KEY not configured');
     const headers = { 'x-access-token': goldApiKey, 'Content-Type': 'application/json' };
     const [goldResp, silverResp] = await Promise.all([
-      axios.get(`https://www.goldapi.io/api/XAU/${curr}`, { headers, timeout: 8000 }).catch(() => null),
-      axios.get(`https://www.goldapi.io/api/XAG/${curr}`, { headers, timeout: 8000 }).catch(() => null),
+      axios.get(`${goldApi.baseUrl}/XAU/${curr}`, { headers, timeout: 8000 }).catch(() => null),
+      axios.get(`${goldApi.baseUrl}/XAG/${curr}`, { headers, timeout: 8000 }).catch(() => null),
     ]);
     const gd = goldResp?.data || {};
     const sd = silverResp?.data || {};
@@ -45,8 +47,9 @@ async function fetchPerGramRates(currency = 'INR') {
   // Source 2: MetalPriceAPI (end-of-day fallback)
   if (!goldPerGram || goldPerGram <= 0) {
     try {
-      const metalApiKey = process.env.METALPRICEAPI_KEY || '2231ecdf41631c3c93b8b39dca380250';
-      const url = `https://api.metalpriceapi.com/v1/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
+      const metalApiKey = metalPriceApi.key;
+      if (!metalApiKey) throw new Error('METALPRICEAPI_KEY not configured');
+      const url = `${metalPriceApi.baseUrl}/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
       const resp = await axios.get(url, { headers: { 'Accept': 'application/json' }, timeout: 5000 });
       const d = resp.data || {};
       if (d.success && d.rates) {
@@ -223,7 +226,7 @@ router.post('/', async (req, res) => {
       status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
     });
 
-    if (paymentMethod === 'card' && process.env.STRIPE_SECRET_KEY) {
+    if (paymentMethod === 'card' && stripe) {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: cart.items.map(item => ({

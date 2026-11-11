@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const { goldApi, metalPriceApi } = require('../config/externalApis');
 
 const router = express.Router();
 
@@ -37,7 +38,10 @@ const fetchLiveMetals = async (currency = 'inr') => {
 
   // ---------- Source 1: GoldAPI.io (Real-Time Intraday) ----------
   try {
-    const goldApiKey = process.env.GOLDAPI_KEY || 'goldapi-pdixz26mhm8766q-io';
+    const goldApiKey = goldApi.key;
+    if (!goldApiKey) {
+      throw new Error('GOLDAPI_KEY not configured in environment');
+    }
     const goldHeaders = {
       'x-access-token': goldApiKey,
       'Content-Type': 'application/json',
@@ -91,8 +95,11 @@ const fetchLiveMetals = async (currency = 'inr') => {
   // ---------- Source 2: MetalPriceAPI (End-of-Day Fallback) ----------
   if (!goldPerGram || goldPerGram <= 0) {
     try {
-      const metalApiKey = process.env.METALPRICEAPI_KEY || '2231ecdf41631c3c93b8b39dca380250';
-      const metalPriceUrl = `https://api.metalpriceapi.com/v1/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
+      const metalApiKey = metalPriceApi.key;
+      if (!metalApiKey) {
+        throw new Error('METALPRICEAPI_KEY not configured in environment');
+      }
+      const metalPriceUrl = `${metalPriceApi.baseUrl}/latest?api_key=${metalApiKey}&base=${curr}&currencies=XAU,XAG`;
       const resp = await axios.get(metalPriceUrl, {
         headers: { 'Accept': 'application/json' },
         timeout: 6000,

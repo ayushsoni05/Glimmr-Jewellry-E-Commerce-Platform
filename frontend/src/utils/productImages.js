@@ -214,8 +214,7 @@ const categoryMaterialImageMap = {
   }
 };
 
-// Backend origin for serving uploaded images in production
-const API_BASE_ORIGIN = 'https://glimmr-jewellry-e-commerce-platform-5.onrender.com';
+import { API_BASE_ORIGIN } from '../api';
 
 export const normalizeImageUrl = (src) => {
   if (!src) return src;

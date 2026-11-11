@@ -9,7 +9,8 @@ const Product = require('../models/Product');
 
 async function getSilverPerGramINR() {
   try {
-    const token = process.env.GOLDAPI_TOKEN || 'goldapi-pdixz26mhm8766q-io';
+    const token = process.env.GOLDAPI_KEY || process.env.GOLDAPI_TOKEN;
+    if (!token) return 75;
     const url = 'https://www.goldapi.io/api/XAG/INR/20251130';
     const resp = await axios.get(url, { headers: { 'x-access-token': token, 'Accept': 'application/json' }, timeout: 10000 });
     const data = resp.data || {};
