@@ -356,6 +356,43 @@ const Checkout = () => {
     }
   };
 
+  const handleWhatsAppOrderConfirm = () => {
+    const ob = getOrderBreakdown();
+    const itemsLines = cart.items.map((ci, idx) => {
+      const p = ci.product || {};
+      const name = p.name || 'Jewellery Design';
+      const price = getItemPrice(p);
+      const wt = p.weight ? ` (${p.weight}g)` : '';
+      return `${idx + 1}. ${name}${wt} - Qty: ${ci.quantity} - Rs. ${(price * ci.quantity).toLocaleString('en-IN')}`;
+    }).join('\n');
+
+    const addr = `${shippingAddress.line1}${shippingAddress.line2 ? ', ' + shippingAddress.line2 : ''}, Didwana, Rajasthan (PIN: 341303)`;
+
+    const lines = [
+      'Namaste Monika Jewellers Didwana,',
+      '',
+      'I would like to confirm my jewelry order draft for Didwana doorstep delivery:',
+      '',
+      'Items in Order:',
+      itemsLines,
+      '',
+      `Subtotal: Rs. ${ob.subtotal.toLocaleString('en-IN')}`,
+      ob.discountAmount > 0 ? `Voucher Discount: -Rs. ${ob.discountAmount.toLocaleString('en-IN')}` : '',
+      `Total Payable: Rs. ${ob.totalPayable.toLocaleString('en-IN')}`,
+      `Selected Payment Preference: ${paymentMethod === 'cod' ? 'Cash on Handover in Didwana' : paymentMethod === 'upi' ? 'UPI on Handover' : 'Showroom Counter Settlement'}`,
+      '',
+      'Delivery Address in Didwana (PIN: 341303):',
+      `Patron Name: ${shippingAddress.name}`,
+      `Contact Phone: ${shippingAddress.phone}`,
+      `Address: ${addr}`,
+      '',
+      'Please confirm availability and schedule my local handover.'
+    ].filter(Boolean);
+
+    const encoded = encodeURIComponent(lines.join('\n'));
+    window.open(`https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`, '_blank');
+  };
+
   const getItemBreakdown = (p) => {
     if (!p) return { totalLivePrice: 0, rawMetalCost: 0, makingCharges: 0, gemstoneCost: 0, gstTax: 0, subtotal: 0, weight: 0, karat: 0, material: '', purityPercentageStr: '', diamondDetails: null };
     const isFramerProduct = typeof p.id === 'string' && !p._id;
@@ -967,19 +1004,40 @@ const Checkout = () => {
                     />
                   </div>
 
+                  {/* Paused Transactional Gateway & Direct Concierge Confirmation */}
+                  <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-body space-y-1.5 mt-6">
+                    <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-emerald-900">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Didwana Exclusive Handover (PIN: 341303)</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-emerald-900/90">
+                      Standard payment gateway execution is paused. Confirm this order draft on WhatsApp to have our Didwana showroom team prepare your hallmarked pieces, provide live video inspection, and arrange complimentary doorstep handover (Cash or UPI on Delivery).
+                    </p>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
                     <button onClick={() => setStep(2)} className="px-6 py-3.5 bg-[#FAF9F7] border border-gray-200 text-xs font-body font-bold uppercase tracking-wider text-[#111111] hover:bg-gray-100 cursor-pointer">Back</button>
                     {deliveryEligibility.isEligible ? (
-                      <motion.button 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={handleCheckout} 
-                        disabled={loading} 
-                        className="flex-1 py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.25em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-                      >
-                        {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                        <span>{loading ? 'Processing Acquisition...' : `Place Order • ₹${calculateTotal().toLocaleString('en-IN')}`}</span>
-                      </motion.button>
+                      <div className="flex-1 flex flex-col sm:flex-row gap-3">
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleWhatsAppOrderConfirm} 
+                          className="flex-1 py-4 bg-[#25D366] hover:bg-[#20ba59] text-black text-xs font-body font-bold uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer"
+                        >
+                          <span>Confirm Order on WhatsApp (+91 9351214851)</span>
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleCheckout} 
+                          disabled={loading} 
+                          className="px-6 py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.15em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                          <span>Record Order Draft</span>
+                        </motion.button>
+                      </div>
                     ) : (
                       <a
                         href={deliveryEligibility.whatsappUrl}

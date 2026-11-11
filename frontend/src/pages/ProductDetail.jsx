@@ -10,6 +10,8 @@ import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage, getProductImages } from '../utils/productImages';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Flame, Sparkles } from 'lucide-react';
+import DesignInquiryModal from '../components/DesignInquiryModal';
+import GoldRateCalculator from '../components/GoldRateCalculator';
 
 const Accordion = ({ title, children, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -55,6 +57,9 @@ const ProductDetail = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
   const [lightFilter, setLightFilter] = useState('daylight');
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const [inquiryModalTab, setInquiryModalTab] = useState('inquiry');
+  const [showRateCalculator, setShowRateCalculator] = useState(false);
   
   const livePricing = getLiveProductPrice(product);
 
@@ -403,13 +408,96 @@ const ProductDetail = () => {
               {product.description || 'Handcrafted by master artisans with BIS 916 hallmarked purity. Designed to be cherished as a lifelong family heirloom, celebrating grace, authenticity, and enduring Indian heritage.'}
             </p>
 
-            {/* Main Action Button */}
-            <button 
-              onClick={addToCart} 
-              className="w-full bg-[#222222] text-white font-body py-3.5 sm:py-5 uppercase tracking-[0.15em] font-bold text-xs sm:text-sm hover:bg-[#B59A6C] transition-colors rounded-none mb-6 sm:mb-8 shadow-sm"
-            >
-              PURCHASE NOW
-            </button>
+            {/* High-Touch WhatsApp Inquiry & Atelier Booking Suite */}
+            <div className="space-y-3 mb-6 sm:mb-8">
+              {/* Primary CTA: Ask for this design on WhatsApp */}
+              <button 
+                type="button"
+                onClick={() => {
+                  setInquiryModalTab('inquiry');
+                  setIsInquiryModalOpen(true);
+                }}
+                className="w-full bg-[#111111] hover:bg-[#25D366] text-white hover:text-black font-body py-4 sm:py-5 uppercase tracking-[0.2em] font-bold text-xs sm:text-sm transition-all duration-300 rounded-none shadow-md flex items-center justify-center gap-2.5 border border-black hover:border-[#25D366]"
+              >
+                <span>ASK FOR THIS DESIGN ON WHATSAPP (IS THIS AVAILABLE?)</span>
+              </button>
+
+              {/* Secondary Service Actions */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInquiryModalTab('tryon');
+                    setIsInquiryModalOpen(true);
+                  }}
+                  className="py-3 px-2 border border-[#B59A6C] bg-[#FAF9F7] hover:bg-[#B59A6C] text-[#222222] hover:text-white font-body text-[11px] font-bold uppercase tracking-wider transition-colors text-center"
+                >
+                  Book Showroom Try-On
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInquiryModalTab('exchange');
+                    setIsInquiryModalOpen(true);
+                  }}
+                  className="py-3 px-2 border border-gray-200 hover:border-[#B59A6C] bg-white text-[#222222] font-body text-[11px] font-bold uppercase tracking-wider transition-colors text-center"
+                >
+                  Exchange Old Gold
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInquiryModalTab('videocall');
+                    setIsInquiryModalOpen(true);
+                  }}
+                  className="py-3 px-2 border border-gray-200 hover:border-[#B59A6C] bg-white text-[#222222] font-body text-[11px] font-bold uppercase tracking-wider transition-colors text-center"
+                >
+                  Live Video Tour
+                </button>
+              </div>
+
+              {/* Add to Inquiry Cart / Portfolio Button */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={addToCart}
+                  className="flex-1 py-3 px-4 bg-white border border-gray-300 hover:border-black text-[#222222] font-body text-xs font-semibold uppercase tracking-wider transition-colors text-center"
+                >
+                  Add to Inquiry Portfolio
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRateCalculator(!showRateCalculator)}
+                  className="py-3 px-4 bg-[#FAF9F7] border border-gray-300 hover:border-[#B59A6C] text-[#B59A6C] font-mono text-xs font-semibold uppercase tracking-wider transition-colors"
+                >
+                  {showRateCalculator ? 'Hide Gold Calculator' : 'Daily Gold Calculator'}
+                </button>
+              </div>
+
+              {/* Optional Inline Gold Rate Calculator Drawer */}
+              {showRateCalculator && (
+                <div className="pt-2">
+                  <GoldRateCalculator
+                    compact={true}
+                    initialWeight={Number(product?.weight) || 10}
+                    initialPurity={product?.karat === 18 ? '18k' : product?.category === 'Silver' ? 'silver' : '22k'}
+                  />
+                </div>
+              )}
+
+              {/* Didwana Hyperlocal Verification Notice */}
+              <div className="p-3.5 bg-[#FAF9F7] border border-[#B59A6C]/30 text-xs font-body space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="font-bold text-[#222222] uppercase tracking-wider text-[11px]">
+                    Didwana Local Showroom Handover (PIN: 341303)
+                  </span>
+                </div>
+                <p className="text-[#666666] text-[11px] leading-relaxed">
+                  Direct doorstep delivery is fulfilled exclusively within Didwana. Patrons outside Didwana coordinate insured armored courier transit via our WhatsApp concierge.
+                </p>
+              </div>
+            </div>
 
             {/* Product Meta Details */}
             <div className="border-t border-b border-gray-100 py-3 sm:py-4 mb-6 sm:mb-8 space-y-2 text-xs font-body text-[#808080]">
@@ -619,6 +707,14 @@ const ProductDetail = () => {
           </form>
         </motion.section>
       </div>
+
+      {/* Luxury WhatsApp Design Inquiry Drawer */}
+      <DesignInquiryModal
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
+        product={product}
+        defaultTab={inquiryModalTab}
+      />
     </div>
   );
 };

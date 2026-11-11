@@ -8,7 +8,7 @@ import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { getProductImage } from '../utils/productImages';
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
-import { DIDWANA_ZONE } from '../utils/deliveryZone';
+import { DIDWANA_ZONE, formatMultiItemCartInquiry } from '../utils/deliveryZone';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { 
   ShoppingBagIcon, 
@@ -175,6 +175,35 @@ const Cart = () => {
 
   const calculateFinalTotal = () => {
     return Math.max(0, calculateSubtotal() - calculateDiscount());
+  };
+
+  const handleWhatsAppCartInquiry = () => {
+    const formattedItems = cartItems.map((item) => {
+      const p = item.product || {};
+      return {
+        name: p.name || 'Jewellery Design',
+        price: getItemPrice(p),
+        quantity: item.quantity,
+        weight: p.weight || '',
+        sku: p.sku || p._id || ''
+      };
+    });
+
+    const totalWeight = cartItems.reduce((acc, item) => {
+      const w = Number(item.product?.weight) || 0;
+      return acc + (w * item.quantity);
+    }, 0);
+
+    const url = formatMultiItemCartInquiry({
+      items: formattedItems,
+      totalPrice: calculateFinalTotal(),
+      totalWeight,
+      deliveryPreference: 'Didwana Doorstep Handover (PIN 341303)',
+      customerName: user?.name || '',
+      customerPhone: user?.phone || ''
+    });
+
+    window.open(url, '_blank');
   };
 
   if (loading || authLoading) {
@@ -649,17 +678,49 @@ const Cart = () => {
                     </p>
                   </div>
 
-                  {/* Proceed to Checkout CTA Button */}
+                  {/* Paused Transactional Checkout & Direct WhatsApp Portfolio Inquiry */}
+                  <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs font-body space-y-1.5">
+                    <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-emerald-900">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Direct WhatsApp Concierge &amp; Showroom Handover</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-emerald-900/90">
+                      Direct payment processing is paused for high-touch patron service. Submit your cart portfolio to Monika Jewellers on WhatsApp (+91 9351214851) to verify Didwana showroom stock, finalize hallmark certification, and schedule free doorstep handover in Didwana (PIN 341303) or showroom pickup.
+                    </p>
+                  </div>
+
+                  {/* Primary WhatsApp Portfolio Inquiry CTA Button */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/checkout', { state: { appliedVoucher: appliedCoupon } })}
-                    className="w-full py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.25em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-3 cursor-pointer group"
+                    onClick={handleWhatsAppCartInquiry}
+                    className="w-full py-4 bg-[#25D366] hover:bg-[#20ba59] text-black text-xs font-body font-bold uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 cursor-pointer group border border-emerald-600"
                   >
-                    <span>Proceed to Checkout</span>
+                    <span>INQUIRE CART DESIGNS ON WHATSAPP (+91 9351214851)</span>
                     <motion.span whileHover={{ x: 4 }}>
-                      <ArrowRightIcon size={16} className="text-[#B59A6C]" />
+                      <ArrowRightIcon size={16} className="text-black" />
                     </motion.span>
+                  </motion.button>
+
+                  {/* Secondary Action: Book Showroom Viewing */}
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      const lines = [
+                        'Namaste Monika Jewellers Didwana,',
+                        '',
+                        'I would like to schedule a private showroom visit in Didwana to view the items currently in my cart.',
+                        `Cart Items Count: ${calculateTotalItems()}`,
+                        `Estimated Portfolio Total: Rs. ${calculateFinalTotal().toLocaleString('en-IN')}`,
+                        '',
+                        'Please let me know an available appointment time today or tomorrow.'
+                      ];
+                      window.open(`https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+                    }}
+                    className="w-full py-3 bg-[#FAF9F7] hover:bg-[#222222] text-[#222222] hover:text-white border border-[#E5E2D9] text-xs font-body font-bold uppercase tracking-wider transition-all text-center"
+                  >
+                    Book Showroom Viewing For These Items (Didwana)
                   </motion.button>
 
                   {/* Trust & Guarantee Badges */}

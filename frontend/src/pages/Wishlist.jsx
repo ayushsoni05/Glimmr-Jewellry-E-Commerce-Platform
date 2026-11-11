@@ -8,6 +8,7 @@ import { useToast } from '../contexts/ToastContext';
 import { HeartIcon } from '../components/Icons';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { getProductImage } from '../utils/productImages';
+import { DIDWANA_ZONE, formatWishlistInquiry, formatDesignInquiryMessage } from '../utils/deliveryZone';
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -67,6 +68,21 @@ const Wishlist = () => {
       window.dispatchEvent(new Event('wishlist-updated'));
       toastSuccess('Wishlist cleared');
     }
+  };
+
+  const handleWhatsAppWishlistInquiry = () => {
+    if (products.length === 0) return;
+    const url = formatWishlistInquiry({ items: products });
+    window.open(url, '_blank');
+  };
+
+  const handleSingleProductInquiry = (product) => {
+    const url = formatDesignInquiryMessage({
+      product,
+      deliveryPreference: 'Didwana Doorstep Handover (PIN 341303)',
+      inquiryType: 'Wishlist Item Availability Check'
+    });
+    window.open(url, '_blank');
   };
 
   const addToCart = async (product) => {
@@ -172,7 +188,15 @@ const Wishlist = () => {
                 Saved Items ({products.length})
               </span>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleWhatsAppWishlistInquiry}
+                  className="py-2.5 px-4 bg-[#25D366] hover:bg-[#20ba59] text-black font-body text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
+                >
+                  Inquire All on WhatsApp (+91 9351214851)
+                </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -257,25 +281,36 @@ const Wishlist = () => {
                         </div>
 
                         {/* Secondary Button Row */}
-                        <div className="pt-3 border-t border-gray-100 flex items-center gap-2">
+                        <div className="pt-3 border-t border-gray-100 space-y-2">
                           <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => addToCart(product)}
-                            className="flex-1 bg-transparent border border-[#222222] hover:bg-[#222222] hover:text-white text-[#222222] py-2 text-[11px] font-bold uppercase tracking-wider transition-colors rounded-none"
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={() => handleSingleProductInquiry(product)}
+                            className="w-full bg-[#25D366] hover:bg-[#20ba59] text-black py-2 px-3 text-[11px] font-bold uppercase tracking-wider transition-colors text-center"
                           >
-                            Add to Cart
+                            Inquire on WhatsApp
                           </motion.button>
 
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => removeFromWishlist(productId)}
-                            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-[#808080] hover:text-[#222222] text-[11px] font-bold uppercase tracking-wider transition-colors rounded-none"
-                            title="Remove item"
-                          >
-                            Remove
-                          </motion.button>
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => addToCart(product)}
+                              className="flex-1 bg-transparent border border-[#222222] hover:bg-[#222222] hover:text-white text-[#222222] py-2 text-[11px] font-bold uppercase tracking-wider transition-colors rounded-none"
+                            >
+                              Add to Portfolio
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => removeFromWishlist(productId)}
+                              className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-[#808080] hover:text-[#222222] text-[11px] font-bold uppercase tracking-wider transition-colors rounded-none"
+                              title="Remove item"
+                            >
+                              Remove
+                            </motion.button>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
