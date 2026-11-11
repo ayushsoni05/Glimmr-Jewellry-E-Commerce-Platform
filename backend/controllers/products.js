@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const axios = require('axios');
 const { calculateProductPrice, getCurrentMetalPrices } = require('../utils/priceCalculator');
 const { getImageForCategoryAndMaterial } = require('../utils/productImages');
+const { escapeRegex } = require('../utils/regexSanitizer');
 
 const getProducts = async (req, res) => {
   try {
@@ -22,9 +23,9 @@ const getProducts = async (req, res) => {
     // Build match object for non-price filters
     const match = {};
 
-    // Search functionality
+    // Search functionality with ReDoS protection
     if (search && String(search).trim() !== '') {
-      const searchTerm = String(search).trim();
+      const searchTerm = escapeRegex(String(search).trim());
       match.$or = [
         { name: { $regex: searchTerm, $options: 'i' } },
         { description: { $regex: searchTerm, $options: 'i' } },
@@ -36,7 +37,7 @@ const getProducts = async (req, res) => {
     // Normalize filters and ignore empty strings so "All" selections don't filter out everything
     const normalizedCategory = normalizeCategory(category);
     if (normalizedCategory) {
-      const stem = normalizedCategory.replace(/s$/, '');
+      const stem = escapeRegex(normalizedCategory.replace(/s$/, ''));
       match.category = { $regex: new RegExp(`^${stem}s?$`, 'i') };
     }
     if (material && String(material).trim() !== '') {

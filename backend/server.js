@@ -30,7 +30,7 @@ const app = express();
 console.log('Starting Glimmr backend...');
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5002;
 
-// CORS configuration for production (Vercel frontend + Render backend)
+// CORS configuration: Restricted strictly to authorized project origins
 const corsOptions = {
   origin: [
     'http://localhost:5173',
@@ -38,12 +38,11 @@ const corsOptions = {
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://glimmr-jewellry-e-commerce-platform.vercel.app',
-    /\.vercel\.app$/,  // Allow all Vercel preview deployments
-    /\.netlify\.app$/  // Allow Netlify deployments if used
+    /^https:\/\/glimmr-jewellry-e-commerce-platform(-[a-z0-9-]+)?\.vercel\.app$/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-showroom-terminal-key', 'x-terminal-key']
 };
 
 // HTTP Security Headers & Cross-Site Protection

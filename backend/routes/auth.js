@@ -81,7 +81,7 @@ function createMailTransport() {
     // Log verification result at startup
     transport.verify((err) => {
       if (err) {
-        console.error('[SMTP] ❌ Transport verify failed:', err && err.message ? err.message : err);
+        console.error('[SMTP] Transport verify failed:', err && err.message ? err.message : err);
         console.error('[SMTP] Config:', { 
           host, 
           port, 
@@ -92,7 +92,7 @@ function createMailTransport() {
         });
         console.error('[SMTP] Troubleshooting: Ensure SMTP_HOST, SMTP_USER, and SMTP_PASS are correct');
       } else {
-        console.log('[SMTP] ✅ Transport verified successfully:', { 
+        console.log('[SMTP] Transport verified successfully:', { 
           host, 
           port, 
           secure, 
@@ -379,13 +379,13 @@ async function sendOtpEmail(email, otp, context) {
         }
       );
 
-      console.log('[OTP_EMAIL] ✅ Email sent via Resend REST API successfully!');
+      console.log('[OTP_EMAIL] Email sent via Resend REST API successfully!');
       console.log('[OTP_EMAIL] Resend ID:', response.data?.id);
       return response.data;
     } catch (resendError) {
       const errDetail = resendError.response?.data?.message || resendError.response?.data?.name || resendError.message;
-      console.error('[OTP_EMAIL] ⚠️ Resend REST API failed:', errDetail);
-      console.log('[OTP_EMAIL] 🔄 Trying fallback transports...');
+      console.error('[OTP_EMAIL] Resend REST API failed:', errDetail);
+      console.log('[OTP_EMAIL] Trying fallback transports...');
     }
   }
 
@@ -412,13 +412,13 @@ async function sendOtpEmail(email, otp, context) {
         }
       );
 
-      console.log('[OTP_EMAIL] ✅ Email sent via Brevo API successfully!');
+      console.log('[OTP_EMAIL] Email sent via Brevo API successfully!');
       console.log('[OTP_EMAIL] Message ID:', response.data.messageId);
       return response.data;
     } catch (brevoError) {
       const errDetail = brevoError.response?.data?.message || brevoError.message;
-      console.error('[OTP_EMAIL] ⚠️ Brevo API failed:', errDetail);
-      console.log('[OTP_EMAIL] 🔄 Trying SMTP fallback...');
+      console.error('[OTP_EMAIL] Brevo API failed:', errDetail);
+      console.log('[OTP_EMAIL] Trying SMTP fallback...');
     }
   }
 
@@ -440,19 +440,18 @@ async function sendOtpEmail(email, otp, context) {
           text: `Your OTP for ${context} is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes. If you did not request this, please ignore this message.`,
         });
         
-        console.log('[OTP_EMAIL] ✅ Email sent via SMTP successfully!');
+        console.log('[OTP_EMAIL] Email sent via SMTP successfully!');
         console.log('[OTP_EMAIL] MessageID:', result.messageId);
         return result;
       } catch (smtpError) {
-        console.error('[OTP_EMAIL] ❌ SMTP failed:', smtpError.message);
+        console.error('[OTP_EMAIL] SMTP failed:', smtpError.message);
       }
     }
   }
 
-  // Fallback: If external mail delivery is unconfigured or failed, log OTP to server console so developer & users can proceed cleanly
-  console.log('[OTP_EMAIL] ℹ️ Mail transport unavailable or failed. Using fallback OTP mode.');
-  console.log(`[OTP_EMAIL] 🔑 DEV OTP FOR ${email}: ${otp}`);
-  return { devFallback: true, otp };
+  // Fallback: If external mail delivery is unconfigured or failed, log status
+  console.log('[OTP_EMAIL] Mail transport unavailable or failed. Fallback mode active.');
+  return { devFallback: true };
 }
 
 async function sendOtpSms(phone, otp, context) {
@@ -462,13 +461,12 @@ async function sendOtpSms(phone, otp, context) {
   }
 
   try {
-    console.log('[SMS] Sending OTP via Fast2SMS to:', phone);
-    console.log('[SMS] ***** OTP CODE:', otp, '*****'); // Log OTP for development/testing
+    console.log('[SMS] Sending OTP via Fast2SMS to:', phone.substring(0, 4) + '******');
     const result = await sendOtpViaSms(phone, otp, context);
-    console.log('[SMS] ✅ OTP sent successfully via Fast2SMS');
+    console.log('[SMS] OTP sent successfully via Fast2SMS');
     return result;
   } catch (error) {
-    console.error('[SMS] ❌ Failed to send OTP via Fast2SMS:', error.message);
+    console.error('[SMS] Failed to send OTP via Fast2SMS:', error.message);
     throw new Error(`Failed to send SMS: ${error.message}`);
   }
 }
@@ -500,12 +498,10 @@ async function issueOtp(user, context, channel = CONTACT_TYPES.EMAIL) {
     // Send OTP via Fast2SMS
     try {
       await sendOtpSms(user.phone, otp, context);
-      console.log('[OTP] SMS sent successfully to:', user.phone);
+      console.log('[OTP] SMS sent successfully to:', user.phone.substring(0, 4) + '******');
     } catch (smsError) {
-      console.error('[OTP] Failed to send SMS, falling back to Dev OTP:', smsError.message);
+      console.error('[OTP] Failed to send SMS:', smsError.message);
       user.devOtpFallback = true;
-      user.lastDevOtp = otp;
-      console.log(`[OTP] 🔑 DEV OTP FOR ${user.phone}: ${otp}`);
     }
   } else if (channel === CONTACT_TYPES.EMAIL) {
     // Send OTP via email
@@ -514,13 +510,10 @@ async function issueOtp(user, context, channel = CONTACT_TYPES.EMAIL) {
       console.log('[OTP] Email OTP processed for:', user.email);
       if (emailRes && emailRes.devFallback) {
         user.devOtpFallback = true;
-        user.lastDevOtp = otp;
       }
     } catch (emailError) {
       console.error('[OTP] Failed to send email:', emailError.message);
       user.devOtpFallback = true;
-      user.lastDevOtp = otp;
-      console.log(`[OTP] 🔑 DEV OTP FOR ${user.email}: ${otp}`);
     }
   } else {
     // Shouldn't reach here; defensive check
@@ -754,7 +747,7 @@ router.post('/login', authLimiter, async (req, res) => {
                 <body>
                   <div class="container">
                     <div class="header">
-                      <h2>🔐 Admin 2FA Code</h2>
+                      <h2>Admin 2FA Code</h2>
                     </div>
                     <div class="content">
                       <p>Hello Admin,</p>
@@ -781,7 +774,7 @@ router.post('/login', authLimiter, async (req, res) => {
               await resendClient.emails.send({
                 from: process.env.RESEND_FROM || 'Glimmr <onboarding@resend.dev>',
                 to: user.email,
-                subject: '🔐 Admin 2FA Verification Code',
+                subject: 'Admin 2FA Verification Code',
                 html: htmlContent
               });
               console.log('[AUTH] 2FA code sent to admin email');
@@ -1013,7 +1006,7 @@ router.post('/verify-otp-login', verifyLimiter, async (req, res) => {
     }
 
     // OTP is valid - clear all OTP data
-    console.log('[OTP_VERIFY] ✅ OTP verified successfully');
+    console.log('[OTP_VERIFY] OTP verified successfully');
     user.otp = undefined;
     user.otpExpiry = undefined;
     user.otpAttempts = 0;
@@ -1426,7 +1419,7 @@ router.post('/admin-login', authLimiter, async (req, res) => {
             <body>
               <div class="container">
                 <div class="header">
-                  <h2>🔐 Admin 2FA Code</h2>
+                  <h2>Admin 2FA Code</h2>
                 </div>
                 <div class="content">
                   <p>Hello Admin,</p>
@@ -1449,7 +1442,7 @@ router.post('/admin-login', authLimiter, async (req, res) => {
           await resendClient.emails.send({
             from: process.env.RESEND_FROM || 'Glimmr <onboarding@resend.dev>',
             to: user.email,
-            subject: '🔐 Admin 2FA Verification Code',
+            subject: 'Admin 2FA Verification Code',
             html: htmlContent
           });
           console.log('[ADMIN_LOGIN] 2FA code sent to admin email');

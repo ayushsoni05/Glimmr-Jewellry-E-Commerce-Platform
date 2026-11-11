@@ -8,6 +8,7 @@ const { notifyOrderStatusChange } = require('../utils/orderNotification');
 const { sendOrderNotificationToAdmin } = require('../utils/adminNotification');
 const authMiddleware = require('../middleware/auth');
 const adminMiddleware = require('../middleware/admin');
+const { calculateValidatedDiscount } = require('../utils/voucherValidator');
 
 const router = express.Router();
 
@@ -202,8 +203,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'No valid cart items to place order. Please refresh your cart.' });
     }
     
-    // Total amount including tax minus valid voucher discount
-    const discount = Math.max(0, Number(discountAmount) || 0);
+    // Total amount including tax minus server-validated voucher discount (prevents client price tampering)
+    const discount = couponCode
+      ? calculateValidatedDiscount(couponCode, subtotal, discountAmount)
+      : 0;
     const totalAmount = Math.max(0, (subtotal + totalTax) - discount);
 
     console.log('[ORDER] Subtotal: ₹' + subtotal + ', Tax: ₹' + totalTax + ', Discount: ₹' + discount + ', Total: ₹' + totalAmount);

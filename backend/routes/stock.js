@@ -3,6 +3,8 @@ const router = express.Router();
 const Product = require('../models/Product');
 const StockLog = require('../models/StockLog');
 const { staffAuth, managerOrAdminAuth } = require('../middleware/admin');
+const { scannerLimiter } = require('../middleware/rateLimiter');
+const { escapeRegex } = require('../utils/regexSanitizer');
 const { getCurrentMetalPrices } = require('../utils/priceCalculator');
 
 // ============================================================
@@ -17,7 +19,7 @@ router.get('/', staffAuth, async (req, res) => {
     const query = { isActive: true };
 
     if (search && String(search).trim() !== '') {
-      const s = String(search).trim();
+      const s = escapeRegex(String(search).trim());
       query.$or = [
         { name: { $regex: s, $options: 'i' } },
         { sku: { $regex: s, $options: 'i' } },
@@ -27,7 +29,7 @@ router.get('/', staffAuth, async (req, res) => {
     }
 
     if (category && category !== 'all') {
-      const stem = category.toLowerCase().replace(/s$/, '');
+      const stem = escapeRegex(category.toLowerCase().replace(/s$/, ''));
       query.category = { $regex: new RegExp(`^${stem}s?$`, 'i') };
     }
 
@@ -243,16 +245,17 @@ router.get('/logs', staffAuth, async (req, res) => {
 // ============================================================
 // 5. GET /lookup/:code - Instant lookup for QR / Barcode Scanner (POS and Inventory)
 // ============================================================
-router.get('/lookup/:code', async (req, res) => {
+router.get('/lookup/:code', scannerLimiter, staffAuth, async (req, res) => {
   try {
     const rawCode = String(req.params.code).trim();
     if (!rawCode) {
       return res.status(400).json({ error: 'Scanner code parameter is required' });
     }
 
-    // Try finding by exact SKU, barcode, HUID, or MongoDB ObjectId
+    const sanitizedCode = escapeRegex(rawCode);
+    // Try finding by exact SKU, barcode, HUID, or MongoDB ObjectId with ReDoS protection
     const searchConditions = [
-      { sku: new RegExp(`^${rawCode}$`, 'i') },
+      { sku: new RegExp(`^${sanitizedCode}$`, 'i') },
       { barcode: rawCode },
       { huid: rawCode.toUpperCase() }
     ];
@@ -275,7 +278,7 @@ router.get('/lookup/:code', async (req, res) => {
 // ============================================================
 // 6. POST /scan - Instant QR / Barcode Stock Update & Website Auto-Listing
 // ============================================================
-router.post('/scan', async (req, res) => {
+router.post('/scan', scannerLimiter, staffAuth, async (req, res) => {
   try {
     const { code, mode = 'increment', quantity = 1, location, notes, operator = 'Showroom Operator' } = req.body;
     const rawCode = String(code || '').trim();
@@ -283,8 +286,9 @@ router.post('/scan', async (req, res) => {
       return res.status(400).json({ error: 'Code is required for scanner update' });
     }
 
+    const sanitizedCode = escapeRegex(rawCode);
     const searchConditions = [
-      { sku: new RegExp(`^${rawCode}$`, 'i') },
+      { sku: new RegExp(`^${sanitizedCode}$`, 'i') },
       { barcode: rawCode },
       { huid: rawCode.toUpperCase() }
     ];

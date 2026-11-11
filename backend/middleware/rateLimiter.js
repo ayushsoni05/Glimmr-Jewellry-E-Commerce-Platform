@@ -45,11 +45,21 @@ const crmLimiter = rateLimit({
   message: { error: 'Customer directory query limit reached. Please try again shortly.' },
 });
 
+// Rate limiter for scanner lookup and stock updates (60 scans/min per terminal)
+const scannerLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Barcode/QR scanning frequency limit reached. Please wait a moment.' },
+});
+
 module.exports = {
   authLimiter,
   otpRequestLimiter,
   verifyLimiter,
   billingLimiter,
   crmLimiter,
+  scannerLimiter,
 };
 

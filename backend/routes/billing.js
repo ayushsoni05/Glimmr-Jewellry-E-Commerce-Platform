@@ -3,6 +3,7 @@ const router = express.Router();
 const OfflineBill = require('../models/OfflineBill');
 const BillCounter = require('../models/BillCounter');
 const { staffAuth, managerOrAdminAuth } = require('../middleware/admin');
+const { escapeRegex } = require('../utils/regexSanitizer');
 const {
   deductInventoryForBill,
   restoreInventoryForBill,
@@ -10,20 +11,33 @@ const {
   updateCustomerOnPayment
 } = require('../utils/inventoryAndCrmSync');
 
-// Resilient Showroom POS Authorization: Accepts staff JWT or showroom terminal context
+// Resilient Showroom POS Authorization: Accepts staff JWT or authorized showroom terminal key
+const SHOWROOM_TERMINAL_KEY = process.env.SHOWROOM_TERMINAL_KEY || 'MONIKA-POS-SECURE-TERMINAL-2026';
+
 const posOrStaffAuth = async (req, res, next) => {
+  // Option 1: Valid Bearer JWT from showroom staff, manager, or admin
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     return staffAuth(req, res, next);
   }
-  // Allow showroom POS terminal requests when operator is present or fetching public POS bills
-  if (req.body?.operator || req.query?.operator || req.headers['x-showroom-terminal'] || req.path === '/' || req.path.startsWith('/stats') || req.path === '/next-number') {
+
+  // Option 2: Authorized showroom counter terminal key
+  const terminalKey = req.headers['x-showroom-terminal-key'] || req.headers['x-terminal-key'];
+  if (terminalKey && terminalKey === SHOWROOM_TERMINAL_KEY) {
     req.user = {
-      name: req.body?.operator || req.query?.operator || 'Showroom Cashier',
+      name: req.body?.operator || req.query?.operator || 'Showroom Terminal Counter',
       role: 'cashier'
     };
     return next();
   }
-  return staffAuth(req, res, next);
+
+  // Allow generating next bill number counter for POS initialization
+  if (req.path === '/next-number' && req.method === 'GET') {
+    return next();
+  }
+
+  return res.status(401).json({
+    error: 'Access denied. Valid showroom staff clearance token or terminal key required.'
+  });
 };
 
 // Enforce resilient showroom authorization across all billing router endpoints
@@ -36,9 +50,16 @@ router.post('/', async (req, res) => {
   try {
     const billData = req.body;
 
-    // Statutory Rule 114B check: verify PAN card for bills > Rs. 2,00,000
-    if ((billData.totalPayable || 0) > 200000 && (!billData.customer?.panNumber || billData.customer.panNumber.length !== 10)) {
-      console.warn(`[COMPLIANCE] High-value bill ${billData.billNumber} (>Rs. 2L) generated without valid PAN`);
+    // Statutory Rule 114B check: verify PAN card for cash bills > Rs. 2,00,000
+    const isCashPayment = billData.paymentMethod === 'cash' || (billData.splitCashAmount && Number(billData.splitCashAmount) > 200000);
+    if (isCashPayment && (billData.totalPayable || 0) > 200000) {
+      const pan = String(billData.customer?.panNumber || '').trim().toUpperCase();
+      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+      if (!panRegex.test(pan)) {
+        return res.status(400).json({
+          error: 'Statutory Compliance Error (Rule 114B): Valid 10-digit Permanent Account Number (PAN) is strictly mandatory for cash jewellery transactions exceeding Rs. 2,00,000.'
+        });
+      }
     }
 
     // Guard against duplicate billNumber (E11000 duplicate key error)
@@ -129,9 +150,10 @@ router.get('/', async (req, res) => {
     // Payment status filter (paid / partially_paid / pending / settled)
     if (paymentStatus) query.paymentStatus = paymentStatus;
 
-    // Text search filter (bill number, customer name, phone)
+    // Text search filter (bill number, customer name, phone) with ReDoS defense
     if (search) {
-      const searchRegex = new RegExp(search, 'i');
+      const sanitized = escapeRegex(String(search).trim());
+      const searchRegex = new RegExp(sanitized, 'i');
       query.$or = [
         { billNumber: searchRegex },
         { 'customer.name': searchRegex },
