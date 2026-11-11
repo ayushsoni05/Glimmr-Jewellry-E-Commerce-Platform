@@ -398,3 +398,133 @@ export function formatVideoInspectionRequest({
   const encoded = encodeURIComponent(lines.join('\n'));
   return `https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`;
 }
+
+/**
+ * Generate VIP Concierge Stylist & Curation Inquiry for WhatsApp
+ */
+export function formatConciergeStylistInquiry({
+  occasion = '',
+  metal = '',
+  budget = '',
+  estimatedGrams = '',
+  recommendation = '',
+  patronName = '',
+  patronPhone = '',
+  userNote = ''
+} = {}) {
+  const lines = [
+    'Namaste Monika Jewellers Didwana Atelier,',
+    '',
+    'I am seeking personal styling advice from your VIP Atelier Concierge:',
+    occasion ? `Selected Occasion: ${occasion}` : '',
+    metal ? `Preferred Metal / Purity: ${metal}` : '',
+    budget ? `Target Budget Range: ${budget}` : '',
+    estimatedGrams ? `Estimated Gold Equivalent: approx. ${estimatedGrams}` : '',
+    recommendation ? `Stylist Recommendation: ${recommendation}` : '',
+    userNote ? `Specific Preferences: ${userNote}` : '',
+    patronName ? `Patron Name: ${patronName}` : '',
+    patronPhone ? `Contact Phone: ${patronPhone}` : '',
+    '',
+    'Showroom Destination: Didwana Flagship Atelier (PIN 341303)',
+    'Please connect me with a senior stylist to discuss custom selections and availability.'
+  ].filter(Boolean);
+
+  const encoded = encodeURIComponent(lines.join('\n'));
+  return `https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`;
+}
+
+/**
+ * Generate VIP Concierge Private Showroom / Video Appointment Inquiry for WhatsApp
+ */
+export function formatConciergeAppointmentInquiry({
+  consultationType = 'In-Person Showroom Visit',
+  agenda = 'Bridal Trousseau Consultation',
+  preferredDate = '',
+  preferredTime = '',
+  patronName = '',
+  patronPhone = '',
+  userNote = ''
+} = {}) {
+  const lines = [
+    'Namaste Monika Jewellers Didwana Atelier,',
+    '',
+    'I would like to schedule a private VIP consultation:',
+    `Consultation Type: ${consultationType}`,
+    `Purpose: ${agenda}`,
+    preferredDate ? `Preferred Date: ${preferredDate}` : '',
+    preferredTime ? `Preferred Time Slot: ${preferredTime}` : '',
+    patronName ? `Patron Name: ${patronName}` : '',
+    patronPhone ? `Contact Phone: ${patronPhone}` : '',
+    userNote ? `Special Requests / Questions: ${userNote}` : '',
+    '',
+    consultationType.includes('Showroom')
+      ? 'Location: Monika Jewellers Flagship Showroom, Station Road, Didwana (PIN 341303)'
+      : 'Modality: Virtual HD WhatsApp Video Consultation',
+    'Please confirm the appointment slot and stylist availability.'
+  ].filter(Boolean);
+
+  const encoded = encodeURIComponent(lines.join('\n'));
+  return `https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`;
+}
+
+/**
+ * Generate VIP Concierge Live Bullion Rate Lock Inquiry for WhatsApp
+ */
+export function formatConciergeBullionRateLock({
+  metalType = '22K Hallmark Gold',
+  weightGrams = 0,
+  targetBudget = 0,
+  ratePer10g = 0,
+  estimatedTotal = 0,
+  patronName = '',
+  patronPhone = ''
+} = {}) {
+  const lines = [
+    'Namaste Monika Jewellers Didwana Atelier,',
+    '',
+    'I would like to consult on live bullion rates and lock-in terms:',
+    `Selected Metal: ${metalType}`,
+    ratePer10g > 0 ? `Current Live Benchmark: Rs. ${Number(ratePer10g).toLocaleString('en-IN')} per 10g` : '',
+    weightGrams > 0 ? `Target Grammage: ${weightGrams}g` : '',
+    targetBudget > 0 ? `Target Investment Budget: Rs. ${Number(targetBudget).toLocaleString('en-IN')}` : '',
+    estimatedTotal > 0 ? `Estimated Metal Value: Rs. ${Number(estimatedTotal).toLocaleString('en-IN')} (+ 3% GST)` : '',
+    patronName ? `Patron Name: ${patronName}` : '',
+    patronPhone ? `Contact Phone: ${patronPhone}` : '',
+    '',
+    'Please confirm immediate availability and booking procedures at the Didwana showroom.'
+  ].filter(Boolean);
+
+  const encoded = encodeURIComponent(lines.join('\n'));
+  return `https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`;
+}
+
+/**
+ * Generate VIP Concierge Bespoke Design & Heirloom Revival Inquiry for WhatsApp
+ */
+export function formatConciergeBespokeInquiry({
+  designTitle = '',
+  metalPreference = '',
+  targetWeight = '',
+  targetBudget = '',
+  notes = '',
+  patronName = '',
+  patronPhone = ''
+} = {}) {
+  const lines = [
+    'Namaste Monika Jewellers Didwana Atelier,',
+    '',
+    'I would like to commission a custom bespoke design / heirloom revival:',
+    designTitle ? `Design Concept: ${designTitle}` : 'Custom Jewellery Commission',
+    metalPreference ? `Metal Karatage: ${metalPreference}` : '',
+    targetWeight ? `Target Weight: ${targetWeight}` : '',
+    targetBudget ? `Target Budget: ${targetBudget}` : '',
+    notes ? `Design Details / Instructions: ${notes}` : '',
+    patronName ? `Patron Name: ${patronName}` : '',
+    patronPhone ? `Contact Phone: ${patronPhone}` : '',
+    '',
+    'I can share reference sketches/photos here. Please connect me with your Master Karigar.'
+  ].filter(Boolean);
+
+  const encoded = encodeURIComponent(lines.join('\n'));
+  return `https://wa.me/${DIDWANA_ZONE.whatsappNumber}?text=${encoded}`;
+}
