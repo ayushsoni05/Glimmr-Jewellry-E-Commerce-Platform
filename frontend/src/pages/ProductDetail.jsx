@@ -430,8 +430,8 @@ const ProductDetail = () => {
             {/* Trust Badges Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 p-4 bg-[#FAF9F7] rounded-none border border-gray-100/80">
               <div className="flex flex-col text-left">
-                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Pan-India Transit</span>
-                <span className="font-body text-[11px] text-[#808080]">Complimentary fully insured doorstep delivery</span>
+                <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Didwana Delivery</span>
+                <span className="font-body text-[11px] text-[#808080]">Doorstep delivery in Didwana (341303). Outside via WhatsApp.</span>
               </div>
               <div className="flex flex-col text-left">
                 <span className="font-body text-xs font-bold text-[#222222] uppercase tracking-wider mb-1">Purity Assured</span>

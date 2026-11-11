@@ -230,8 +230,8 @@ const Home = () => {
           </div>
           <div className="flex flex-col items-center">
             <img src={FRAMER_ICONS.shipping} alt="Insured Shipping" className="w-8 h-8 sm:w-10 sm:h-10 mb-2.5 sm:mb-4 object-contain" />
-            <h3 className="font-heading text-sm sm:text-base uppercase tracking-wider mb-1 text-[#222222] font-bold">Insured Pan-India Transit</h3>
-            <p className="text-[#707070] text-[11px] sm:text-xs font-body">Tamper-evident sealed delivery with OTP handover across 19,000+ PINs</p>
+            <h3 className="font-heading text-sm sm:text-base uppercase tracking-wider mb-1 text-[#222222] font-bold">Didwana Doorstep Delivery</h3>
+            <p className="text-[#707070] text-[11px] sm:text-xs font-body">Direct delivery in Didwana (341303). Outside Didwana via WhatsApp consultation</p>
           </div>
           <div className="flex flex-col items-center">
             <img src={FRAMER_ICONS.transparent} alt="Transparent Pricing" className="w-8 h-8 sm:w-10 sm:h-10 mb-2.5 sm:mb-4 object-contain" />

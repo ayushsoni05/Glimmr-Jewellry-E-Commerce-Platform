@@ -936,6 +936,9 @@ const Profile = () => {
                         onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
                         className="px-4 py-3 bg-white border border-gray-200 text-xs font-body text-[#222222] focus:border-[#222222] focus:outline-none transition-all rounded-none"
                       />
+                      <div className="md:col-span-2 text-[10px] text-gray-500 font-mono bg-gray-50 p-2 border border-gray-200">
+                        Doorstep delivery is available in Didwana, Rajasthan (PIN 341303). Deliveries outside Didwana are coordinated via WhatsApp (+91 9351214851).
+                      </div>
                       <div className="flex flex-col gap-2.5 text-xs font-body text-[#222222]">
                         <label className="flex items-center gap-2 cursor-pointer uppercase tracking-wider font-bold">
                           <input
@@ -1028,7 +1031,18 @@ const Profile = () => {
                         <p className="text-xs font-body text-gray-700 leading-relaxed">{address.line1}</p>
                         {address.line2 && <p className="text-xs font-body text-gray-600">{address.line2}</p>}
                         <p className="text-xs font-body text-gray-700 font-bold mt-1">{address.city}, {address.state} - {address.pincode}</p>
-                        <p className="text-[11px] font-mono text-gray-500 mt-2">📞 {address.phone} • {address.country}</p>
+                        <div className="mt-1.5">
+                          {address.pincode === '341303' ? (
+                            <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                              Didwana Delivery Zone Verified
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-amber-800 bg-amber-50 px-2 py-0.5 border border-amber-200">
+                              Outside Didwana (Inquire via WhatsApp)
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-mono text-gray-500 mt-2">Phone: {address.phone} • {address.country}</p>
                       </div>
                       <div className="flex gap-2 pt-4 mt-4 border-t border-gray-200">
                         <button
@@ -1642,7 +1656,11 @@ const Profile = () => {
                     <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block mb-1">YOUR AVERAGE RATING</span>
                     <div className="flex items-center gap-3">
                       <span className="font-heading font-bold text-4xl text-[#FAF9F7]">4.8</span>
-                      <span className="text-[#B59A6C] text-lg">★★★★★</span>
+                      <div className="flex items-center gap-0.5 text-[#B59A6C]">
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon key={i} size={16} className="fill-current text-[#B59A6C]" />
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -1669,7 +1687,11 @@ const Profile = () => {
                         <div className="flex-1">
                           <h4 className="font-heading font-bold text-base text-[#222222] mb-1">{review.productName}</h4>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[#B59A6C] text-sm">{'★'.repeat(review.rating)}{'☆'.repeat(5-review.rating)}</span>
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <StarIcon key={i} size={13} className={i < review.rating ? 'fill-current text-[#B59A6C]' : 'text-gray-300'} />
+                              ))}
+                            </div>
                             <span className="text-[10px] font-body text-gray-400">{new Date(review.date).toLocaleDateString('en-IN')}</span>
                           </div>
                           <p className="text-xs font-body text-gray-700 leading-relaxed mb-3">{review.comment}</p>

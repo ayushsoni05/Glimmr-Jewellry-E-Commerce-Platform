@@ -30,23 +30,23 @@ const Contact = () => {
       id: 'support',
       title: 'CUSTOMER CONCIERGE',
       subtitle: 'Personalized Assistance & Inquiries',
-      phone: '+91 (022) 2345 6789 / +91 98200 12345',
+      phone: '+91 9351214851',
       email: 'concierge@monikajewellers.com',
-      hours: 'Mon - Sat: 10:30 AM - 8:30 PM IST',
+      hours: 'Mon - Sat: 10:00 AM - 8:30 PM IST',
     },
     {
       id: 'showroom',
-      title: 'FLAGSHIP ATELIER SHOWROOM',
-      subtitle: 'Private VIP Appointments & Viewing',
-      address: 'Jewel Arcade, Zaveri Bazaar & Bandra Kurla Complex (BKC)',
-      city: 'Mumbai, Maharashtra 400051, India',
-      hours: 'Mon - Sun: 10:30 AM - 8:30 PM IST',
+      title: 'DIDWANA SHOWROOM & ATELIER',
+      subtitle: 'Flagship Showroom & Viewing',
+      address: 'Monika Jewellers Showroom',
+      city: 'Didwana, Rajasthan 341303, India',
+      hours: 'Mon - Sun: 10:00 AM - 8:30 PM IST',
     },
     {
       id: 'bespoke',
       title: 'BESPOKE & ENGAGEMENT',
       subtitle: 'Custom Bridal & Heirloom Design',
-      phone: '+91 98200 12345 (WhatsApp Available)',
+      phone: '+91 9351214851 (WhatsApp Available)',
       email: 'bespoke@monikajewellers.com',
       hours: 'By Private Appointment & Walk-in',
     },
@@ -109,9 +109,11 @@ const Contact = () => {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                    className="w-16 h-16 bg-[#B59A6C] text-white rounded-full flex items-center justify-center text-2xl mx-auto mb-6 shadow-md"
+                    className="w-16 h-16 bg-[#B59A6C] text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-md"
                   >
-                    ✓
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
                   </motion.div>
                   <h3 className="font-heading text-2xl uppercase tracking-[0.2em] text-[#222222] mb-3">
                     Message Received
@@ -247,11 +249,48 @@ const Contact = () => {
               />
               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-6 text-white text-left">
                 <span className="font-body text-[10px] font-bold uppercase tracking-[0.25em] text-[#B59A6C] block mb-1">
-                  MUMBAI ATELIER SHOWROOM
+                  DIDWANA SHOWROOM &amp; ATELIER
                 </span>
                 <h4 className="font-heading text-lg uppercase tracking-wider font-normal">
-                  Private VIP Appointments
+                  Didwana, Rajasthan - 341303
                 </h4>
+              </div>
+            </div>
+
+            {/* Direct Google Map Frame */}
+            <div className="w-full max-w-[430px] border border-gray-200 bg-white p-3 space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="font-bold text-[#111111] uppercase tracking-wider">Showroom Map</span>
+                <span className="text-[#B59A6C]">GPS 27.3995 N, 74.5762 E</span>
+              </div>
+              <div className="w-full h-48 border border-gray-100 overflow-hidden">
+                <iframe
+                  title="Didwana Showroom Map"
+                  src="https://maps.google.com/maps?q=Monika+Jewellers,+Didwana,+Rajasthan+341303&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex gap-2">
+                <a
+                  href="https://www.google.com/maps/dir/?api=1&destination=Monika+Jewellers+Didwana+Rajasthan+341303"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2 text-center bg-[#111111] text-white text-[10px] font-mono font-bold uppercase tracking-wider hover:bg-[#222222]"
+                >
+                  Get Directions
+                </a>
+                <a
+                  href="https://wa.me/919351214851"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2 text-center bg-[#25D366] text-white text-[10px] font-mono font-bold uppercase tracking-wider hover:bg-[#1fae53]"
+                >
+                  WhatsApp
+                </a>
               </div>
             </div>
           </motion.div>

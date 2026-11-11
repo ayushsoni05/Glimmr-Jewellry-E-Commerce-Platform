@@ -8,6 +8,7 @@ import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { getProductImage } from '../utils/productImages';
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
+import { DIDWANA_ZONE } from '../utils/deliveryZone';
 import GlimmrLoader from '../components/GlimmrLoader';
 import { 
   ShoppingBagIcon, 
@@ -625,6 +626,27 @@ const Cart = () => {
                         })}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Didwana Delivery Policy Notice */}
+                  <div className="p-3.5 bg-amber-50/80 border border-amber-200 text-amber-950 text-xs font-body space-y-1.5 rounded-none">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold text-[11px] uppercase tracking-wider text-amber-900">
+                        <span className="w-2 h-2 rounded-full bg-[#B59A6C]" />
+                        <span>Delivery Restricted: Didwana (341303)</span>
+                      </div>
+                      <a
+                        href={DIDWANA_ZONE.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono font-bold text-[#128C7E] hover:underline"
+                      >
+                        WhatsApp Desk
+                      </a>
+                    </div>
+                    <p className="text-[11px] text-amber-900 leading-relaxed">
+                      We deliver online orders strictly within Didwana, Rajasthan. To arrange delivery outside Didwana, please discuss with Monika Jewellers directly on WhatsApp.
+                    </p>
                   </div>
 
                   {/* Proceed to Checkout CTA Button */}

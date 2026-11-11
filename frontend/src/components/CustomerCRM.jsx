@@ -682,7 +682,7 @@ export default function CustomerCRM({ api }) {
                     <button
                       onClick={() => openWhatsApp(
                         selectedCustomer.phone,
-                        `Namaste ${selectedCustomer.name}, gentle reminder regarding your pending balance of Rs. ${selectedCustomer.totalOutstanding.toLocaleString('en-IN')} with New Monika Jewellers. Please visit our showroom or contact us at +91 98200 12345.`
+                        `Namaste ${selectedCustomer.name}, gentle reminder regarding your pending balance of Rs. ${selectedCustomer.totalOutstanding.toLocaleString('en-IN')} with Monika Jewellers. Please visit our showroom or contact us at +91 9351214851.`
                       )}
                       className="flex-1 py-2.5 px-3 bg-amber-600 hover:bg-amber-700 text-white text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
                     >

@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
+import ShopLocationModal from './ShopLocationModal';
 // Logo image used directly via <img> tag
 
 const Header = () => {
@@ -15,6 +16,7 @@ const Header = () => {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [liveRates, setLiveRates] = useState({ gold: 15600, silver: 235 });
   const [isLiveRatesHovered, setIsLiveRatesHovered] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchHeaderRates = () => {
@@ -122,16 +124,28 @@ const Header = () => {
         <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-2 truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-[#B59A6C] inline-block shrink-0" />
-            <span className="truncate font-medium text-[#222222]">Complimentary Insured Pan-India Delivery • 100% BIS 916 Hallmarked Pure Gold &amp; Certified Natural Diamonds</span>
+            <span className="truncate font-medium text-[#222222]">Doorstep Delivery Exclusively in Didwana (PIN 341303) • Outside Didwana via WhatsApp Discussion • 100% BIS Hallmarked</span>
           </div>
-          <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+          <div className="flex items-center gap-3 sm:gap-5 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsLocationModalOpen(true)}
+              className="flex items-center gap-1.5 text-[#B59A6C] hover:text-[#111111] font-mono text-[10px] font-bold uppercase transition-colors cursor-pointer"
+              title="Showroom Location & Precise Map (Didwana)"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>DIDWANA MAP</span>
+            </button>
             <Link to="/live-rates" className="hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-colors font-medium">
-              <span className="text-gray-500">IBJA Bullion:</span>
-              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 24K ₹{liveRates.gold.toLocaleString('en-IN')}/g • Silver ₹{liveRates.silver.toLocaleString('en-IN')}/g</span>
+              <span className="text-gray-500">IBJA:</span>
+              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 24K ₹{liveRates.gold.toLocaleString('en-IN')}/g</span>
             </Link>
-            <span className="hidden sm:inline font-mono font-medium">+91 (022) 2345 6789</span>
+            <span className="hidden sm:inline font-mono font-medium">+91 9351214851</span>
             <div className="hidden sm:flex items-center space-x-2 text-[#222222]">
-              <a href="https://wa.me/919820012345" target="_blank" rel="noopener noreferrer" className="hover:text-[#25D366] transition-colors font-mono text-[10px] font-bold">WHATSAPP</a>
+              <a href="https://wa.me/919351214851" target="_blank" rel="noopener noreferrer" className="hover:text-[#25D366] transition-colors font-mono text-[10px] font-bold">WHATSAPP</a>
             </div>
           </div>
         </div>
@@ -259,6 +273,22 @@ const Header = () => {
 
           {/* Right Icons */}
           <div className="flex items-center space-x-2.5 sm:space-x-5 lg:space-x-6 flex-shrink-0">
+            {/* Showroom Map Location Button */}
+            <button
+              onClick={() => setIsLocationModalOpen(true)}
+              className="text-[#222222] hover:text-[#B59A6C] transition-colors p-1 flex items-center gap-1 group cursor-pointer"
+              title="Showroom Location &amp; Map (Didwana, Rajasthan)"
+              aria-label="Didwana Showroom Location &amp; Map"
+            >
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="hidden lg:inline text-[10px] font-mono font-bold tracking-wider text-[#B59A6C] group-hover:text-[#111111]">
+                MAP
+              </span>
+            </button>
+
             <button onClick={toggleSearch} className="text-[#222222] hover:text-black transition-colors p-1" title="Search">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -538,14 +568,32 @@ const Header = () => {
                   </Link>
                 )}
                 
+                <button
+                  type="button"
+                  onClick={() => { setIsLocationModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="w-full py-2.5 px-4 bg-[#FAF9F7] border border-[#E5E2D9] text-[#111111] text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 rounded-lg cursor-pointer"
+                >
+                  <svg className="w-4 h-4 text-[#B59A6C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>Didwana Showroom Map (341303)</span>
+                </button>
+
                 <div className="text-center font-mono text-[9px] text-gray-400 uppercase tracking-widest">
-                  MONIKA JEWELLERS • MUMBAI
+                  MONIKA JEWELLERS • DIDWANA, RAJASTHAN (341303)
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </header>
+
+      {/* Shop Location Modal */}
+      <ShopLocationModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
+      />
     </>
   );
 };

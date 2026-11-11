@@ -42,6 +42,9 @@ export const INDIAN_STATES = [
 // Pincode database with common cities/towns and their states
 // This is a sample database - can be extended
 const PINCODE_DATABASE = {
+  // Didwana, Rajasthan (Monika Jewellers Home Delivery Zone)
+  '341303': { city: 'Didwana', state: 'Rajasthan' },
+
   // Delhi
   '110001': { city: 'New Delhi', state: 'Delhi' },
   '110002': { city: 'New Delhi', state: 'Delhi' },
@@ -591,3 +594,6 @@ function handleGeolocationError(error, reject) {
   
   reject(new Error(errorMessage));
 }
+
+// Alias export for backwards and semantic compatibility
+export const getCurrentLocationAddress = getCurrentLocation;

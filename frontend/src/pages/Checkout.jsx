@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
@@ -6,10 +6,13 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useMetalRates } from '../contexts/MetalRatesContext';
-import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode } from '../utils/addressUtils';
+import { INDIAN_STATES, fetchAddressFromPincode, isValidPincode, getCurrentLocationAddress } from '../utils/addressUtils';
 import { INDIAN_CITIES } from '../utils/indianCities';
 import { getProductImage } from '../utils/productImages';
 import { AVAILABLE_VOUCHERS, validateVoucher } from '../utils/voucherConfig';
+import { checkDeliveryEligibility, DIDWANA_ZONE } from '../utils/deliveryZone';
+import DeliveryZoneNotice from '../components/DeliveryZoneNotice';
+import ShopLocationModal from '../components/ShopLocationModal';
 import GlimmrLoader from '../components/GlimmrLoader';
 import JewelryOrderStoryModal from '../components/JewelryOrderStoryModal';
 import { 
@@ -71,12 +74,61 @@ const Checkout = () => {
   const [pincodeError, setPincodeError] = useState('');
   const [filteredCities, setFilteredCities] = useState([]);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState('cod');
   
   // Jewelry Order Story Animation State
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [storyOrderData, setStoryOrderData] = useState(null);
+
+  // High-precision delivery zone eligibility (strictly Didwana, Rajasthan PIN 341303)
+  const deliveryEligibility = useMemo(() => {
+    return checkDeliveryEligibility({
+      pincode: shippingAddress.pincode,
+      city: shippingAddress.city,
+      latitude: shippingAddress.latitude,
+      longitude: shippingAddress.longitude
+    });
+  }, [shippingAddress.pincode, shippingAddress.city, shippingAddress.latitude, shippingAddress.longitude]);
+
+  const handleDetectHighAccuracyLocation = async () => {
+    setDetectingLocation(true);
+    try {
+      const geoAddr = await getCurrentLocationAddress();
+      if (geoAddr) {
+        setShippingAddress(prev => ({
+          ...prev,
+          line1: geoAddr.line1 && geoAddr.line1 !== 'Current Location' ? geoAddr.line1 : prev.line1,
+          line2: geoAddr.line2 || prev.line2,
+          city: geoAddr.city || prev.city,
+          state: geoAddr.state || prev.state,
+          pincode: geoAddr.pincode || prev.pincode,
+          latitude: geoAddr.latitude,
+          longitude: geoAddr.longitude
+        }));
+
+        const result = checkDeliveryEligibility({
+          pincode: geoAddr.pincode,
+          city: geoAddr.city,
+          latitude: geoAddr.latitude,
+          longitude: geoAddr.longitude
+        });
+
+        if (result.isEligible) {
+          toastSuccess('High-precision location verified: Didwana delivery zone confirmed!');
+        } else {
+          toastError('Location detected outside Didwana (PIN 341303). Delivery is only possible via WhatsApp discussion.');
+        }
+      }
+    } catch (err) {
+      console.error('[LOCATION DETECT] Error:', err);
+      toastError(err.message || 'Could not detect location. Please enter manually.');
+    } finally {
+      setDetectingLocation(false);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -245,6 +297,10 @@ const Checkout = () => {
     }
     if (!shippingAddress.name || !shippingAddress.phone || !shippingAddress.line1 || !shippingAddress.city || !shippingAddress.pincode) {
       toastError('Please fill all shipping details');
+      return;
+    }
+    if (!deliveryEligibility.isEligible) {
+      toastError('Online delivery is restricted exclusively to Didwana, Rajasthan (PIN 341303). Please message Monika Jewellers on WhatsApp.');
       return;
     }
     if (!paymentMethod) {
@@ -632,6 +688,28 @@ const Checkout = () => {
 
                   {(isAddingNew || savedAddresses.length === 0) && (
                     <div className="space-y-5 pt-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-[#FAF9F7] border border-[#E5E2D9]">
+                        <div>
+                          <span className="text-[10px] font-mono font-bold text-[#B59A6C] uppercase tracking-wider block">
+                            HIGH-PRECISION GPS LOCATION
+                          </span>
+                          <p className="text-[11px] text-gray-600 mt-0.5">
+                            Auto-detect your location with precise accuracy (Didwana zone verification).
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleDetectHighAccuracyLocation}
+                          disabled={detectingLocation}
+                          className="px-3.5 py-2 bg-white border border-[#B59A6C] text-[#111111] hover:bg-[#B59A6C] hover:text-white text-[11px] font-mono font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0 shadow-xs"
+                        >
+                          <svg className={`w-3.5 h-3.5 ${detectingLocation ? 'animate-spin text-[#111111]' : 'text-[#B59A6C]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.07-7.07l-1.41 1.41M6.34 17.66l-1.41 1.41m12.73 0l-1.41-1.41M6.34 6.34L4.93 4.93M12 16a4 4 0 100-8 4 4 0 000 8z" />
+                          </svg>
+                          <span>{detectingLocation ? 'Acquiring GPS...' : 'Use Precise GPS Location'}</span>
+                        </button>
+                      </div>
+
                       <span className="text-[10px] font-body font-bold uppercase tracking-[0.2em] text-[#B59A6C] block">
                         {isAddingNew ? 'ADD NEW DELIVERY DESTINATION' : 'ENTER SHIPPING DETAILS'}
                       </span>
@@ -782,17 +860,44 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
+                  <div className="pt-4">
+                    <DeliveryZoneNotice
+                      eligibility={deliveryEligibility}
+                      pincode={shippingAddress.pincode}
+                      city={shippingAddress.city}
+                      onOpenMap={() => setShowLocationModal(true)}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
                     <button onClick={() => setStep(1)} className="px-6 py-3.5 bg-[#FAF9F7] border border-gray-200 text-xs font-body font-bold uppercase tracking-wider text-[#111111] hover:bg-gray-100 cursor-pointer">Back</button>
-                    <motion.button 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setStep(3)} 
-                      className="flex-1 py-3.5 bg-[#111111] text-white text-xs font-body font-bold uppercase tracking-[0.2em] shadow-md hover:bg-[#222222] cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <span>Continue to Payment</span>
-                      <ArrowRightIcon size={16} className="text-[#B59A6C]" />
-                    </motion.button>
+                    {deliveryEligibility.isEligible ? (
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          if (!shippingAddress.name || !shippingAddress.phone || !shippingAddress.line1 || !shippingAddress.city || !shippingAddress.pincode) {
+                            toastError('Please fill all required shipping fields');
+                            return;
+                          }
+                          setStep(3);
+                        }} 
+                        className="flex-1 py-3.5 bg-[#111111] text-white text-xs font-body font-bold uppercase tracking-[0.2em] shadow-md hover:bg-[#222222] cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Continue to Payment</span>
+                        <ArrowRightIcon size={16} className="text-[#B59A6C]" />
+                      </motion.button>
+                    ) : (
+                      <a
+                        href={deliveryEligibility.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-3.5 bg-[#25D366] text-white text-xs font-body font-bold uppercase tracking-[0.15em] shadow-md hover:bg-[#1fae53] cursor-pointer flex items-center justify-center gap-2 text-center"
+                      >
+                        <span>Message on WhatsApp to Deliver Outside Didwana</span>
+                        <ArrowRightIcon size={16} className="text-white" />
+                      </a>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -853,18 +958,38 @@ const Checkout = () => {
                     })}
                   </div>
 
-                  <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
+                  <div className="pt-2">
+                    <DeliveryZoneNotice
+                      eligibility={deliveryEligibility}
+                      pincode={shippingAddress.pincode}
+                      city={shippingAddress.city}
+                      onOpenMap={() => setShowLocationModal(true)}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-gray-200">
                     <button onClick={() => setStep(2)} className="px-6 py-3.5 bg-[#FAF9F7] border border-gray-200 text-xs font-body font-bold uppercase tracking-wider text-[#111111] hover:bg-gray-100 cursor-pointer">Back</button>
-                    <motion.button 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCheckout} 
-                      disabled={loading} 
-                      className="flex-1 py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.25em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
-                    >
-                      {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                      <span>{loading ? 'Processing Acquisition...' : `Place Order • ₹${calculateTotal().toLocaleString('en-IN')}`}</span>
-                    </motion.button>
+                    {deliveryEligibility.isEligible ? (
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleCheckout} 
+                        disabled={loading} 
+                        className="flex-1 py-4 bg-[#111111] text-[#FAF9F7] text-xs font-body font-bold uppercase tracking-[0.25em] shadow-xl hover:bg-[#222222] transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                      >
+                        {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                        <span>{loading ? 'Processing Acquisition...' : `Place Order • ₹${calculateTotal().toLocaleString('en-IN')}`}</span>
+                      </motion.button>
+                    ) : (
+                      <a
+                        href={deliveryEligibility.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-4 bg-[#25D366] text-white text-xs font-body font-bold uppercase tracking-[0.15em] shadow-xl hover:bg-[#1fae53] transition-all flex items-center justify-center gap-3 cursor-pointer text-center"
+                      >
+                        <span>Message on WhatsApp to Deliver Outside Didwana</span>
+                      </a>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -1078,6 +1203,12 @@ const Checkout = () => {
         isOpen={showStoryModal}
         orderData={storyOrderData}
         onClose={() => setShowStoryModal(false)}
+      />
+
+      {/* Showroom Map & Didwana Location Modal */}
+      <ShopLocationModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
       />
     </div>
   );

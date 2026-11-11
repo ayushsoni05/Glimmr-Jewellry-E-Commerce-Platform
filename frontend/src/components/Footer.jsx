@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { STORE_CONFIG } from '../config/storeConfig';
 // Brand logo
 
 const Footer = () => {
@@ -102,7 +103,7 @@ const Footer = () => {
             <h4 className="text-xs font-semibold text-[#B59A6C] tracking-[0.2em] uppercase mb-4">The Atelier</h4>
             <ul className="space-y-3">
               <li><Link to="/about" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Our Heritage &amp; Karigars</Link></li>
-              <li><Link to="/contact" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Visit Mumbai Showroom</Link></li>
+              <li><Link to="/contact" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Visit Didwana Showroom (341303)</Link></li>
               <li><Link to="/gifting" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Luxury E-Gift Cards</Link></li>
               <li><Link to="/store-grid" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Curated Catalog</Link></li>
               <li><Link to="/profile" className="text-white/60 hover:text-[#B59A6C] transition-colors font-body text-xs">Privé Patron Portal</Link></li>
@@ -137,14 +138,14 @@ const Footer = () => {
           className="mb-12"
         >
            <p className="text-white/60 font-body text-xs sm:text-sm flex flex-col md:flex-row gap-2 md:gap-4 justify-center items-center text-center">
-             <span>Flagship Showroom: Jewel Arcade, Zaveri Bazaar &amp; BKC, Mumbai 400051</span>
+             <span>Flagship Showroom: {STORE_CONFIG.address.full}</span>
              <span className="hidden md:inline text-white/30">•</span>
-             <span>Customer Care: +91 (022) 2345 6789 / +91 98200 12345</span>
+             <span>Customer Care: +91 9351214851</span>
              <span className="hidden md:inline text-white/30">•</span>
-             <span>care@monikajewellers.com</span>
+             <span>{STORE_CONFIG.contact.email}</span>
            </p>
            <p className="text-white/40 font-mono text-[10px] text-center mt-2">
-             GSTIN: 27AAAAA0000A1Z5 | HSN Code: 7113 | Central BIS Hallmark License: HM-916-84920
+             GSTIN: {STORE_CONFIG.gstin} | HSN Code: {STORE_CONFIG.hsn} | Central BIS Hallmark License: {STORE_CONFIG.bisLicense}
            </p>
         </motion.div>
 

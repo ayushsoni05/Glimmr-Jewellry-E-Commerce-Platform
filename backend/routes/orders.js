@@ -205,6 +205,19 @@ router.post('/', async (req, res) => {
     if (!itemsWithLivePrice.length) {
       return res.status(400).json({ error: 'No valid cart items to place order. Please refresh your cart.' });
     }
+
+    // Strict Delivery Zone Check: Deliveries permitted exclusively in Didwana, Rajasthan (PIN 341303)
+    const rawPin = String(shippingAddress?.pincode || '').replace(/\D/g, '');
+    const city = String(shippingAddress?.city || '').trim().toLowerCase();
+    const isDidwanaDelivery = rawPin === '341303' || city === 'didwana' || city.includes('didwana');
+
+    if (!isDidwanaDelivery) {
+      return res.status(400).json({
+        error: 'Online doorstep delivery is strictly restricted to Didwana, Rajasthan (PIN 341303). For deliveries outside Didwana, please discuss directly with Monika Jewellers on WhatsApp.',
+        code: 'DELIVERY_OUTSIDE_DIDWANA',
+        whatsappUrl: 'https://wa.me/919351214851'
+      });
+    }
     
     // Total amount including tax minus server-validated voucher discount (prevents client price tampering)
     const discount = couponCode
