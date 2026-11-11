@@ -14,6 +14,7 @@ import { ShieldCheckIcon, TrashIcon, CheckCircleIcon, TagIcon } from '../compone
 import RecordPaymentDrawer from '../components/RecordPaymentDrawer';
 import { useBarcodeScanner } from '../utils/useBarcodeScanner';
 import { playScannerSound } from '../utils/barcodeTagGenerator';
+import BusyMagicBilling from '../components/BusyMagicBilling';
 
 export const calculateItemMakingAmount = (type, value, rawMetalCost, netWeight) => {
   const numVal = Math.max(0, parseFloat(value) || 0);
@@ -222,6 +223,7 @@ const OfflineBilling = () => {
   const [productsLoading, setProductsLoading] = useState(true);
   const [mobileTab, setMobileTab] = useState('catalog'); // 'catalog' | 'bill'
   const [catalogAlert, setCatalogAlert] = useState('');
+  const [billingViewMode, setBillingViewMode] = useState('busy'); // 'busy' (BUSY Magic Replica) | 'catalog' (Visual Tiles)
 
   // Metal Rates (Owner Editable)
   const [liveRates, setLiveRates] = useState(() => {
@@ -1476,10 +1478,11 @@ const OfflineBilling = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F7]">
+    <div className={billingViewMode === 'busy' && !showHistory ? 'min-h-screen bg-[#0B1E36]' : 'min-h-screen bg-[#FAF9F7]'}>
 
-      {/* TOP ATELIER BAR */}
-      <div className="bg-[#222222] text-white py-3 px-3 sm:px-6 lg:px-8 border-b border-[#B59A6C]/30">
+      {/* TOP ATELIER BAR (Only for Catalog Tiles View Mode) */}
+      {!showHistory && billingViewMode === 'catalog' && (
+        <div className="bg-[#222222] text-white py-3 px-3 sm:px-6 lg:px-8 border-b border-[#B59A6C]/30">
         <div className="max-w-[1520px] mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
           <div className="flex items-center gap-3">
             <h1 className="font-heading text-xl sm:text-2xl font-bold tracking-[0.15em] uppercase">Monika Jewellers Billing</h1>
@@ -1541,6 +1544,13 @@ const OfflineBilling = () => {
               className="px-3 py-1.5 border border-white/20 text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-colors cursor-pointer"
             >
               {showHistory ? 'Return to POS' : 'Bill History'}
+            </button>
+
+            <button
+              onClick={() => setBillingViewMode('busy')}
+              className="px-3 py-1.5 bg-[#B59A6C] text-[#07162C] font-mono text-[10px] font-bold uppercase tracking-wider rounded hover:bg-white transition-colors cursor-pointer"
+            >
+              BUSY Magic Voucher Mode
             </button>
           </div>
         </div>
@@ -1838,6 +1848,7 @@ const OfflineBilling = () => {
           )}
         </AnimatePresence>
       </div>
+      )}
 
       {showHistory ? (
         /* BILL HISTORY VIEW - Phase 2: Enhanced with Filters */
@@ -2069,6 +2080,88 @@ const OfflineBilling = () => {
             </div>
           )}
         </div>
+      ) : billingViewMode === 'busy' ? (
+        <BusyMagicBilling
+          billItems={billItems}
+          setBillItems={setBillItems}
+          billTotals={billTotals}
+          liveRates={liveRates}
+          setLiveRates={setLiveRates}
+          rateStatus={rateStatus}
+          customGoldRate={customGoldRate}
+          setCustomGoldRate={setCustomGoldRate}
+          customSilverRate={customSilverRate}
+          setCustomSilverRate={setCustomSilverRate}
+          handleApplyCustomRates={handleApplyCustomRates}
+          handleResetToMarketRates={handleResetToMarketRates}
+          gstRate={gstRate}
+          setGstRate={setGstRate}
+          taxSplitMode={taxSplitMode}
+          setTaxSplitMode={setTaxSplitMode}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          customerPhone={customerPhone}
+          setCustomerPhone={setCustomerPhone}
+          customerAddress={customerAddress}
+          setCustomerAddress={setCustomerAddress}
+          customerGstin={customerGstin}
+          setCustomerGstin={setCustomerGstin}
+          customerPan={customerPan}
+          setCustomerPan={setCustomerPan}
+          operatorName={operatorName}
+          setOperatorName={setOperatorName}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
+          cashReceived={cashReceived}
+          setCashReceived={setCashReceived}
+          changeToReturn={changeToReturn}
+          paymentReference={paymentReference}
+          setPaymentReference={setPaymentReference}
+          splitCashAmount={splitCashAmount}
+          setSplitCashAmount={setSplitCashAmount}
+          splitCardAmount={splitCardAmount}
+          setSplitCardAmount={setSplitCardAmount}
+          splitUpiAmount={splitUpiAmount}
+          setSplitUpiAmount={setSplitUpiAmount}
+          splitCardRef={splitCardRef}
+          setSplitCardRef={setSplitCardRef}
+          splitUpiRef={splitUpiRef}
+          setSplitUpiRef={setSplitUpiRef}
+          isPartialPayment={isPartialPayment}
+          setIsPartialPayment={setIsPartialPayment}
+          advanceAmount={advanceAmount}
+          setAdvanceAmount={setAdvanceAmount}
+          advanceMethod={advanceMethod}
+          setAdvanceMethod={setAdvanceMethod}
+          advanceReference={advanceReference}
+          setAdvanceReference={setAdvanceReference}
+          dueDate={dueDate}
+          setDueDate={setDueDate}
+          hasOldGold={hasOldGold}
+          setHasOldGold={setHasOldGold}
+          oldGoldWeight={oldGoldWeight}
+          setOldGoldWeight={setOldGoldWeight}
+          oldGoldKarat={oldGoldKarat}
+          setOldGoldKarat={setOldGoldKarat}
+          oldGoldRate={oldGoldRate}
+          setOldGoldRate={setOldGoldRate}
+          billNotes={billNotes}
+          setBillNotes={setBillNotes}
+          handleGenerateInvoice={handleGenerateInvoice}
+          handleClearBill={handleClearBill}
+          products={products}
+          addProductToBill={addProductToBill}
+          handleHardwareScan={handleHardwareScan}
+          lastScannedTag={lastScannedTag}
+          showHistory={showHistory}
+          setShowHistory={setShowHistory}
+          setShowZReport={setShowZReport}
+          setShowRateLockDrawer={setShowRateLockDrawer}
+          activeLocks={activeLocks}
+          catalogAlert={catalogAlert}
+          setCatalogAlert={setCatalogAlert}
+          onToggleViewMode={() => setBillingViewMode('catalog')}
+        />
       ) : (
         /* MAIN SPLIT-PANEL BILLING INTERFACE */
         <div className="max-w-[1520px] mx-auto px-3 sm:px-6 lg:px-8 py-4">
