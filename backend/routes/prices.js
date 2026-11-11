@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { goldApi, metalPriceApi } = require('../config/externalApis');
-const { getLatestBullionData } = require('../services/himanshuBullionService');
+const { getLatestBullionData, bullionEmitter } = require('../services/himanshuBullionService');
 
 const router = express.Router();
 
@@ -190,6 +190,54 @@ const fetchChartHistory = async (currency = 'inr', range = '24h', liveGold10g = 
   CHART_CACHE.set(cacheKey, { _ts: Date.now(), points: finalPoints });
   return finalPoints;
 };
+
+// GET /api/prices/stream - Server-Sent Events (SSE) real-time push stream
+router.get('/stream', async (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  if (res.flushHeaders) {
+    res.flushHeaders();
+  }
+
+  // Send initial payload snapshot immediately
+  try {
+    const initialPayload = await fetchLiveMetals('inr');
+    res.write(`data: ${JSON.stringify({ type: 'INIT', payload: initialPayload, timestamp: Date.now() })}\n\n`);
+  } catch (err) {
+    console.warn('[SSE] Error sending initial payload:', err?.message || err);
+  }
+
+  // Listener for instant bullion tick broadcasts
+  const onBullionTick = async () => {
+    try {
+      const livePayload = await fetchLiveMetals('inr');
+      res.write(`data: ${JSON.stringify({ type: 'TICK', payload: livePayload, timestamp: Date.now() })}\n\n`);
+    } catch (err) {
+      console.warn('[SSE] Error pushing tick payload:', err?.message || err);
+    }
+  };
+
+  bullionEmitter.on('tick', onBullionTick);
+
+  // 15-second keepalive heartbeat to prevent proxy timeouts
+  const keepAliveInterval = setInterval(() => {
+    try {
+      res.write(':keepalive\n\n');
+    } catch (e) {
+      // client connection likely terminated
+    }
+  }, 15000);
+
+  req.on('close', () => {
+    bullionEmitter.off('tick', onBullionTick);
+    clearInterval(keepAliveInterval);
+    res.end();
+  });
+});
 
 // GET /api/prices - real-time live rates + Himanshu Bullion full feed + chart
 router.get('/', async (req, res) => {

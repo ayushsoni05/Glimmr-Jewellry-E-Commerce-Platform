@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
 import ShopLocationModal from './ShopLocationModal';
@@ -14,43 +15,25 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [liveRates, setLiveRates] = useState({
-    gold: 14492,
-    silver: 192,
-    gold995: 144341,
-    gold22k: 132844,
-    gold18k: 108691,
-    silverPeti: 191910,
-    silverChorsa: 188456,
-    mcxGold: 141426
-  });
+  const { 
+    liveRates: contextLiveRates, 
+    streamingActive, 
+    priceDeltas, 
+    isTickFlashing 
+  } = useMetalRates();
+
+  const liveRates = {
+    gold: contextLiveRates?.gold?.price || 14492,
+    silver: contextLiveRates?.silver?.price || 192,
+    gold995: contextLiveRates?.himanshuBullion?.rates?.gold_995_ask || contextLiveRates?.gold_10g_24k || 144341,
+    gold22k: contextLiveRates?.gold_10g_22k || 132844,
+    gold18k: contextLiveRates?.gold_10g_18k || 108691,
+    silverPeti: contextLiveRates?.himanshuBullion?.rates?.silver_999_1kg || contextLiveRates?.silver_1kg || 191910,
+    silverChorsa: contextLiveRates?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456,
+    mcxGold: contextLiveRates?.himanshuBullion?.rates?.mcx_gold || 141426
+  };
   const [isLiveRatesHovered, setIsLiveRatesHovered] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchHeaderRates = () => {
-      api.get('/prices/latest?currency=inr')
-        .then(res => {
-          if (res.data) {
-            setLiveRates({
-              gold: res.data.gold?.price || 14492,
-              silver: res.data.silver?.price || 192,
-              gold995: res.data.himanshuBullion?.rates?.gold_995_ask || res.data.gold_10g_24k || 144341,
-              gold22k: res.data.gold_10g_22k || 132844,
-              gold18k: res.data.gold_10g_18k || 108691,
-              silverPeti: res.data.himanshuBullion?.rates?.silver_999_1kg || res.data.silver_1kg || 191910,
-              silverChorsa: res.data.himanshuBullion?.rates?.silver_chorsa_1kg || 188456,
-              mcxGold: res.data.himanshuBullion?.rates?.mcx_gold || 141426
-            });
-          }
-        })
-        .catch(() => {});
-    };
-
-    fetchHeaderRates();
-    const interval = setInterval(fetchHeaderRates, 30 * 1000); // 30 seconds
-    return () => clearInterval(interval);
-  }, []);
   
   const { cartCount } = useCart();
   const { user, logout } = useAuth();
@@ -154,13 +137,24 @@ const Header = () => {
               </svg>
               <span>DIDWANA MAP</span>
             </button>
-            <Link to="/live-rates" className="hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-colors font-medium">
-              <span className="text-gray-500 font-mono text-[10px] uppercase font-bold">HB JODHPUR:</span>
-              <span className="font-mono text-xs text-[#B59A6C] font-bold">Gold 995 ₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g</span>
+            <Link to="/live-rates" className={`hidden md:flex items-center gap-2 text-[#222222] hover:text-[#B59A6C] transition-all duration-300 font-medium ${isTickFlashing ? 'bg-[#B59A6C]/10 px-2 py-0.5 rounded' : ''}`}>
+              <span className="text-gray-500 font-mono text-[10px] uppercase font-bold flex items-center gap-1">
+                <span className={`w-1.5 h-1.5 rounded-full ${streamingActive ? 'bg-emerald-500 animate-pulse' : 'bg-[#B59A6C]'}`} />
+                HB JODHPUR:
+              </span>
+              <span className={`font-mono text-xs font-bold transition-colors ${priceDeltas?.gold995 === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.gold995 === 'down' ? 'text-rose-600 font-extrabold' : 'text-[#B59A6C]'}`}>
+                Gold 995 ₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g
+                {priceDeltas?.gold995 === 'up' && ' ▲'}
+                {priceDeltas?.gold995 === 'down' && ' ▼'}
+              </span>
               <span className="hidden lg:inline text-gray-400">•</span>
-              <span className="hidden lg:inline font-mono text-xs text-[#222222]">22K ₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}</span>
+              <span className={`hidden lg:inline font-mono text-xs transition-colors ${priceDeltas?.gold22k === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.gold22k === 'down' ? 'text-rose-600 font-extrabold' : 'text-[#222222]'}`}>
+                22K ₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}
+              </span>
               <span className="hidden xl:inline text-gray-400">•</span>
-              <span className="hidden xl:inline font-mono text-xs text-emerald-700">Silver ₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg</span>
+              <span className={`hidden xl:inline font-mono text-xs transition-colors ${priceDeltas?.silverPeti === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.silverPeti === 'down' ? 'text-rose-600 font-extrabold' : 'text-emerald-700'}`}>
+                Silver ₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg
+              </span>
             </Link>
             <span className="hidden sm:inline font-mono font-medium">+91 9351214851</span>
             <div className="hidden sm:flex items-center space-x-2 text-[#222222]">

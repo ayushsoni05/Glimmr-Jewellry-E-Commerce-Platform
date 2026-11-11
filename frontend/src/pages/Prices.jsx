@@ -15,6 +15,7 @@ import {
 import api from '../api';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useMetalRates } from '../contexts/MetalRatesContext';
 import MonthlyUpdatesNewsletter from '../components/MonthlyUpdatesNewsletter';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
@@ -127,6 +128,25 @@ const Prices = () => {
 
   const { success: toastSuccess, error: toastError } = useToast();
   const { user } = useAuth();
+  const { 
+    liveRates, 
+    streamingActive, 
+    tickCount, 
+    lastTickTime, 
+    isTickFlashing, 
+    priceDeltas 
+  } = useMetalRates();
+
+  // Instant zero-delay sync when a live SSE tick arrives from Himanshu Bullion Jodhpur
+  useEffect(() => {
+    if (currency === 'inr' && liveRates) {
+      setLast((prev) => ({
+        ...prev,
+        ...liveRates,
+        chart: prev?.chart || liveRates.chart
+      }));
+    }
+  }, [liveRates, currency]);
 
   const fetchPrices = useCallback(async (curr = currency, range = timeRange) => {
     setIsRefreshing(true);
@@ -483,30 +503,45 @@ const Prices = () => {
             {/* Terminal Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-6 border-b border-white/10">
               <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                  </span>
                   <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400 font-bold">
-                    [HB JODHPUR REAL-TIME TICKER ACTIVE]
+                    [HB JODHPUR SSE PUSH STREAM ACTIVE]
                   </span>
                   <span className="text-white/30">•</span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/50">
-                    Pride Stream
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">
+                    Pride Hub Feed
                   </span>
+                  {isTickFlashing && (
+                    <span className="px-2 py-0.5 text-[9px] font-mono bg-emerald-500 text-black font-extrabold uppercase rounded animate-pulse">
+                      LIVE TICK RECEIVED
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-serif text-white tracking-wide">
                   Himanshu Bullion Jodhpur • Live Bullion Terminal
                 </h2>
                 <p className="text-xs font-body text-white/60 mt-1">
-                  Official physical bullion rates and MCX futures broadcasted live from Jodhpur bullion market.
+                  Official physical bullion rates and MCX futures broadcasted live with zero delay from Jodhpur bullion market.
                 </p>
               </div>
 
-              <div className="text-left lg:text-right">
-                <div className="inline-block px-3 py-1 bg-[#252525] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[11px] font-bold uppercase tracking-wider">
-                  Live Parity Synchronized
+              <div className="text-left lg:text-right space-y-1">
+                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  <span className="px-3 py-1 bg-[#252525] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[11px] font-bold uppercase tracking-wider">
+                    {streamingActive ? 'SSE STREAM ACTIVE • 0s DELAY' : 'CONNECTING LIVE STREAM...'}
+                  </span>
+                  {tickCount > 0 && (
+                    <span className="px-2.5 py-1 bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-bold">
+                      {tickCount} UPDATES
+                    </span>
+                  )}
                 </div>
-                <div className="text-[10px] font-mono text-white/50 mt-1">
-                  Last Sync: {last?.timestamp ? new Date(last.timestamp).toLocaleTimeString('en-IN') : 'Live'}
+                <div className="text-[10px] font-mono text-white/50">
+                  Last Tick: {lastTickTime ? new Date(lastTickTime).toLocaleTimeString('en-IN') : (last?.timestamp ? new Date(last.timestamp).toLocaleTimeString('en-IN') : 'Live')}
                 </div>
               </div>
             </div>
@@ -540,8 +575,18 @@ const Prices = () => {
                         <span className="text-[10px] text-white/50 font-normal font-body">Fine Bullion Gold (per 10g)</span>
                       </td>
                       <td className="py-3.5 px-4 text-white/60">{last?.himanshuBullion?.rates?.gold_995_bid || '--'}</td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
-                        ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')}
+                      <td className="py-3.5 px-4 font-bold text-base">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          priceDeltas?.gold995 === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : priceDeltas?.gold995 === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-emerald-400'
+                        }`}>
+                          <span>₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')}</span>
+                          {priceDeltas?.gold995 === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {priceDeltas?.gold995 === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_high || 145004).toLocaleString('en-IN')}</td>
                       <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_low || 144065).toLocaleString('en-IN')}</td>
@@ -555,8 +600,18 @@ const Prices = () => {
                         <span className="text-[10px] text-white/50 font-normal font-body">Bank Certified Fine Silver (per 1 kg)</span>
                       </td>
                       <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
-                        ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')}
+                      <td className="py-3.5 px-4 font-bold text-base">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          priceDeltas?.silverPeti === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : priceDeltas?.silverPeti === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-emerald-400'
+                        }`}>
+                          <span>₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')}</span>
+                          {priceDeltas?.silverPeti === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {priceDeltas?.silverPeti === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-white/70">
                         {last?.himanshuBullion?.products?.find(p => p.name?.includes('BANK PETI'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('BANK PETI')).high).toLocaleString('en-IN')}` : '--'}
@@ -574,8 +629,18 @@ const Prices = () => {
                         <span className="text-[10px] text-white/50 font-normal font-body">Artisanal Casting Silver (per 1 kg)</span>
                       </td>
                       <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 text-emerald-400 font-bold text-base">
-                        ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')}
+                      <td className="py-3.5 px-4 font-bold text-base">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          priceDeltas?.silverChorsa === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : priceDeltas?.silverChorsa === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-emerald-400'
+                        }`}>
+                          <span>₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')}</span>
+                          {priceDeltas?.silverChorsa === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {priceDeltas?.silverChorsa === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-white/70">
                         {last?.himanshuBullion?.products?.find(p => p.name?.includes('CHORSA'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('CHORSA')).high).toLocaleString('en-IN')}` : '--'}
@@ -593,8 +658,18 @@ const Prices = () => {
                         <span className="text-[10px] text-white/50 font-normal font-body">Electrolytic Pure Copper (per 1 kg)</span>
                       </td>
                       <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 text-amber-400 font-bold text-base">
-                        ₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}
+                      <td className="py-3.5 px-4 font-bold text-base">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          priceDeltas?.copper === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : priceDeltas?.copper === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-amber-400'
+                        }`}>
+                          <span>₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}</span>
+                          {priceDeltas?.copper === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {priceDeltas?.copper === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-white/70">₹2,004</td>
                       <td className="py-3.5 px-4 text-white/70">₹1,997</td>
@@ -616,18 +691,42 @@ const Prices = () => {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {/* MCX Gold */}
-                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
-                  <span className="text-[10px] text-white/50 block mb-1">GOLD FUTURE (MCX)</span>
-                  <div className="text-sm sm:text-base font-bold text-white">
+                <div className={`p-3.5 text-xs font-mono border transition-all duration-700 ${
+                  priceDeltas?.mcxGold === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.mcxGold === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#202020] border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-white/50 block">GOLD FUTURE (MCX)</span>
+                    {priceDeltas?.mcxGold === 'up' && <span className="text-[10px] font-bold text-emerald-400">▲ UP</span>}
+                    {priceDeltas?.mcxGold === 'down' && <span className="text-[10px] font-bold text-rose-400">▼ DOWN</span>}
+                  </div>
+                  <div className={`text-sm sm:text-base font-bold ${
+                    priceDeltas?.mcxGold === 'up' ? 'text-emerald-300' : priceDeltas?.mcxGold === 'down' ? 'text-rose-300' : 'text-white'
+                  }`}>
                     ₹{(last?.himanshuBullion?.rates?.mcx_gold || 141426).toLocaleString('en-IN')}
                   </div>
                   <div className="text-[10px] text-white/40 mt-1">10 Grams Contract</div>
                 </div>
 
                 {/* MCX Silver */}
-                <div className="bg-[#202020] border border-white/10 p-3.5 text-xs font-mono">
-                  <span className="text-[10px] text-white/50 block mb-1">SILVER FUTURE (MCX)</span>
-                  <div className="text-sm sm:text-base font-bold text-white">
+                <div className={`p-3.5 text-xs font-mono border transition-all duration-700 ${
+                  priceDeltas?.mcxSilver === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.mcxSilver === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#202020] border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-white/50 block">SILVER FUTURE (MCX)</span>
+                    {priceDeltas?.mcxSilver === 'up' && <span className="text-[10px] font-bold text-emerald-400">▲ UP</span>}
+                    {priceDeltas?.mcxSilver === 'down' && <span className="text-[10px] font-bold text-rose-400">▼ DOWN</span>}
+                  </div>
+                  <div className={`text-sm sm:text-base font-bold ${
+                    priceDeltas?.mcxSilver === 'up' ? 'text-emerald-300' : priceDeltas?.mcxSilver === 'down' ? 'text-rose-300' : 'text-white'
+                  }`}>
                     ₹{(last?.himanshuBullion?.rates?.mcx_silver || 187200).toLocaleString('en-IN')}
                   </div>
                   <div className="text-[10px] text-white/40 mt-1">1 Kilogram Contract</div>
@@ -671,22 +770,46 @@ const Prices = () => {
                 <span className="text-[10px] font-mono text-emerald-400">100% BIS Hallmarked</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                <div className="p-3 bg-[#191919] border border-white/10">
+                <div className={`p-3 border transition-all duration-700 ${
+                  priceDeltas?.gold24k === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.gold24k === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#191919] border-white/10'
+                }`}>
                   <span className="text-[10px] text-white/60 block">24K PURE (999)</span>
                   <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_24k || 144921).toLocaleString('en-IN')} / 10g</span>
                   <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_24k || 144921) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
-                <div className="p-3 bg-[#191919] border border-[#B59A6C]/40">
+                <div className={`p-3 border transition-all duration-700 ${
+                  priceDeltas?.gold22k === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.gold22k === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#191919] border-[#B59A6C]/40'
+                }`}>
                   <span className="text-[10px] text-[#B59A6C] font-bold block">22K 916 HALLMARK</span>
                   <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_22k || 132844).toLocaleString('en-IN')} / 10g</span>
                   <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_22k || 132844) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
-                <div className="p-3 bg-[#191919] border border-white/10">
+                <div className={`p-3 border transition-all duration-700 ${
+                  priceDeltas?.gold18k === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.gold18k === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#191919] border-white/10'
+                }`}>
                   <span className="text-[10px] text-white/60 block">18K SOLITAIRE (750)</span>
                   <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_18k || 108691).toLocaleString('en-IN')} / 10g</span>
                   <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_18k || 108691) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
-                <div className="p-3 bg-[#191919] border border-white/10">
+                <div className={`p-3 border transition-all duration-700 ${
+                  priceDeltas?.silver1kg === 'up'
+                    ? 'bg-emerald-950/40 border-emerald-500/60'
+                    : priceDeltas?.silver1kg === 'down'
+                    ? 'bg-rose-950/40 border-rose-500/60'
+                    : 'bg-[#191919] border-white/10'
+                }`}>
                   <span className="text-[10px] text-white/60 block">SILVER 999.9 PETI</span>
                   <span className="text-sm font-bold text-white block">₹{(last?.silver_1kg || 191910).toLocaleString('en-IN')} / 1kg</span>
                   <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.silver_1kg || 191910) / 100).toLocaleString('en-IN')} / 10g</span>
@@ -713,11 +836,19 @@ const Prices = () => {
               {/* 24K Pure Gold */}
               <motion.div
                 whileHover={{ y: -6, borderColor: '#B59A6C' }}
-                className="bg-white border border-[#E5E2D9] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group"
+                className={`bg-white border p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group transition-all duration-700 ${
+                  priceDeltas?.gold24k === 'up'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                    : priceDeltas?.gold24k === 'down'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20'
+                    : 'border-[#E5E2D9]'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest">
+                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
                     99.9% PURE GOLD
+                    {priceDeltas?.gold24k === 'up' && <span className="text-emerald-500">▲</span>}
+                    {priceDeltas?.gold24k === 'down' && <span className="text-rose-500">▼</span>}
                   </span>
                   <span className="font-mono text-xs text-gray-400">24K</span>
                 </div>
@@ -741,11 +872,19 @@ const Prices = () => {
               {/* 22K Fine Gold */}
               <motion.div
                 whileHover={{ y: -6, borderColor: '#B59A6C' }}
-                className="bg-white border border-[#E5E2D9] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group"
+                className={`bg-white border p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group transition-all duration-700 ${
+                  priceDeltas?.gold22k === 'up'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                    : priceDeltas?.gold22k === 'down'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20'
+                    : 'border-[#E5E2D9]'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest">
+                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
                     91.6% JEWELRY STANDARD
+                    {priceDeltas?.gold22k === 'up' && <span className="text-emerald-500">▲</span>}
+                    {priceDeltas?.gold22k === 'down' && <span className="text-rose-500">▼</span>}
                   </span>
                   <span className="font-mono text-xs text-gray-400">22K</span>
                 </div>
@@ -769,11 +908,19 @@ const Prices = () => {
               {/* 18K Modern Gold */}
               <motion.div
                 whileHover={{ y: -6, borderColor: '#B59A6C' }}
-                className="bg-white border border-[#E5E2D9] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group"
+                className={`bg-white border p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group transition-all duration-700 ${
+                  priceDeltas?.gold18k === 'up'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                    : priceDeltas?.gold18k === 'down'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20'
+                    : 'border-[#E5E2D9]'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest">
+                  <span className="px-3 py-1 bg-[#FAF9F7] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
                     75.0% SOLITAIRE SETTING
+                    {priceDeltas?.gold18k === 'up' && <span className="text-emerald-500">▲</span>}
+                    {priceDeltas?.gold18k === 'down' && <span className="text-rose-500">▼</span>}
                   </span>
                   <span className="font-mono text-xs text-gray-400">18K</span>
                 </div>
@@ -801,11 +948,19 @@ const Prices = () => {
               {/* 925 Sterling Silver 10g */}
               <motion.div
                 whileHover={{ y: -6, borderColor: '#B59A6C' }}
-                className="bg-white border border-[#E5E2D9] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group"
+                className={`bg-white border p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group transition-all duration-700 ${
+                  priceDeltas?.silverPeti === 'up'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                    : priceDeltas?.silverPeti === 'down'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20'
+                    : 'border-[#E5E2D9]'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-[#FAF9F7] border border-gray-300 text-gray-600 font-mono text-[10px] uppercase font-bold tracking-widest">
+                  <span className="px-3 py-1 bg-[#FAF9F7] border border-gray-300 text-gray-600 font-mono text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
                     92.5% FINE STERLING
+                    {priceDeltas?.silverPeti === 'up' && <span className="text-emerald-500">▲</span>}
+                    {priceDeltas?.silverPeti === 'down' && <span className="text-rose-500">▼</span>}
                   </span>
                   <span className="font-mono text-xs text-gray-400">925 AG</span>
                 </div>
@@ -826,11 +981,19 @@ const Prices = () => {
               {/* 925 Sterling Silver 1kg */}
               <motion.div
                 whileHover={{ y: -6, borderColor: '#B59A6C' }}
-                className="bg-white border border-[#E5E2D9] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group"
+                className={`bg-white border p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative group transition-all duration-700 ${
+                  priceDeltas?.silver1kg === 'up'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/20'
+                    : priceDeltas?.silver1kg === 'down'
+                    ? 'border-rose-500 ring-2 ring-rose-500/20'
+                    : 'border-[#E5E2D9]'
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 bg-[#FAF9F7] border border-gray-300 text-gray-600 font-mono text-[10px] uppercase font-bold tracking-widest">
+                  <span className="px-3 py-1 bg-[#FAF9F7] border border-gray-300 text-gray-600 font-mono text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
                     BULLION BAR (1 KG)
+                    {priceDeltas?.silver1kg === 'up' && <span className="text-emerald-500">▲</span>}
+                    {priceDeltas?.silver1kg === 'down' && <span className="text-rose-500">▼</span>}
                   </span>
                   <span className="font-mono text-xs text-gray-400">1000G</span>
                 </div>

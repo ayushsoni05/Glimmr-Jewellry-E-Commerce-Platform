@@ -3241,6 +3241,10 @@ img {
   border-color: rgb(16 185 129 / 0.5);
 }
 
+.border-emerald-500\/60{
+  border-color: rgb(16 185 129 / 0.6);
+}
+
 .border-emerald-600{
   --tw-border-opacity: 1;
   border-color: rgb(5 150 105 / var(--tw-border-opacity, 1));
@@ -3387,8 +3391,17 @@ img {
   border-color: rgb(251 113 133 / var(--tw-border-opacity, 1));
 }
 
+.border-rose-500{
+  --tw-border-opacity: 1;
+  border-color: rgb(244 63 94 / var(--tw-border-opacity, 1));
+}
+
 .border-rose-500\/40{
   border-color: rgb(244 63 94 / 0.4);
+}
+
+.border-rose-500\/60{
+  border-color: rgb(244 63 94 / 0.6);
 }
 
 .border-slate-100{
@@ -3907,6 +3920,10 @@ img {
   background-color: rgb(16 185 129 / var(--tw-bg-opacity, 1));
 }
 
+.bg-emerald-500\/25{
+  background-color: rgb(16 185 129 / 0.25);
+}
+
 .bg-emerald-600{
   --tw-bg-opacity: 1;
   background-color: rgb(5 150 105 / var(--tw-bg-opacity, 1));
@@ -4055,9 +4072,17 @@ img {
   background-color: rgb(244 63 94 / 0.2);
 }
 
+.bg-rose-500\/25{
+  background-color: rgb(244 63 94 / 0.25);
+}
+
 .bg-rose-600{
   --tw-bg-opacity: 1;
   background-color: rgb(225 29 72 / var(--tw-bg-opacity, 1));
+}
+
+.bg-rose-950\/40{
+  background-color: rgb(76 5 25 / 0.4);
 }
 
 .bg-slate-100{
@@ -5697,9 +5722,19 @@ img {
   color: rgb(167 243 208 / var(--tw-text-opacity, 1));
 }
 
+.text-emerald-300{
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+
 .text-emerald-400{
   --tw-text-opacity: 1;
   color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+}
+
+.text-emerald-500{
+  --tw-text-opacity: 1;
+  color: rgb(16 185 129 / var(--tw-text-opacity, 1));
 }
 
 .text-emerald-600{
@@ -6405,13 +6440,31 @@ img {
   --tw-ring-color: rgb(0 0 0 / var(--tw-ring-opacity, 1));
 }
 
+.ring-emerald-400{
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(52 211 153 / var(--tw-ring-opacity, 1));
+}
+
 .ring-emerald-400\/40{
   --tw-ring-color: rgb(52 211 153 / 0.4);
+}
+
+.ring-emerald-500\/20{
+  --tw-ring-color: rgb(16 185 129 / 0.2);
 }
 
 .ring-rose-300{
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(253 164 175 / var(--tw-ring-opacity, 1));
+}
+
+.ring-rose-400{
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(251 113 133 / var(--tw-ring-opacity, 1));
+}
+
+.ring-rose-500\/20{
+  --tw-ring-color: rgb(244 63 94 / 0.2);
 }
 
 .ring-opacity-10{
@@ -8696,6 +8749,10 @@ img {
 
   .lg\:justify-start{
     justify-content: flex-start;
+  }
+
+  .lg\:justify-end{
+    justify-content: flex-end;
   }
 
   .lg\:gap-10{

@@ -2,6 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const signalR = require('@microsoft/signalr');
+const EventEmitter = require('events');
+
+const bullionEmitter = new EventEmitter();
+bullionEmitter.setMaxListeners(200);
 
 // Path to persistent fallback cache
 const CACHE_DIR = path.join(__dirname, '../data');
@@ -232,6 +236,7 @@ function processBullionPayload(payload) {
   };
 
   saveDiskCache();
+  bullionEmitter.emit('tick', memoryStore);
 }
 
 /**
@@ -316,5 +321,6 @@ function getLatestBullionData() {
 
 module.exports = {
   startBullionService,
-  getLatestBullionData
+  getLatestBullionData,
+  bullionEmitter
 };
