@@ -27,7 +27,8 @@ import {
   ChevronDown,
   X,
   Minimize2,
-  Maximize2
+  Maximize2,
+  RotateCcw
 } from 'lucide-react';
 
 const KARATS_OPTIONS = [
