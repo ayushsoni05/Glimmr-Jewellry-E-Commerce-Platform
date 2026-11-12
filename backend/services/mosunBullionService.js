@@ -329,6 +329,7 @@ function fetchOfficialStarlineSymbols() {
             const symbols = JSON.parse(match[1]);
             if (Array.isArray(symbols) && symbols.length > 0) {
               updateConfigFromSymbols(symbols);
+              syncWithMarketTick(memoryStore);
               resolve(true);
               return;
             }
@@ -363,6 +364,10 @@ function updateConfigFromSymbols(symbols) {
   symbolConfig.rawSymbols = symbols;
 
   symbols.forEach(s => {
+    // Only process actively displayed symbols matching Mosun & Sons mobile app
+    // Explicitly filters out hidden/inactive duplicate symbols like Symbol 651 (obsolete 3600 premium)
+    if (s.IsDisplay === false || s.IsDisplay === 'false') return;
+
     const rawName = (s.SymbolName || '').trim();
     const name = rawName.toUpperCase();
     const sellPrem = Number(s.McxPremium_sell);
@@ -383,7 +388,7 @@ function updateConfigFromSymbols(symbols) {
     } else if (symId === 642 || rawName.includes('18 कैरेट')) {
       if (!isNaN(sellPrem)) symbolConfig.gold_18k_sell_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.gold_18k_buy_premium = buyPrem;
-    } else if (symId === 649 || (name.includes('SILVER BANK') && name.includes('RTGS'))) {
+    } else if (symId === 649 || (name.includes('SILVER BANK') && name.includes('RTGS') && symId !== 651)) {
       if (!isNaN(sellPrem)) symbolConfig.silver_bank_rtgs_premium = sellPrem;
     } else if (symId === 647 || (name.includes('SILVER BANK') && !name.includes('RTGS'))) {
       if (!isNaN(sellPrem)) symbolConfig.silver_bank_cash_premium = sellPrem;

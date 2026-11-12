@@ -409,6 +409,7 @@ const Prices = () => {
 
     const hbSilverAsk = last?.himanshuBullion?.rates?.silver_999_1kg || 191910;
     const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 188165;
+    const mosunSilverBankCash = last?.mosunBullion?.rates?.silver_bank_cash || 188665;
     const hbSilverChorsa = last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456;
     const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 185465;
     const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || 185965;
@@ -466,6 +467,17 @@ const Prices = () => {
         hbDelta: priceDeltas?.silverPeti,
         mosunDelta: mosunPriceDeltas?.silverPeti,
         tax: '3% GST Paid RTGS'
+      },
+      {
+        id: 'silver-bank-cash',
+        name: 'SILVER BANK PETI 999.9 CASH (1 KG)',
+        subtitle: 'Bank Certified Fine Silver Bar (Local Cash Delivery)',
+        hbPrice: hbSilverAsk - 500,
+        mosunPrice: mosunSilverBankCash,
+        diff: (hbSilverAsk - 500) - mosunSilverBankCash,
+        hbDelta: priceDeltas?.silverPeti,
+        mosunDelta: mosunPriceDeltas?.silverPeti,
+        tax: 'Local Cash Delivery'
       },
       {
         id: 'silver-chorsa-rtgs',
