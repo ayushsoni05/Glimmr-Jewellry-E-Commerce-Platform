@@ -186,74 +186,109 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     doc.rect(15, y, 180, 8, 'F');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(255, 255, 255);
-    doc.text('ITEM DESCRIPTION', 20, y + 5.5);
-    doc.text('SPEC / PURITY', 105, y + 5.5);
-    doc.text('QTY', 140, y + 5.5, { align: 'center' });
-    doc.text('UNIT PRICE (Rs.)', 165, y + 5.5, { align: 'right' });
+    doc.text('#', 17, y + 5.5);
+    doc.text('PHOTO', 23, y + 5.5);
+    doc.text('ORNAMENT / HUID', 41, y + 5.5);
+    doc.text('PURITY / SPEC', 106, y + 5.5);
+    doc.text('NET WT', 137, y + 5.5, { align: 'right' });
+    doc.text('QTY', 151, y + 5.5, { align: 'center' });
     doc.text('TOTAL (Rs.)', 190, y + 5.5, { align: 'right' });
 
     y += 8;
 
     safeItems.forEach((d, index) => {
       const imgData = imageDataArr[index];
+      const rowHeight = 17;
 
-      if (y > 250) {
+      if (y + rowHeight > 250) {
         doc.addPage();
         y = 20;
       }
 
       if (index % 2 === 0) {
         doc.setFillColor(250, 249, 247);
-        doc.rect(15, y, 180, d.weight > 0 ? 16 : 12, 'F');
+        doc.rect(15, y, 180, rowHeight, 'F');
       }
 
-      let textX = 20;
+      // Index #
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text(String(index + 1), 17, y + 7);
+
+      // Verified Photo
       if (imgData) {
         try {
-          doc.addImage(imgData, 'JPEG', 20, y + 1, 10, 10);
-          textX = 33;
-        } catch { /* skip image */ }
+          doc.addImage(imgData, 'JPEG', 21, y + 1.5, 14, 14);
+          doc.setDrawColor(181, 154, 108);
+          doc.setLineWidth(0.2);
+          doc.rect(21, y + 1.5, 14, 14, 'S');
+        } catch { /* skip */ }
+      } else {
+        doc.setDrawColor(210, 210, 210);
+        doc.setLineWidth(0.2);
+        doc.rect(21, y + 1.5, 14, 14, 'S');
+        doc.setFontSize(5);
+        doc.setTextColor(160, 160, 160);
+        doc.text('PHOTO', 28, y + 9, { align: 'center' });
       }
 
+      // Item Name
       doc.setFont('times', 'bold');
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(17, 17, 17);
-      doc.text(String(d.name || 'Jewelry Piece').substring(0, 35), textX, y + 6);
+      doc.text(String(d.name || 'Jewelry Piece').substring(0, 32), 41, y + 5.5);
 
+      // HUID & Hallmark
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6);
-      doc.setTextColor(140, 140, 140);
+      doc.setTextColor(120, 120, 120);
       const huidStr = d.huid ? `  |  HUID: ${d.huid}` : '';
-      doc.text(`HSN: 7113  |  BIS Hallmarked${huidStr}`, textX, y + 10);
+      doc.text(`HSN: 7113  |  BIS Hallmarked${huidStr}`, 41, y + 9.5);
 
-      if (d.weight > 0) {
-        doc.setFontSize(6.5);
-        doc.setTextColor(120, 120, 120);
+      // Weight breakdown & rate
+      if (d.weight > 0 || d.netWeight > 0) {
+        doc.setFontSize(5.8);
+        doc.setTextColor(100, 100, 100);
         const rPg = d.ratePerGram ? `Rs.${d.ratePerGram.toLocaleString('en-IN')}/g` : '';
         const pur = d.purityPercent ? `${d.purityPercent.toFixed(1)}%` : '';
         const mkLabel = getMakingModeLabel(d);
-        const breakdownParts = [`${d.weight}g x ${rPg} x ${pur} = Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')}`, `Making (${mkLabel}): Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}`];
-        if (d.gemstoneCost > 0) breakdownParts.push(`Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}`);
-        doc.text(breakdownParts.join('  |  '), textX, y + 13.5);
+        const nw = d.netWeight || d.weight || 0;
+        doc.text(`Net: ${nw}g x ${rPg}  |  Making (${mkLabel}): Rs.${((d.makingCharges || 0) * d.quantity).toLocaleString('en-IN')}`, 41, y + 13.5);
       }
 
-      doc.setFontSize(8);
-      doc.setTextColor(80, 80, 80);
-      const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1);
-      const spec = `${mat} ${d.karat ? d.karat + 'K' : ''} ${d.weight ? d.weight + 'g' : ''}`.trim();
-      doc.text(spec, 105, y + 6);
-
-      doc.text(String(d.quantity), 140, y + 6, { align: 'center' });
-      doc.text(`Rs. ${Number(d.totalPrice).toLocaleString('en-IN')}`, 165, y + 6, { align: 'right' });
-
+      // Purity / Spec
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(17, 17, 17);
-      doc.text(`Rs. ${(d.totalPrice * d.quantity).toLocaleString('en-IN')}`, 190, y + 6, { align: 'right' });
+      doc.setFontSize(7.5);
+      doc.setTextColor(50, 50, 50);
+      const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1);
+      doc.text(`${mat} ${d.karat ? d.karat + 'K' : ''}`, 106, y + 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`${(d.purityPercent || 91.67).toFixed(1)}% Purity`, 106, y + 10);
 
-      y += (d.weight > 0 ? 17 : 13);
+      // Net Weight
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(17, 17, 17);
+      doc.text(`${(d.netWeight || d.weight || 0).toFixed(3)}g`, 137, y + 7, { align: 'right' });
+
+      // Qty
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(d.quantity || 1), 151, y + 7, { align: 'center' });
+
+      // Total
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(17, 17, 17);
+      doc.text(`Rs. ${((d.totalPrice || 0) * d.quantity).toLocaleString('en-IN')}`, 190, y + 7, { align: 'right' });
+
+      y += rowHeight;
       doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.2);
       doc.line(15, y, 195, y);
     });
 
@@ -261,16 +296,16 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     if (y > 240) { doc.addPage(); y = 20; }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(17, 17, 17);
-    doc.text('Declaration & Legal Terms:', 15, y + 4);
+    doc.setFontSize(7.5);
+    doc.setTextColor(181, 154, 108);
+    doc.text('ANTI-FRAUD & PHOTOGRAPHIC VERIFICATION:', 15, y + 4);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(120, 120, 120);
-    doc.text('We declare that this invoice shows the actual price of', 15, y + 8);
-    doc.text('the goods described and that all particulars are true.', 15, y + 12);
-    doc.text('Gold and Silver jewelry is 100% BIS Hallmarked.', 15, y + 16);
+    doc.setFontSize(6.8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Articles photographically verified at counter. 100% BIS Hallmarked.', 15, y + 8);
+    doc.text('Buyback/exchange strictly requires physical match with printed photo,', 15, y + 12);
+    doc.text('verified net weight, and unique BIS HUID laser code.', 15, y + 16);
 
     const wordsStr = numberToIndianWords(totalPayable);
     doc.setFont('helvetica', 'bold');
@@ -411,7 +446,219 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     document.body.appendChild(printFrame);
     const frameDoc = printFrame.contentDocument || printFrame.contentWindow.document;
     frameDoc.open();
-    frameDoc.write(`<html><head><title>${billNumber} - ${STORE_CONFIG.name}</title><style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;600;700&family=Fragment+Mono&display=swap');*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;color:#222;padding:20mm}.gold-bar{height:4px;background:#B59A6C;margin-bottom:20px}.header{display:flex;justify-content:space-between;margin-bottom:16px}.brand{font-family:'Playfair Display',serif;font-size:22px;font-weight:700}.sub{font-size:7.5px;color:#888;margin-top:4px}.bill-meta{text-align:right}.bill-meta .label{font-size:9px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em}.bill-meta .number{font-size:14px;font-weight:700;margin-top:4px}.bill-meta .date{font-size:8.5px;color:#888;margin-top:2px}.customer-box{background:#FAF9F7;border:1px solid #E5E2D9;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between}.customer-box .section-label{font-size:8px;color:#B59A6C;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}.customer-box .name{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.customer-box .detail{font-size:8px;color:#555;margin-top:2px}table{width:100%;border-collapse:collapse;margin-top:12px}th{background:#111;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;text-align:left}th.right{text-align:right}th.center{text-align:center}td{padding:8px;font-size:9px;border-bottom:1px solid #eee;vertical-align:top}td.right{text-align:right;font-family:'Fragment Mono',monospace}td.center{text-align:center;font-family:'Fragment Mono',monospace;font-weight:700}td.bold{font-weight:700}.item-img{width:32px;height:32px;object-fit:cover;border:1px solid #eee;margin-right:8px;vertical-align:middle}.item-name{font-family:'Playfair Display',serif;font-weight:700;font-size:10px}.item-hsn{font-size:6.5px;color:#aaa;margin-top:2px}.item-breakdown{font-size:7px;color:#888;margin-top:3px}.summary{display:flex;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid #ddd}.declaration{max-width:240px;font-size:7.5px;color:#888}.declaration .title{font-size:8px;color:#111;font-weight:700;margin-bottom:4px}.totals{min-width:200px}.totals .row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:9px;color:#555}.totals .row .val{font-family:'Fragment Mono',monospace;font-weight:700;color:#111}.totals .grand{border-top:2px solid #111;padding-top:8px;margin-top:6px}.totals .grand .label{font-family:'Playfair Display',serif;font-size:12px;font-weight:700}.totals .grand .val{font-family:'Fragment Mono',monospace;font-size:14px;font-weight:700}.discount-row{color:#147a3b;background:#f0fdf4;padding:4px 6px;border:1px solid #bbf7d0;margin-bottom:4px}.footer{margin-top:24px;padding-top:12px;border-top:1px solid #ddd;display:flex;justify-content:space-between;align-items:flex-end}.footer .cert{font-size:7.5px;color:#888}.footer .sig{text-align:right}.footer .sig .brand{font-family:'Playfair Display',serif;font-size:12px;color:#B59A6C;font-weight:700}.footer .sig .label{font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.15em;margin-top:2px}@media print{body{padding:10mm}}</style></head><body><div class="gold-bar"></div><div class="header"><div><div class="brand">${STORE_CONFIG.name.toUpperCase()}</div><div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div><div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div><div class="sub">${STORE_CONFIG.address.full}</div></div><div class="bill-meta"><div class="label">Store Billing Invoice</div><div class="number">${billNumber}</div><div class="date">${invoiceDate} | ${invoiceTime}</div><div class="date" style="color:#147a3b;font-weight:700">Payment: ${paymentMethod.toUpperCase()}</div></div></div><div class="customer-box"><div><div class="section-label">Customer Details</div><div class="name">${customer.name || 'Walk-in Customer'}</div><div class="detail">Phone: ${customer.phone || 'N/A'}</div></div><div><div class="section-label">Metal Rates Applied</div><div class="detail">Gold: Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g</div><div class="detail">Silver: Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g | Operator: ${operator}</div></div></div><table><thead><tr><th>Item Description</th><th>Spec / Purity</th><th class="center">Qty</th><th class="right">Unit Price</th><th class="right">Total</th></tr></thead><tbody>${safeItems.map(d => { const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1); return `<tr><td>${d.image ? `<img src="${d.image}" class="item-img" />` : ''}<div class="item-name">${d.name || 'Jewelry Piece'}</div><div class="item-hsn">HSN: 7113 | BIS Hallmarked${d.huid ? ` | HUID: <b>${d.huid}</b>` : ''}</div>${d.weight > 0 ? `<div class="item-breakdown">Metal: Rs.${(d.metalCost * d.quantity).toLocaleString('en-IN')} | Making (${getMakingModeLabel(d)}): Rs.${(d.makingCharges * d.quantity).toLocaleString('en-IN')}${d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</div>` : ''}</td><td>${mat} ${d.karat ? d.karat + 'K' : ''} ${d.weight ? d.weight + 'g' : ''}</td><td class="center">${d.quantity}</td><td class="right">Rs. ${Number(d.totalPrice).toLocaleString('en-IN')}</td><td class="right bold">Rs. ${(d.totalPrice * d.quantity).toLocaleString('en-IN')}</td></tr>`; }).join('')}</tbody></table><div class="summary"><div class="declaration"><div class="title">Declaration & Legal Terms:</div><div>We declare that this invoice shows the actual price of the goods described and all particulars are true and correct. All Gold and Silver jewelry is 100% BIS Hallmarked.</div><div style="margin-top:8px;font-size:8px;color:#222;font-style:italic;"><b>Amount in Words:</b> ${numberToIndianWords(totalPayable)}</div></div><div class="totals"><div class="row"><span>Subtotal (Before Tax):</span><span class="val">Rs. ${subtotal.toLocaleString('en-IN')}</span></div>${computedTotalGst > 0 ? `<div class="row" style="font-weight:700"><span>Total GST (${rateNum}%):</span><span class="val">Rs. ${computedTotalGst.toLocaleString('en-IN')}</span></div>${!isSingle ? `<div class="row" style="font-size:7.5px;color:#777;padding-left:6px;margin-top:-2px"><span>CGST (${cgstPercent}%): Rs. ${cgst.toLocaleString('en-IN')} &nbsp;|&nbsp; SGST (${sgstPercent}%): Rs. ${sgst.toLocaleString('en-IN')}</span></div>` : ''}` : `<div class="row"><span>GST (0% Exempt):</span><span class="val">Rs. 0</span></div>`}${discountAmount > 0 ? `<div class="row discount-row"><span>Voucher (${couponCode || 'Privilege'}):</span><span class="val">-Rs. ${discountAmount.toLocaleString('en-IN')}</span></div>` : ''}${oldGoldDeduction > 0 ? `<div class="row" style="color:#b45309;background:#fffbeb;padding:4px 6px;border:1px solid #fde68a;margin-bottom:4px;"><span>Old Gold Exchange:</span><span class="val">-Rs. ${oldGoldDeduction.toLocaleString('en-IN')}</span></div>` : ''}<div class="row grand"><span class="label">Total Payable:</span><span class="val">Rs. ${totalPayable.toLocaleString('en-IN')}</span></div>${paymentMethod === 'cash' && cashReceived > 0 ? `<div class="row" style="margin-top:6px"><span>Cash Received:</span><span class="val">Rs. ${cashReceived.toLocaleString('en-IN')}</span></div><div class="row"><span>Change Returned:</span><span class="val">Rs. ${changeReturned.toLocaleString('en-IN')}</span></div>` : ''}</div></div><div class="footer"><div class="cert">Computer Generated Certified GST Invoice</div><div class="sig"><div class="brand">${STORE_CONFIG.name}</div><div class="label">Authorized Signatory</div></div></div></body></html>`);
+    frameDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${billNumber} - ${STORE_CONFIG.name}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&family=Fragment+Mono:wght@400;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; color: #111; padding: 14mm 16mm; font-size: 9px; line-height: 1.35; }
+    .gold-bar { height: 4px; background: #B59A6C; margin-bottom: 14px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .brand { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #07162C; letter-spacing: 0.05em; }
+    .sub { font-size: 7.5px; color: #555; margin-top: 2px; }
+    .bill-meta { text-align: right; }
+    .bill-meta .badge { font-size: 8.5px; color: #B59A6C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
+    .bill-meta .number { font-size: 14px; font-weight: 700; font-family: 'Fragment Mono', monospace; color: #07162C; margin-top: 2px; }
+    .bill-meta .date { font-size: 8px; color: #666; margin-top: 2px; }
+    .bill-meta .payment-badge { font-size: 8px; color: #147a3b; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+
+    .customer-box { background: #FAF9F7; border: 1px solid #E5E2D9; padding: 10px 14px; margin: 10px 0; display: flex; justify-content: space-between; gap: 16px; border-radius: 2px; }
+    .customer-box .sec-title { font-size: 7.5px; color: #B59A6C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
+    .customer-box .name { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: #111; }
+    .customer-box .detail { font-size: 8px; color: #555; margin-top: 1.5px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #07162C; color: #fff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 6px; text-align: left; }
+    th.center { text-align: center; }
+    th.right { text-align: right; }
+    td { padding: 6px; font-size: 8.5px; border-bottom: 1px solid #E8E5DD; vertical-align: middle; }
+    td.center { text-align: center; }
+    td.right { text-align: right; font-family: 'Fragment Mono', monospace; }
+    td.bold { font-weight: 700; }
+
+    .photo-cell { width: 52px; height: 52px; object-fit: cover; border: 1px solid #B59A6C; border-radius: 2px; display: block; margin: 0 auto; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .no-photo-box { width: 52px; height: 52px; border: 1px dashed #ccc; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 7.5px; color: #999; text-transform: uppercase; margin: 0 auto; background: #FAF9F7; }
+
+    .item-name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 9.5px; color: #07162C; }
+    .item-hsn { font-size: 7px; color: #666; margin-top: 1.5px; }
+    .huid-code { display: inline-block; padding: 0.5px 3.5px; background: #FFF8E7; border: 0.5px solid #B59A6C; border-radius: 2px; font-family: 'Fragment Mono', monospace; font-size: 7.5px; font-weight: 700; color: #8C6D37; }
+    .item-breakdown { font-size: 7px; color: #666; margin-top: 2px; }
+
+    .summary-section { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 12px; gap: 20px; }
+    .declaration-box { flex: 1; max-width: 320px; }
+    .totals-box { min-width: 230px; font-size: 8.5px; }
+    .totals-box .row { display: flex; justify-content: space-between; margin-bottom: 3px; color: #555; }
+    .totals-box .row .val { font-family: 'Fragment Mono', monospace; font-weight: 700; color: #111; }
+    .totals-box .grand { border-top: 1.5px solid #07162C; padding-top: 6px; margin-top: 5px; }
+    .totals-box .grand .label { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: #07162C; }
+    .totals-box .grand .val { font-family: 'Fragment Mono', monospace; font-size: 13px; font-weight: 700; color: #07162C; }
+
+    .anti-fraud-banner { margin-top: 14px; padding: 8px 12px; background: #FCFAF6; border: 1px solid #B59A6C; border-left: 4px solid #B59A6C; border-radius: 2px; }
+    .anti-fraud-title { font-size: 8px; font-weight: 700; color: #07162C; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .anti-fraud-text { font-size: 7px; line-height: 1.4; color: #444; }
+
+    .signatures-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 8px; }
+    .sig-block { width: 200px; text-align: center; }
+    .sig-line { border-top: 1px solid #777; margin-top: 32px; margin-bottom: 3px; }
+    .sig-title { font-size: 7.5px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: 0.06em; }
+    .sig-sub { font-size: 6.5px; color: #777; }
+
+    @media print { body { padding: 8mm 10mm; } }
+  </style>
+</head>
+<body>
+  <div class="gold-bar"></div>
+  <div class="header">
+    <div>
+      <div class="brand">${STORE_CONFIG.name.toUpperCase()}</div>
+      <div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div>
+      <div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div>
+      <div class="sub">${STORE_CONFIG.address.full}</div>
+    </div>
+    <div class="bill-meta">
+      <div class="badge">${rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</div>
+      <div class="number">${billNumber}</div>
+      <div class="date">${invoiceDate} | ${invoiceTime}</div>
+      <div class="payment-badge">Payment: ${paymentMethod.toUpperCase()}</div>
+    </div>
+  </div>
+
+  <div class="customer-box">
+    <div>
+      <div class="sec-title">Customer Details</div>
+      <div class="name">${customer.name || 'Walk-in Customer'}</div>
+      <div class="detail">Phone: ${customer.phone || 'N/A'}${customer.panNumber ? ' | PAN: ' + customer.panNumber : ''}</div>
+      ${customer.address ? `<div class="detail">Address: ${customer.address}</div>` : ''}
+      ${customer.gstin ? `<div class="detail">GSTIN: ${customer.gstin}</div>` : ''}
+    </div>
+    <div style="text-align: right;">
+      <div class="sec-title">Counter Rates & Staff</div>
+      <div class="detail">Gold 24K: <b>Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g</b></div>
+      <div class="detail">Silver: <b>Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g</b></div>
+      <div class="detail">Operator / Cashier: ${operator}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="center" style="width: 22px;">#</th>
+        <th class="center" style="width: 58px;">Verified Photo</th>
+        <th>Ornament Description & HUID</th>
+        <th>Purity / Spec</th>
+        <th class="right" style="width: 55px;">Gross Wt</th>
+        <th class="right" style="width: 55px;">Net Wt</th>
+        <th class="center" style="width: 28px;">Qty</th>
+        <th class="right" style="width: 75px;">Rate & Making</th>
+        <th class="right" style="width: 75px;">Item Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${safeItems.map((d, idx) => {
+        const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1);
+        const grossWt = Number(d.weight || d.netWeight || 0);
+        const netWt = Number(d.netWeight || d.weight || 0);
+        const pur = (d.purityPercent || (d.karat === 24 ? 99.9 : d.karat === 22 ? 91.67 : d.karat === 18 ? 75 : d.karat === 14 ? 58.33 : 92.5)).toFixed(1);
+        return `<tr>
+          <td class="center bold" style="color: #666;">${idx + 1}</td>
+          <td class="center">
+            ${d.image ? `<img src="${d.image}" class="photo-cell" alt="${d.name || ''}" />` : `<div class="no-photo-box">Photo</div>`}
+          </td>
+          <td>
+            <div class="item-name">${d.name || 'Jewelry Piece'}</div>
+            <div class="item-hsn">HSN: 7113 | BIS Hallmarked ${d.huid ? `| HUID: <span class="huid-code">${d.huid}</span>` : ''}</div>
+            ${(d.weight > 0 || d.netWeight > 0) ? `<div class="item-breakdown">Metal Val: Rs.${((d.metalCost || 0) * (d.quantity || 1)).toLocaleString('en-IN')}${d.gemstoneCost > 0 ? ` | Stone: Rs.${((d.gemstoneCost || 0) * (d.quantity || 1)).toLocaleString('en-IN')}` : ''}</div>` : ''}
+          </td>
+          <td>
+            <div style="font-weight: 700; color: #111;">${mat} ${d.karat ? d.karat + 'K' : ''}</div>
+            <div style="font-size: 7px; color: #777;">${pur}% Purity</div>
+          </td>
+          <td class="right">${grossWt.toFixed(3)}g</td>
+          <td class="right bold" style="color: #07162C;">${netWt.toFixed(3)}g</td>
+          <td class="center bold">${d.quantity || 1}</td>
+          <td class="right">
+            <div>Rs. ${(d.ratePerGram || 0).toLocaleString('en-IN')}/g</div>
+            <div style="font-size: 7px; color: #777;">Mk (${getMakingModeLabel(d)}): Rs.${((d.makingCharges || 0) * (d.quantity || 1)).toLocaleString('en-IN')}</div>
+          </td>
+          <td class="right bold" style="color: #07162C; font-size: 9.5px;">Rs. ${((d.totalPrice || 0) * (d.quantity || 1)).toLocaleString('en-IN')}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <div class="summary-section">
+    <div class="declaration-box">
+      <div style="font-size: 8px; font-weight: 700; color: #07162C; text-transform: uppercase; margin-bottom: 3px;">Declaration & Certification</div>
+      <div style="font-size: 7px; color: #555; line-height: 1.4;">
+        We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. Gold and Silver jewellery is 100% BIS Hallmarked under IS 1417:2016. Verify authenticity on the BIS Care App using printed HUID.
+      </div>
+      <div style="margin-top: 6px; font-size: 7.5px; color: #111; font-style: italic;">
+        <b>Amount in Words:</b> ${numberToIndianWords(totalPayable)}
+      </div>
+    </div>
+
+    <div class="totals-box">
+      <div class="row"><span>Taxable Subtotal:</span><span class="val">Rs. ${subtotal.toLocaleString('en-IN')}</span></div>
+      ${computedTotalGst > 0 ? `
+        <div class="row" style="font-weight: 700; color: #111;">
+          <span>Total GST (${rateNum}%):</span>
+          <span class="val">Rs. ${computedTotalGst.toLocaleString('en-IN')}</span>
+        </div>
+        ${!isSingle ? `
+          <div class="row" style="font-size: 7px; color: #777; padding-left: 6px; margin-top: -2px;">
+            <span>CGST (${cgstPercent}%): Rs. ${cgst.toLocaleString('en-IN')} &nbsp;|&nbsp; SGST (${sgstPercent}%): Rs. ${sgst.toLocaleString('en-IN')}</span>
+          </div>
+        ` : ''}
+      ` : `
+        <div class="row"><span>GST (0% Exempt):</span><span class="val">Rs. 0</span></div>
+      `}
+      ${discountAmount > 0 ? `
+        <div class="row" style="color: #147a3b; background: #f0fdf4; padding: 2px 4px; border: 1px solid #bbf7d0;">
+          <span>Voucher (${couponCode || 'Privilege'}):</span>
+          <span class="val">-Rs. ${discountAmount.toLocaleString('en-IN')}</span>
+        </div>
+      ` : ''}
+      ${oldGoldDeduction > 0 ? `
+        <div class="row" style="color: #b45309; background: #fffbeb; padding: 2px 4px; border: 1px solid #fde68a;">
+          <span>Old Gold Exchange:</span>
+          <span class="val">-Rs. ${oldGoldDeduction.toLocaleString('en-IN')}</span>
+        </div>
+      ` : ''}
+      <div class="row grand">
+        <span class="label">Total Payable:</span>
+        <span class="val">Rs. ${totalPayable.toLocaleString('en-IN')}</span>
+      </div>
+      ${paymentMethod === 'cash' && cashReceived > 0 ? `
+        <div class="row" style="margin-top: 4px;"><span>Cash Received:</span><span class="val">Rs. ${cashReceived.toLocaleString('en-IN')}</span></div>
+        <div class="row"><span>Change Returned:</span><span class="val">Rs. ${changeReturned.toLocaleString('en-IN')}</span></div>
+      ` : ''}
+    </div>
+  </div>
+
+  <div class="anti-fraud-banner">
+    <div class="anti-fraud-title">Anti-Fraud & Photographic Article Verification Notice</div>
+    <div class="anti-fraud-text">
+      This certified GST Tax Invoice contains photographic verification of the exact article(s) delivered to the buyer at the billing counter. All pieces are hallmarked with BIS standards and unique 6-character HUID laser codes. To prevent substitution fraud or spurious claims, any buyback, repair, exchange, or return is strictly subject to matching the physical ornament with the printed photograph, verified net weight, and BIS HUID.
+    </div>
+  </div>
+
+  <div class="signatures-row">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-title">Customer Acknowledgement</div>
+      <div class="sig-sub">"I confirm receipt of genuine articles matching photos & net weight."</div>
+    </div>
+    <div class="sig-block">
+      <div style="font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: #B59A6C;">${STORE_CONFIG.name}</div>
+      <div class="sig-line" style="margin-top: 20px;"></div>
+      <div class="sig-title">Authorized Signatory</div>
+      <div class="sig-sub">Certified Computer Generated Tax Invoice</div>
+    </div>
+  </div>
+</body>
+</html>`);
     frameDoc.close();
     setTimeout(() => { printFrame.contentWindow.print(); setTimeout(() => document.body.removeChild(printFrame), 1000); }, 500);
   };
@@ -592,51 +839,75 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
               </div>
             </div>
 
-            {/* Item Table */}
+            {/* Item Table with Dedicated Photo Column */}
             <div className="overflow-x-auto">
               <table className="w-full text-xs font-body">
                 <thead>
                   <tr className="bg-[#111111] text-white">
-                    <th className="py-2.5 px-3 text-left font-bold uppercase tracking-wider text-[10px]">Item Description</th>
+                    <th className="py-2.5 px-2 text-center font-bold uppercase tracking-wider text-[10px] w-7">#</th>
+                    <th className="py-2.5 px-2 text-center font-bold uppercase tracking-wider text-[10px] w-14">Photo</th>
+                    <th className="py-2.5 px-3 text-left font-bold uppercase tracking-wider text-[10px]">Ornament & HUID</th>
                     <th className="py-2.5 px-3 text-left font-bold uppercase tracking-wider text-[10px]">Spec / Purity</th>
-                    <th className="py-2.5 px-3 text-center font-bold uppercase tracking-wider text-[10px]">Qty</th>
-                    <th className="py-2.5 px-3 text-right font-bold uppercase tracking-wider text-[10px]">Unit Price</th>
+                    <th className="py-2.5 px-3 text-right font-bold uppercase tracking-wider text-[10px]">Gross / Net</th>
+                    <th className="py-2.5 px-2 text-center font-bold uppercase tracking-wider text-[10px] w-10">Qty</th>
+                    <th className="py-2.5 px-3 text-right font-bold uppercase tracking-wider text-[10px]">Rate & Making</th>
                     <th className="py-2.5 px-3 text-right font-bold uppercase tracking-wider text-[10px]">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {safeItems.map((d, idx) => {
                     const mat = (d.material || 'gold').charAt(0).toUpperCase() + (d.material || 'gold').slice(1);
+                    const grossWt = Number(d.weight || d.netWeight || 0);
+                    const netWt = Number(d.netWeight || d.weight || 0);
                     return (
                       <tr key={idx} className="hover:bg-gray-50/50 border-b border-gray-100">
-                        <td className="py-3 px-3">
-                          <div className="flex items-start gap-2.5">
-                            {d.image && (
-                              <img src={d.image} alt={d.name || 'Product'} className="w-10 h-10 object-cover border border-gray-200 shrink-0 bg-[#FAF9F7]" />
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-heading font-bold text-[#111111] leading-snug break-words">{d.name || 'Fine Jewelry Piece'}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider">HSN: 7113 | BIS Hallmarked</span>
-                                {d.huid && (
-                                  <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 bg-[#B59A6C]/10 text-[#B59A6C] border border-[#B59A6C]/30 tracking-widest uppercase">
-                                    HUID: {d.huid}
-                                  </span>
-                                )}
-                              </div>
-                              {d.weight > 0 && (
-                                <div className="mt-1 text-[9px] text-gray-500">
-                                  <span className="block">{d.weight}g x Rs.{(d.ratePerGram || 0).toLocaleString('en-IN')}/g x {(d.purityPercent || 91.67).toFixed(1)}% = Rs.{(d.metalCost * d.quantity).toLocaleString('en-IN')}</span>
-                                  <span className="block">Making ({getMakingModeLabel(d)}): Rs.{(d.makingCharges * d.quantity).toLocaleString('en-IN')}{d.gemstoneCost > 0 ? ` | Diamond: Rs.${(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}` : ''}</span>
-                                </div>
-                              )}
+                        <td className="py-3 px-2 text-center font-mono text-gray-500 font-bold">{idx + 1}</td>
+                        <td className="py-2 px-2 text-center">
+                          {d.image ? (
+                            <img
+                              src={d.image}
+                              alt={d.name || 'Product'}
+                              className="w-12 h-12 object-cover border border-[#B59A6C]/40 rounded-xs mx-auto bg-[#FAF9F7] shadow-2xs"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-xs border border-dashed border-gray-300 mx-auto flex items-center justify-center text-[9px] text-gray-400 bg-gray-50 font-sans">
+                              No Pic
                             </div>
-                          </div>
+                          )}
                         </td>
-                        <td className="py-3 px-3 text-gray-600">{mat} {d.karat ? `${d.karat}K` : ''} {d.weight ? `${d.weight}g` : ''}</td>
-                        <td className="py-3 px-3 text-center font-mono font-bold">{d.quantity}</td>
-                        <td className="py-3 px-3 text-right font-mono whitespace-nowrap">Rs.{Number(d.totalPrice).toLocaleString('en-IN')}</td>
-                        <td className="py-3 px-3 text-right font-mono font-bold whitespace-nowrap">Rs.{(d.totalPrice * d.quantity).toLocaleString('en-IN')}</td>
+                        <td className="py-3 px-3">
+                          <p className="font-heading font-bold text-[#111111] leading-snug break-words">{d.name || 'Fine Jewelry Piece'}</p>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="text-[9px] font-body text-gray-400 uppercase tracking-wider">HSN: 7113 | BIS Hallmarked</span>
+                            {d.huid && (
+                              <span className="text-[8px] font-mono font-bold px-1.5 py-0.2 bg-[#B59A6C]/10 text-[#B59A6C] border border-[#B59A6C]/30 tracking-widest uppercase rounded-2xs">
+                                HUID: {d.huid}
+                              </span>
+                            )}
+                          </div>
+                          {d.gemstoneCost > 0 && (
+                            <div className="mt-0.5 text-[9px] text-gray-500 font-mono">
+                              Diamond / Gemstones: Rs.{(d.gemstoneCost * d.quantity).toLocaleString('en-IN')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-gray-700">
+                          <div className="font-bold">{mat} {d.karat ? `${d.karat}K` : ''}</div>
+                          <div className="text-[10px] text-gray-500">{(d.purityPercent || 91.67).toFixed(1)}% Purity</div>
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono text-xs">
+                          <div className="text-gray-500 text-[10px]">Gr: {grossWt.toFixed(3)}g</div>
+                          <div className="font-bold text-[#111111]">Net: {netWt.toFixed(3)}g</div>
+                        </td>
+                        <td className="py-3 px-2 text-center font-mono font-bold">{d.quantity || 1}</td>
+                        <td className="py-3 px-3 text-right font-mono text-[11px]">
+                          <div>Rs.{(d.ratePerGram || 0).toLocaleString('en-IN')}/g</div>
+                          <div className="text-[9px] text-gray-500">Mk: Rs.{((d.makingCharges || 0) * (d.quantity || 1)).toLocaleString('en-IN')} ({getMakingModeLabel(d)})</div>
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono font-bold text-sm whitespace-nowrap text-[#07162C]">
+                          Rs. {((d.totalPrice || 0) * (d.quantity || 1)).toLocaleString('en-IN')}
+                        </td>
                       </tr>
                     );
                   })}
@@ -745,6 +1016,17 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Anti-Fraud Photographic Verification Notice Banner */}
+            <div className="bg-[#FCFAF6] border border-[#B59A6C] border-l-4 border-l-[#B59A6C] p-3 rounded-xs flex items-start gap-3">
+              <ShieldCheckIcon size={20} className="text-[#B59A6C] shrink-0 mt-0.5" />
+              <div className="text-[10px] font-body text-gray-600 leading-relaxed">
+                <span className="font-bold text-[#07162C] uppercase tracking-wider block text-[11px] mb-0.5">
+                  Anti-Fraud & Photographic Article Verification Notice
+                </span>
+                This certified GST Tax Invoice features high-resolution photographic verification of the exact article(s) delivered to the customer at the counter. All pieces are hallmarked under BIS IS 1417:2016 standards with unique 6-character HUID laser codes. To prevent item substitution fraud, all buyback, exchange, or claim requests are strictly verified against the printed photograph, certified net weight, and HUID recorded on this invoice.
               </div>
             </div>
 

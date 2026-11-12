@@ -119,7 +119,7 @@ export default function BusyMagicBilling({
   setCatalogAlert,
   onToggleViewMode
 }) {
-  // Selected line item for highlight / delete [F9]
+  // Selected line item for highlight / delete
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
 
   // Fast Add Line Item Bar (BUSY Magic Direct Entry)
@@ -132,6 +132,7 @@ export default function BusyMagicBilling({
   const [quickMakingVal, setQuickMakingVal] = useState('12');
   const [quickStoneVal, setQuickStoneVal] = useState('');
   const [quickHuid, setQuickHuid] = useState('');
+  const [quickImage, setQuickImage] = useState('');
   const [quickCatalogSearch, setQuickCatalogSearch] = useState('');
   const [showCatalogDropdown, setShowCatalogDropdown] = useState(false);
 
@@ -145,17 +146,18 @@ export default function BusyMagicBilling({
   // Daily Board Rates Drawer in BUSY Magic Style
   const [showRatesEditor, setShowRatesEditor] = useState(false);
 
-  // Quick Catalog Filter for Fast Entry
+  // Quick Catalog Filter for Fast Entry (searches real store inventory)
   const quickCatalogMatches = useMemo(() => {
-    if (!quickCatalogSearch.trim()) return [];
-    const q = quickCatalogSearch.toLowerCase();
     const list = Array.isArray(products) ? products : [];
+    if (!quickCatalogSearch.trim()) return list.slice(0, 8);
+    const q = quickCatalogSearch.toLowerCase().trim();
     return list.filter(p =>
       (p.name || '').toLowerCase().includes(q) ||
       (p.sku || '').toLowerCase().includes(q) ||
       (p.barcode || '').toLowerCase().includes(q) ||
-      (p.huid || '').toLowerCase().includes(q)
-    ).slice(0, 8);
+      (p.huid || '').toLowerCase().includes(q) ||
+      (p.category || '').toLowerCase().includes(q)
+    ).slice(0, 10);
   }, [products, quickCatalogSearch]);
 
   // Compute Fast Entry Calculated Values
@@ -223,7 +225,7 @@ export default function BusyMagicBilling({
       gstTax: Math.round((quickMetalCost + quickMakingCharges + (parseFloat(quickStoneVal) || 0)) * (gstRate / 100)),
       totalPrice: quickItemTotal,
       quantity: 1,
-      image: '',
+      image: quickImage || '',
       isCustomItem: true,
       huid: quickHuid.trim().toUpperCase()
     };
@@ -237,46 +239,17 @@ export default function BusyMagicBilling({
     setQuickStoneWt('');
     setQuickStoneVal('');
     setQuickHuid('');
+    setQuickImage('');
     setQuickCatalogSearch('');
 
     setCatalogAlert(`Voucher Grid: Added "${newItem.name}" (${quickNetWt.toFixed(3)}g)`);
     setTimeout(() => setCatalogAlert(''), 3000);
   };
 
-  // Keyboard Shortcuts Hook (BUSY Magic function key mappings)
+  // Standard Escape Key Listener for Modals / Drawers (Function key shortcuts removed)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore when focused in text area with enter
-      if (e.key === 'F2') {
-        e.preventDefault();
-        handleGenerateInvoice();
-      } else if (e.key === 'F3') {
-        e.preventDefault();
-        const inputElem = document.getElementById('busy-quick-name');
-        if (inputElem) inputElem.focus();
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        setShowRatesEditor(prev => !prev);
-      } else if (e.key === 'F5') {
-        e.preventDefault();
-        setShowHistory(prev => !prev);
-      } else if (e.key === 'F7') {
-        e.preventDefault();
-        setHasOldGold(prev => !prev);
-      } else if (e.key === 'F8') {
-        e.preventDefault();
-        setPaymentMethod(prev => (prev === 'mixed' ? 'cash' : 'mixed'));
-      } else if (e.key === 'F9') {
-        e.preventDefault();
-        if (billItems.length > 0) {
-          const targetIndex = selectedRowIndex >= 0 && selectedRowIndex < billItems.length ? selectedRowIndex : billItems.length - 1;
-          const targetId = billItems[targetIndex]?.id;
-          if (targetId) {
-            setBillItems(prev => prev.filter(item => item.id !== targetId));
-            setSelectedRowIndex(prev => Math.max(0, prev - 1));
-          }
-        }
-      } else if (e.key === 'Escape') {
+      if (e.key === 'Escape') {
         if (showRatesEditor) {
           setShowRatesEditor(false);
         } else if (showCatalogDropdown) {
@@ -287,17 +260,7 @@ export default function BusyMagicBilling({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    billItems,
-    selectedRowIndex,
-    handleGenerateInvoice,
-    setShowHistory,
-    setHasOldGold,
-    setPaymentMethod,
-    setBillItems,
-    showRatesEditor,
-    showCatalogDropdown
-  ]);
+  }, [showRatesEditor, showCatalogDropdown]);
 
   // Old Gold Calculation
   const computedOldGoldNetWt = useMemo(() => {
@@ -402,7 +365,7 @@ export default function BusyMagicBilling({
             className="px-3 py-1 bg-[#B59A6C] text-[#07162C] font-bold rounded shadow-xs flex items-center gap-1 cursor-default"
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Sales Voucher [F8]</span>
+            <span>Sales Voucher</span>
           </button>
 
           <button
@@ -413,7 +376,7 @@ export default function BusyMagicBilling({
             }`}
           >
             <Banknote className="w-3.5 h-3.5 text-[#B59A6C]" />
-            <span>Daily Board Rates [F4]</span>
+            <span>Daily Board Rates</span>
           </button>
 
           <button
@@ -422,7 +385,7 @@ export default function BusyMagicBilling({
             className="px-3 py-1 rounded hover:bg-[#15345A] border border-[#1E3A5F] text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
           >
             <Clock className="w-3.5 h-3.5 text-blue-400" />
-            <span>Sales Day Book [F5]</span>
+            <span>Sales Day Book</span>
           </button>
 
           <button
@@ -511,7 +474,7 @@ export default function BusyMagicBilling({
               onClick={() => setShowRatesEditor(prev => !prev)}
               className="text-[#B59A6C] hover:text-white underline text-[10px] cursor-pointer"
             >
-              {showRatesEditor ? 'Close Rates Drawer' : 'Adjust Rates Master [F4]'}
+              {showRatesEditor ? 'Close Rates Drawer' : 'Adjust Rates Master'}
             </button>
           </div>
         </div>
@@ -782,7 +745,7 @@ export default function BusyMagicBilling({
               </span>
             </div>
             <div className="text-[10px] text-slate-300 font-mono">
-              Press <kbd className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-bold">F3</kbd> to jump to Add Item | <kbd className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-bold">F9</kbd> to Delete Highlighted Row
+              Use Fast Entry row below to add items | Select row and click trash to delete
             </div>
           </div>
 
@@ -791,6 +754,7 @@ export default function BusyMagicBilling({
               <thead>
                 <tr className="bg-[#1E3A5F] text-white font-bold uppercase text-[10px] tracking-wider border-b border-slate-400">
                   <th className="p-2 text-center w-8">#</th>
+                  <th className="p-2 text-center w-14">Photo</th>
                   <th className="p-2 min-w-[180px]">Ornament / Description</th>
                   <th className="p-2 w-24">HUID / Tag</th>
                   <th className="p-2 w-24">Purity</th>
@@ -811,7 +775,7 @@ export default function BusyMagicBilling({
               <tbody className="divide-y divide-slate-200">
                 {billItems.length === 0 ? (
                   <tr>
-                    <td colSpan={15} className="text-center py-12 text-slate-400 bg-slate-50 font-sans">
+                    <td colSpan={16} className="text-center py-12 text-slate-400 bg-slate-50 font-sans">
                       <div className="max-w-md mx-auto space-y-2">
                         <Barcode className="w-8 h-8 text-slate-300 mx-auto" />
                         <p className="font-bold text-slate-600 text-xs">
@@ -845,6 +809,22 @@ export default function BusyMagicBilling({
                         {/* Row # */}
                         <td className="p-2 text-center font-bold text-slate-500">
                           {idx + 1}
+                        </td>
+
+                        {/* Dedicated Item Photo */}
+                        <td className="p-1.5 text-center">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-10 h-10 object-cover rounded border border-slate-300 mx-auto bg-white shadow-2xs"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded border border-dashed border-slate-300 mx-auto flex items-center justify-center bg-slate-100 text-[8px] text-slate-400 font-sans">
+                              No Pic
+                            </div>
+                          )}
                         </td>
 
                         {/* Description */}
@@ -977,7 +957,7 @@ export default function BusyMagicBilling({
                               setBillItems(prev => prev.filter(bi => bi.id !== item.id));
                             }}
                             className="text-slate-400 hover:text-rose-600 transition-colors p-1"
-                            title="Delete this row [F9]"
+                            title="Delete this row"
                           >
                             <TrashIcon size={13} />
                           </button>
@@ -997,15 +977,43 @@ export default function BusyMagicBilling({
             <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
                 <span className="bg-[#0B2545] text-white px-2 py-0.5 text-[9px] font-bold uppercase rounded tracking-wider whitespace-nowrap">
-                  Fast Row Entry [F3]
+                  Add Ornament to Voucher Grid
                 </span>
                 <span className="text-[10px] text-slate-500 hidden sm:inline">
-                  Select catalog piece or enter weights to append row instantly:
+                  Select store piece or enter custom piece to append row:
                 </span>
               </div>
 
               {/* Fast Input Grid */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* Product Photo Preview / Selector */}
+                <div className="flex items-center gap-1">
+                  {quickImage ? (
+                    <div className="relative group" title="Attached genuine product photo">
+                      <img
+                        src={quickImage}
+                        alt="Piece"
+                        className="w-8 h-8 object-cover rounded border border-amber-400 bg-white shadow-2xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setQuickImage('')}
+                        title="Remove attached photo"
+                        className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center leading-none hover:bg-rose-700"
+                      >
+                        x
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      title="No photo attached"
+                      className="w-8 h-8 rounded border border-dashed border-slate-300 flex items-center justify-center text-[8px] text-slate-400 text-center leading-tight bg-slate-50 shrink-0"
+                    >
+                      Photo
+                    </div>
+                  )}
+                </div>
+
                 {/* Catalog Picker / Search */}
                 <div className="relative w-48 sm:w-56">
                   <input
@@ -1018,34 +1026,55 @@ export default function BusyMagicBilling({
                       setShowCatalogDropdown(true);
                     }}
                     onFocus={() => setShowCatalogDropdown(true)}
-                    placeholder="Description / Search..."
+                    placeholder="Description / Search inventory..."
                     className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-800 focus:outline-none focus:border-[#0B2545]"
                   />
                   {showCatalogDropdown && quickCatalogMatches.length > 0 && (
-                    <div className="absolute left-0 bottom-full mb-1 z-50 w-72 bg-white border border-slate-300 shadow-xl rounded max-h-48 overflow-y-auto">
-                      <div className="p-1 bg-slate-100 text-[9px] font-bold uppercase text-slate-500 border-b border-slate-200">
-                        Select Catalog Ornament:
+                    <div className="absolute left-0 bottom-full mb-1 z-50 w-80 bg-white border border-slate-300 shadow-xl rounded max-h-56 overflow-y-auto">
+                      <div className="p-1.5 bg-slate-100 text-[9px] font-bold uppercase text-slate-600 border-b border-slate-200 flex justify-between items-center">
+                        <span>Real Store Inventory ({quickCatalogMatches.length} items):</span>
+                        <span className="text-[8px] text-slate-400 font-normal">Click to load</span>
                       </div>
-                      {quickCatalogMatches.map(p => (
-                        <div
-                          key={p._id || p.id}
-                          onClick={() => {
-                            setQuickItemName(p.name);
-                            setQuickKarat(p.karat || 22);
-                            setQuickMaterial(p.material || 'gold');
-                            setQuickGrossWt(String(p.metalWeight || p.weight || ''));
-                            setQuickHuid(p.huid || p.sku || '');
-                            setShowCatalogDropdown(false);
-                          }}
-                          className="p-2 hover:bg-amber-50 cursor-pointer border-b border-slate-100 flex justify-between text-xs"
-                        >
-                          <div>
-                            <span className="font-bold text-slate-800 block">{p.name}</span>
-                            <span className="text-[9px] text-slate-500">{p.karat || 22}K | {p.sku || p.barcode}</span>
+                      {quickCatalogMatches.map(p => {
+                        const prodImg = (Array.isArray(p.images) && p.images[0]) ? p.images[0] : (p.image || '');
+                        return (
+                          <div
+                            key={p._id || p.id}
+                            onClick={() => {
+                              setQuickItemName(p.name);
+                              setQuickKarat(p.karat || 22);
+                              setQuickMaterial(p.material || 'gold');
+                              setQuickGrossWt(String(p.metalWeight || p.weight || ''));
+                              setQuickHuid(p.huid || p.sku || '');
+                              setQuickImage(prodImg);
+                              setShowCatalogDropdown(false);
+                            }}
+                            className="p-2 hover:bg-amber-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs gap-2 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              {prodImg ? (
+                                <img
+                                  src={prodImg}
+                                  alt=""
+                                  className="w-8 h-8 rounded object-cover border border-slate-200 shrink-0 bg-white"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-[9px] text-slate-400">
+                                  Pic
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <span className="font-bold text-slate-800 block truncate">{p.name}</span>
+                                <span className="text-[9px] text-slate-500 block truncate">
+                                  {p.karat || 22}K | {p.sku || p.barcode || p.huid || 'HSN 7113'}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="font-mono text-amber-700 font-bold shrink-0">{p.metalWeight || p.weight || 0}g</span>
                           </div>
-                          <span className="font-mono text-amber-700 font-bold">{p.metalWeight || p.weight || 0}g</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1134,7 +1163,7 @@ export default function BusyMagicBilling({
                   className="px-4 py-1.5 bg-[#0B2545] hover:bg-[#153A66] text-amber-300 border border-amber-400/30 rounded font-bold uppercase tracking-wider text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Line [Enter]</span>
+                  <span>Add Line</span>
                 </button>
               </div>
             </div>
@@ -1157,7 +1186,7 @@ export default function BusyMagicBilling({
                     Exchange Desk
                   </span>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                    Old Gold / Silver Exchange Voucher [F7]
+                    Old Gold / Silver Exchange Voucher
                   </h3>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
@@ -1245,7 +1274,7 @@ export default function BusyMagicBilling({
                 </div>
               ) : (
                 <p className="text-slate-400 text-xs italic">
-                  Check box above or press <kbd className="bg-slate-100 border px-1 rounded text-slate-700 font-bold">F7</kbd> to record old gold trade-in credit against this bill.
+                  Check box above to record old gold trade-in credit against this bill.
                 </p>
               )}
             </section>
@@ -1258,7 +1287,7 @@ export default function BusyMagicBilling({
                     Settlement
                   </span>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                    Payment Mode & Tender [F8]
+                    Payment Mode & Tender
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1271,7 +1300,7 @@ export default function BusyMagicBilling({
                     <option value="cash">Cash Tender</option>
                     <option value="card">Credit / Debit Card</option>
                     <option value="upi">UPI / Dynamic QR</option>
-                    <option value="mixed">Split Multi-Tender [F8]</option>
+                    <option value="mixed">Split Multi-Tender</option>
                     <option value="bank">Bank Transfer / NEFT</option>
                   </select>
                 </div>
@@ -1548,7 +1577,7 @@ export default function BusyMagicBilling({
       </main>
 
       {/* ========================================================================= */}
-      {/* 8. BUSY MAGIC BOTTOM FUNCTION KEY SHORTCUT STRIP                          */}
+      {/* 8. BUSY MAGIC BOTTOM ACTION BAR (Touch & Click Enabled)                   */}
       {/* ========================================================================= */}
       <footer className="fixed bottom-0 inset-x-0 z-40 bg-[#07162C] text-white border-t border-[#1E3A5F] px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-2xl font-mono text-xs">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -1556,9 +1585,9 @@ export default function BusyMagicBilling({
             type="button"
             onClick={handleGenerateInvoice}
             disabled={billItems.length === 0}
-            className="px-3.5 py-1.5 bg-[#B59A6C] text-[#07162C] font-black uppercase tracking-wider rounded shadow hover:bg-white transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
+            className="px-4 py-1.5 bg-[#B59A6C] text-[#07162C] font-black uppercase tracking-wider rounded shadow hover:bg-white transition-all cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
           >
-            <span className="bg-[#07162C] text-[#B59A6C] px-1 py-0.2 rounded text-[10px] font-bold">F2</span>
+            <Printer className="w-3.5 h-3.5" />
             <span>Save & Print Invoice</span>
           </button>
 
@@ -1568,45 +1597,45 @@ export default function BusyMagicBilling({
               const input = document.getElementById('busy-quick-name');
               if (input) input.focus();
             }}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-amber-400 font-bold">[F3]</span>
+            <Plus className="w-3.5 h-3.5 text-amber-400" />
             <span>Add Item</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowRatesEditor(prev => !prev)}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-amber-400 font-bold">[F4]</span>
+            <Banknote className="w-3.5 h-3.5 text-amber-400" />
             <span>Rates Master</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowHistory(true)}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-amber-400 font-bold">[F5]</span>
+            <Clock className="w-3.5 h-3.5 text-blue-400" />
             <span>Day Book</span>
           </button>
 
           <button
             type="button"
             onClick={() => setHasOldGold(prev => !prev)}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-amber-400 font-bold">[F7]</span>
+            <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
             <span>Old Gold</span>
           </button>
 
           <button
             type="button"
             onClick={() => setPaymentMethod(prev => (prev === 'mixed' ? 'cash' : 'mixed'))}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-200 border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="text-amber-400 font-bold">[F8]</span>
+            <CreditCard className="w-3.5 h-3.5 text-amber-400" />
             <span>Split Tender</span>
           </button>
 
@@ -1623,18 +1652,18 @@ export default function BusyMagicBilling({
               }
             }}
             disabled={billItems.length === 0}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-rose-300 border border-[#1E3A5F] rounded transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-rose-300 border border-[#1E3A5F] rounded transition-colors cursor-pointer disabled:opacity-40 flex items-center gap-1"
           >
-            <span className="text-rose-400 font-bold">[F9]</span>
+            <TrashIcon size={13} className="text-rose-400" />
             <span>Delete Row</span>
           </button>
 
           <button
             type="button"
             onClick={handleClearBill}
-            className="px-2.5 py-1.5 bg-[#102A4C] hover:bg-rose-950 text-slate-400 hover:text-white border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
+            className="px-3 py-1.5 bg-[#102A4C] hover:bg-rose-950 text-slate-400 hover:text-white border border-[#1E3A5F] rounded transition-colors cursor-pointer flex items-center gap-1"
           >
-            <span className="font-bold">[Esc]</span>
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Voucher</span>
           </button>
         </div>

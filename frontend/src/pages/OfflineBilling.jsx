@@ -97,6 +97,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 22,
     metalWeight: 6.5,
     weight: 6.5,
+    sku: 'GLM-RNG-22K-001',
+    barcode: '890123400101',
+    huid: 'KD9161',
     images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
   },
   {
@@ -107,6 +110,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 18,
     metalWeight: 4.2,
     weight: 4.2,
+    sku: 'GLM-DIA-18K-002',
+    barcode: '890123400102',
+    huid: 'DR7502',
     diamond: { hasDiamond: true, carat: 0.5, cut: 'excellent', color: 'G', clarity: 'VS1' },
     images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
   },
@@ -118,6 +124,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 925,
     metalWeight: 5.8,
     weight: 5.8,
+    sku: 'GLM-SLV-925-003',
+    barcode: '890123400103',
+    huid: 'SR9253',
     images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
   },
   {
@@ -128,6 +137,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 24,
     metalWeight: 8.0,
     weight: 8.0,
+    sku: 'GLM-BND-24K-004',
+    barcode: '890123400104',
+    huid: 'AU9994',
     images: ['https://framerusercontent.com/images/nYmBPU9wzxN2XzOy4Mors5JiA.png']
   },
   {
@@ -138,6 +150,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 22,
     metalWeight: 26.5,
     weight: 26.5,
+    sku: 'GLM-NCK-22K-005',
+    barcode: '890123400105',
+    huid: 'NK9165',
     images: ['https://framerusercontent.com/images/ye7CD1FwMK23YrmwGKBxPmwkxs.png']
   },
   {
@@ -148,6 +163,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 925,
     metalWeight: 14.0,
     weight: 14.0,
+    sku: 'GLM-SLV-NK-006',
+    barcode: '890123400106',
+    huid: 'SN9256',
     images: ['https://framerusercontent.com/images/ObqkR0R5JsxlwfTh6qRzuVS0Kc.png']
   },
   {
@@ -158,6 +176,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 22,
     metalWeight: 18.2,
     weight: 18.2,
+    sku: 'GLM-KAD-22K-007',
+    barcode: '890123400107',
+    huid: 'KD9167',
     images: ['https://framerusercontent.com/images/DdMSTOefO0YEho190OisMkszb8.png']
   },
   {
@@ -168,6 +189,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 925,
     metalWeight: 12.5,
     weight: 12.5,
+    sku: 'GLM-BNG-925-008',
+    barcode: '890123400108',
+    huid: 'BG9258',
     images: ['https://framerusercontent.com/images/oXkONPSRmFprwc033T5YO7KhozQ.png']
   },
   {
@@ -178,6 +202,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 22,
     metalWeight: 11.5,
     weight: 11.5,
+    sku: 'GLM-JHM-22K-009',
+    barcode: '890123400109',
+    huid: 'JH9169',
     images: ['https://framerusercontent.com/images/VUCxKLRtAXtB7J9fhWKrMpxLg.png']
   },
   {
@@ -188,6 +215,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 18,
     metalWeight: 3.6,
     weight: 3.6,
+    sku: 'GLM-STD-18K-010',
+    barcode: '890123400110',
+    huid: 'ST7500',
     diamond: { hasDiamond: true, carat: 0.6, cut: 'excellent', color: 'F', clarity: 'VVS1' },
     images: ['https://framerusercontent.com/images/bhjfpPAbvDLaUbc1DictL4xmYfQ.png']
   },
@@ -199,6 +229,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 18,
     metalWeight: 16.0,
     weight: 16.0,
+    sku: 'GLM-WAT-18K-011',
+    barcode: '890123400111',
+    huid: 'WT7501',
     images: ['https://framerusercontent.com/images/J7D8037iOHxzeluZMHv3T7v8.png']
   },
   {
@@ -209,6 +242,9 @@ const OFFLINE_FALLBACK_PRODUCTS = [
     karat: 925,
     metalWeight: 24.0,
     weight: 24.0,
+    sku: 'GLM-WAT-925-012',
+    barcode: '890123400112',
+    huid: 'WS9252',
     images: ['https://framerusercontent.com/images/8nrI714PWPpxvAerPHfroa0aznI.png']
   }
 ];
@@ -216,8 +252,17 @@ const OFFLINE_FALLBACK_PRODUCTS = [
 const OfflineBilling = () => {
   const { user } = useAuth();
 
-  // Products & Search
-  const [products, setProducts] = useState([]);
+  // Products & Search (Loads genuine store inventory with instant local cache)
+  const [products, setProducts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('glimmr_billing_products_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return OFFLINE_FALLBACK_PRODUCTS;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [productsLoading, setProductsLoading] = useState(true);
