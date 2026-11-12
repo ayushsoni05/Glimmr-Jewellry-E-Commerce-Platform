@@ -287,7 +287,7 @@ const Header = () => {
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_bank_rtgs || mosunBullion?.rates?.silver_peti || mosunBullion?.rates?.silver_999_1kg || 189099).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_bank_rtgs || mosunBullion?.rates?.silver_peti || mosunBullion?.rates?.silver_999_1kg || 188165).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>

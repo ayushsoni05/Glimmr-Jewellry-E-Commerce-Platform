@@ -141,13 +141,25 @@ const MOSUN_FALLBACK_PRODUCTS = [
   },
   {
     name: 'SILVER BANK 999',
-    displayName: 'Silver Bank Peti RTGS (999.9 Sujangarh)',
+    displayName: 'Silver Bank Peti 999 (Sujangarh Ready)',
     symbolHindi: 'SILVER BANK 999',
-    bid: 187099,
-    ask: 189099,
-    high: 189750,
+    bid: 186665,
+    ask: 188665,
+    high: 189350,
     low: 188150,
-    diff: 6500,
+    diff: 6000,
+    category: 'bullion',
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+  },
+  {
+    name: 'SILVER BANK RTGS 999',
+    displayName: 'Silver Bank Peti RTGS 999 (Sujangarh Ready)',
+    symbolHindi: 'SILVER BANK RTGS 999',
+    bid: 186165,
+    ask: 188165,
+    high: 188850,
+    low: 187650,
+    diff: 5500,
     category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
   },
@@ -155,11 +167,11 @@ const MOSUN_FALLBACK_PRODUCTS = [
     name: 'SILVER CHORSA',
     displayName: 'Silver Chorsa (98.00 Sujangarh)',
     symbolHindi: 'SILVER CHORSA',
-    bid: 184399,
-    ask: 186399,
-    high: 187050,
+    bid: 183965,
+    ask: 185965,
+    high: 186650,
     low: 185450,
-    diff: 3800,
+    diff: 3300,
     category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
   },
@@ -167,11 +179,11 @@ const MOSUN_FALLBACK_PRODUCTS = [
     name: 'silver chorsa rtgs',
     displayName: 'Silver Chorsa RTGS (98.00 Sujangarh)',
     symbolHindi: 'silver chorsa rtgs',
-    bid: 185749,
-    ask: 187749,
-    high: 188400,
-    low: 186800,
-    diff: 5150,
+    bid: 183465,
+    ask: 185465,
+    high: 186150,
+    low: 184950,
+    diff: 2800,
     category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
   },
@@ -179,11 +191,11 @@ const MOSUN_FALLBACK_PRODUCTS = [
     name: 'silver auction original bank',
     displayName: 'Silver Auction Original Bank (Sujangarh)',
     symbolHindi: 'silver auction',
-    bid: 186499,
-    ask: 187799,
-    high: 188450,
+    bid: 186065,
+    ask: 187365,
+    high: 188050,
     low: 186850,
-    diff: 5200,
+    diff: 4700,
     category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (Auction Certified)'
   },
@@ -227,10 +239,10 @@ const MOSUN_FALLBACK_PRODUCTS = [
     name: 'चांदी ज्वैलरी/ बर्तन',
     displayName: 'चांदी ज्वैलरी/ बर्तन (Fine Silver Jewellery / Utensils per kg)',
     symbolHindi: 'चांदी ज्वैलरी/ बर्तन',
-    bid: 180599,
-    ask: 182599,
-    high: 183250,
-    low: 181650,
+    bid: 180665,
+    ask: 182665,
+    high: 183350,
+    low: 182150,
     diff: 0,
     category: 'jewellery',
     desc: 'Showroom Benchmark (Fine Jewellery & Silver Utensils per 1kg)'
@@ -238,7 +250,7 @@ const MOSUN_FALLBACK_PRODUCTS = [
 ];
 
 // Realistic multi-point trend generator fallback anchored directly to live benchmark
-const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 138732, baseMosunS10 = 1891) => {
+const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 138732, baseMosunS10 = 1882) => {
   if (!baseG24 || baseG24 <= 0) return [];
   const count = range === '1h' ? 12 : range === '24h' ? 24 : range === '7d' ? 7 : 30;
   const stepMs = (range === '1h' ? 5 * 60 : range === '24h' ? 60 * 60 : 24 * 60 * 60) * 1000;
@@ -396,10 +408,10 @@ const Prices = () => {
     const mosunGold993 = last?.mosunBullion?.rates?.gold_993_cash || (mosunGoldCash - 150);
 
     const hbSilverAsk = last?.himanshuBullion?.rates?.silver_999_1kg || 191910;
-    const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 189099;
+    const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 188165;
     const hbSilverChorsa = last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456;
-    const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 187749;
-    const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || 186399;
+    const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 185465;
+    const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || 185965;
 
     const hbGold22k = last?.gold_10g_22k || 132844;
     const mosunGold22k = last?.mosunBullion?.rates?.gold_22k || 127932;
@@ -1062,13 +1074,13 @@ const Prices = () => {
                   <span className="text-[#38BDF8] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099)).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 188165)).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 188165)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 189099).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 188165).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -1079,13 +1091,13 @@ const Prices = () => {
                   <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 186399)).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 185965)).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 186399)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 185965)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa || 186399).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa || 185965).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -1786,7 +1798,7 @@ const Prices = () => {
                     {metal === 'gold' ? 'GOLD 995 DIFFERENCE' : 'SILVER DIFFERENCE'}
                   </span>
                   <span className="font-mono text-base font-bold text-[#B59A6C]">
-                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : (144341 - 138732)) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099))).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : (144341 - 138732)) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 188165))).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
@@ -1798,7 +1810,7 @@ const Prices = () => {
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MOSUN SUJANGARH RATE</span>
                   <span className="font-mono text-base font-bold text-[#38BDF8]">
-                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_cash || last?.mosunBullion?.rates?.gold_995_ask || 138732) : (last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_999_1kg || 189099)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_cash || last?.mosunBullion?.rates?.gold_995_ask || 138732) : (last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_999_1kg || 188165)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
@@ -1928,7 +1940,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_bank_rtgs || 189099}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_bank_rtgs || 188165}`}
                     value={calibSilverBank}
                     onChange={(e) => setCalibSilverBank(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
@@ -1941,7 +1953,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_chorsa || 186399}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_chorsa || 185965}`}
                     value={calibSilverChorsa}
                     onChange={(e) => setCalibSilverChorsa(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"

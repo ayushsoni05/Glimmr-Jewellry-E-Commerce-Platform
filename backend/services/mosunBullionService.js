@@ -16,19 +16,21 @@ const STARLINE_SOAP_URL = 'https://starlinebullion.co.in/WebService/WebService.a
 
 // Live MCX Premiums set by Mosun & Sons Sujangarh (extracted directly from starlinebullion.co.in database)
 let symbolConfig = {
-  gold_rtgs_premium: 2250,              // SymbolId 687 "GOLD" McxPremium_sell: 2250
-  gold_995_cash_premium: 0,             // SymbolId 645 "24 कैरेट (99.50)" McxPremium_sell: 00
-  gold_995_cash_buy_premium: -1000,     // SymbolId 645 "24 कैरेट (99.50)" McxPremium_buy: -1000
-  gold_22k_sell_premium: -10800,        // SymbolId 637 "22 कैरेट ज्वैलरी HUID" McxPremium_sell: -10800
-  gold_22k_buy_premium: -11800,         // SymbolId 637 "22 कैरेट ज्वैलरी HUID" McxPremium_buy: -11800
-  gold_20k_sell_premium: -23500,        // SymbolId 639 "20 कैरेट ज्वैलरी HUID" McxPremium_sell: -23500
-  gold_20k_buy_premium: -24500,         // SymbolId 639 "20 कैरेट ज्वैलरी HUID" McxPremium_buy: -24500
-  gold_18k_sell_premium: -35200,        // SymbolId 642 "18 कैरेट ज्वैलरी HUID" McxPremium_sell: -35200
-  gold_18k_buy_premium: -36200,         // SymbolId 642 "18 कैरेट ज्वैलरी HUID" McxPremium_buy: -36200
-  silver_bank_premium: 6500,            // SymbolId 647 "SILVER BANK 999" McxPremium_sell: 6500
-  silver_chorsa_premium: 3800,          // SymbolId 648 "SILVER CHORSA" McxPremium_sell: 3800
-  silver_jewellery_sell_premium: 0,     // SymbolId 643 "चांदी ज्वैलरी/ बर्तन" McxPremium_sell: 00
-  silver_jewellery_buy_premium: -2000,  // SymbolId 643 "चांदी ज्वैलरी/ बर्तन" McxPremium_buy: -2000
+  gold_rtgs_premium: 2350,                  // SymbolId 687 "GOLD" McxPremium_sell: 2350
+  gold_995_cash_premium: 0,                 // SymbolId 645 "24 कैरेट (99.50)" McxPremium_sell: 00
+  gold_995_cash_buy_premium: -1000,         // SymbolId 645 "24 कैरेट (99.50)" McxPremium_buy: -1000
+  gold_22k_sell_premium: -10800,            // SymbolId 637 "22 कैरेट ज्वैलरी HUID" McxPremium_sell: -10800
+  gold_22k_buy_premium: -11800,             // SymbolId 637 "22 कैरेट ज्वैलरी HUID" McxPremium_buy: -11800
+  gold_20k_sell_premium: -23500,            // SymbolId 639 "20 कैरेट ज्वैलरी HUID" McxPremium_sell: -23500
+  gold_20k_buy_premium: -24500,             // SymbolId 639 "20 कैरेट ज्वैलरी HUID" McxPremium_buy: -24500
+  gold_18k_sell_premium: -35200,            // SymbolId 642 "18 कैरेट ज्वैलरी HUID" McxPremium_sell: -35200
+  gold_18k_buy_premium: -36200,             // SymbolId 642 "18 कैरेट ज्वैलरी HUID" McxPremium_buy: -36200
+  silver_bank_cash_premium: 6000,           // SymbolId 647 " SILVER BANK  999 " McxPremium_sell: 6000
+  silver_bank_rtgs_premium: 5500,           // SymbolId 649 "SILVER BANK RTGS 999" McxPremium_sell: 5500
+  silver_chorsa_cash_premium: 3300,         // SymbolId 648 "SILVER CHORSA " McxPremium_sell: 3300
+  silver_chorsa_rtgs_premium: 2800,         // SymbolId 650 "SILVER CHORSA RTGS" McxPremium_sell: 2800
+  silver_jewellery_sell_premium: 0,         // SymbolId 643 "चांदी ज्वैलरी/ बर्तन" McxPremium_sell: 00
+  silver_jewellery_buy_premium: -2000,      // SymbolId 643 "चांदी ज्वैलरी/ बर्तन" McxPremium_buy: -2000
   rawSymbols: []
 };
 
@@ -85,13 +87,25 @@ const DEFAULT_BASELINE = {
     },
     {
       name: 'SILVER BANK 999',
-      displayName: 'Silver Bank Peti RTGS (999.9 Sujangarh)',
+      displayName: 'Silver Bank Peti 999 (Sujangarh Ready)',
       symbolHindi: 'SILVER BANK 999',
-      bid: 187099,
-      ask: 189099,
-      high: 189750,
+      bid: 186665,
+      ask: 188665,
+      high: 189350,
       low: 188150,
-      diff: 6500,
+      diff: 6000,
+      category: 'bullion',
+      desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+    },
+    {
+      name: 'SILVER BANK RTGS 999',
+      displayName: 'Silver Bank Peti RTGS 999 (Sujangarh Ready)',
+      symbolHindi: 'SILVER BANK RTGS 999',
+      bid: 186165,
+      ask: 188165,
+      high: 188850,
+      low: 187650,
+      diff: 5500,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
     },
@@ -99,11 +113,11 @@ const DEFAULT_BASELINE = {
       name: 'SILVER CHORSA',
       displayName: 'Silver Chorsa (98.00 Sujangarh)',
       symbolHindi: 'SILVER CHORSA',
-      bid: 184399,
-      ask: 186399,
-      high: 187050,
+      bid: 183965,
+      ask: 185965,
+      high: 186650,
       low: 185450,
-      diff: 3800,
+      diff: 3300,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
     },
@@ -111,11 +125,11 @@ const DEFAULT_BASELINE = {
       name: 'silver chorsa rtgs',
       displayName: 'Silver Chorsa RTGS (98.00 Sujangarh)',
       symbolHindi: 'silver chorsa rtgs',
-      bid: 185749,
-      ask: 187749,
-      high: 188400,
-      low: 186800,
-      diff: 5150,
+      bid: 183465,
+      ask: 185465,
+      high: 186150,
+      low: 184950,
+      diff: 2800,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
     },
@@ -123,11 +137,11 @@ const DEFAULT_BASELINE = {
       name: 'silver auction original bank',
       displayName: 'Silver Auction Original Bank (Sujangarh)',
       symbolHindi: 'silver auction',
-      bid: 186499,
-      ask: 187799,
-      high: 188450,
+      bid: 186065,
+      ask: 187365,
+      high: 188050,
       low: 186850,
-      diff: 5200,
+      diff: 4700,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (Auction Certified)'
     },
@@ -171,10 +185,10 @@ const DEFAULT_BASELINE = {
       name: 'चांदी ज्वैलरी/ बर्तन',
       displayName: 'चांदी ज्वैलरी/ बर्तन (Fine Silver Jewellery / Utensils per kg)',
       symbolHindi: 'चांदी ज्वैलरी/ बर्तन',
-      bid: 180599,
-      ask: 182599,
-      high: 183250,
-      low: 181650,
+      bid: 180665,
+      ask: 182665,
+      high: 183350,
+      low: 182150,
       diff: 0,
       category: 'jewellery',
       desc: 'Showroom Benchmark (Fine Jewellery & Silver Utensils per 1kg)'
@@ -191,13 +205,14 @@ const DEFAULT_BASELINE = {
     gold_995_low: 138250,
     gold_993_cash: 138582,
     gold_993_rtgs: 140832,
-    silver_bank_rtgs: 189099,
-    silver_chorsa: 186399,
-    silver_chorsa_rtgs: 187749,
-    silver_auction_bank: 187799,
-    silver_999_1kg: 189099,
-    silver_peti: 189099,
-    silver_chorsa_1kg: 186399,
+    silver_bank_rtgs: 188165,
+    silver_bank_cash: 188665,
+    silver_chorsa: 185965,
+    silver_chorsa_rtgs: 185465,
+    silver_auction_bank: 187365,
+    silver_999_1kg: 188165,
+    silver_peti: 188165,
+    silver_chorsa_1kg: 185965,
     gold_24k: 138732,
     gold_24k_10g: 138732,
     gold_22k: 127932,
@@ -208,15 +223,15 @@ const DEFAULT_BASELINE = {
     gold_18k_10g: 103532,
     gold_18k_bid: 102532,
     gold_14k_10g: 80927,
-    silver_jewellery: 182599,
-    silver_jewellery_bid: 180599,
-    silver_10g: 1891,
+    silver_jewellery: 182665,
+    silver_jewellery_bid: 180665,
+    silver_10g: 1882,
     rates_per_gram: {
       gold_24k: 13873.2,
       gold_22k: 12793.2,
       gold_20k: 11523.2,
       gold_18k: 10353.2,
-      silver: 189.1
+      silver: 188.16
     },
     mcx_gold: 138732,
     mcx_silver: 182599,
@@ -348,29 +363,35 @@ function updateConfigFromSymbols(symbols) {
   symbolConfig.rawSymbols = symbols;
 
   symbols.forEach(s => {
-    const name = (s.SymbolName || '').trim();
+    const rawName = (s.SymbolName || '').trim();
+    const name = rawName.toUpperCase();
     const sellPrem = Number(s.McxPremium_sell);
     const buyPrem = (s.McxPremium_buy && s.McxPremium_buy !== '--') ? Number(s.McxPremium_buy) : null;
+    const symId = Number(s.SymbolId);
 
-    if (name === 'GOLD' && !isNaN(sellPrem)) {
+    if ((symId === 687 || name === 'GOLD') && !isNaN(sellPrem)) {
       symbolConfig.gold_rtgs_premium = sellPrem;
-    } else if (name === '24 कैरेट (99.50)') {
+    } else if (symId === 645 || rawName === '24 कैरेट (99.50)' || (name.includes('24') && name.includes('99.50'))) {
       if (!isNaN(sellPrem)) symbolConfig.gold_995_cash_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.gold_995_cash_buy_premium = buyPrem;
-    } else if (name === '22 कैरेट ज्वैलरी HUID') {
+    } else if (symId === 637 || rawName.includes('22 कैरेट')) {
       if (!isNaN(sellPrem)) symbolConfig.gold_22k_sell_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.gold_22k_buy_premium = buyPrem;
-    } else if (name === '20 कैरेट ज्वैलरी HUID') {
+    } else if (symId === 639 || rawName.includes('20 कैरेट')) {
       if (!isNaN(sellPrem)) symbolConfig.gold_20k_sell_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.gold_20k_buy_premium = buyPrem;
-    } else if (name === '18 कैरेट ज्वैलरी HUID') {
+    } else if (symId === 642 || rawName.includes('18 कैरेट')) {
       if (!isNaN(sellPrem)) symbolConfig.gold_18k_sell_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.gold_18k_buy_premium = buyPrem;
-    } else if (name.includes('SILVER BANK') && s.IsDisplay) {
-      if (!isNaN(sellPrem)) symbolConfig.silver_bank_premium = sellPrem;
-    } else if (name.includes('SILVER CHORSA') && s.IsDisplay) {
-      if (!isNaN(sellPrem)) symbolConfig.silver_chorsa_premium = sellPrem;
-    } else if (name.includes('चांदी ज्वैलरी')) {
+    } else if (symId === 649 || (name.includes('SILVER BANK') && name.includes('RTGS'))) {
+      if (!isNaN(sellPrem)) symbolConfig.silver_bank_rtgs_premium = sellPrem;
+    } else if (symId === 647 || (name.includes('SILVER BANK') && !name.includes('RTGS'))) {
+      if (!isNaN(sellPrem)) symbolConfig.silver_bank_cash_premium = sellPrem;
+    } else if (symId === 650 || (name.includes('SILVER CHORSA') && name.includes('RTGS'))) {
+      if (!isNaN(sellPrem)) symbolConfig.silver_chorsa_rtgs_premium = sellPrem;
+    } else if (symId === 648 || (name.includes('SILVER CHORSA') && !name.includes('RTGS'))) {
+      if (!isNaN(sellPrem)) symbolConfig.silver_chorsa_cash_premium = sellPrem;
+    } else if (symId === 643 || rawName.includes('चांदी ज्वैलरी') || rawName.includes('बर्तन')) {
       if (!isNaN(sellPrem)) symbolConfig.silver_jewellery_sell_premium = sellPrem;
       if (buyPrem !== null && !isNaN(buyPrem)) symbolConfig.silver_jewellery_buy_premium = buyPrem;
     }
@@ -380,8 +401,10 @@ function updateConfigFromSymbols(symbols) {
     gold_rtgs: `MCX + ${symbolConfig.gold_rtgs_premium}`,
     gold_995_cash: `MCX + ${symbolConfig.gold_995_cash_premium} (Buy: ${symbolConfig.gold_995_cash_buy_premium})`,
     gold_22k: `MCX + ${symbolConfig.gold_22k_sell_premium}`,
-    silver_bank: `MCX + ${symbolConfig.silver_bank_premium}`,
-    silver_chorsa: `MCX + ${symbolConfig.silver_chorsa_premium}`
+    silver_bank_cash: `MCX + ${symbolConfig.silver_bank_cash_premium}`,
+    silver_bank_rtgs: `MCX + ${symbolConfig.silver_bank_rtgs_premium}`,
+    silver_chorsa_cash: `MCX + ${symbolConfig.silver_chorsa_cash_premium}`,
+    silver_chorsa_rtgs: `MCX + ${symbolConfig.silver_chorsa_rtgs_premium}`
   });
 }
 
@@ -396,6 +419,7 @@ function buildMosunProducts({
   gold993Rtgs,
   goldHigh,
   goldLow,
+  silverBankCash,
   silverBankRtgs,
   silverChorsaCash,
   silverChorsaRtgs,
@@ -462,13 +486,25 @@ function buildMosunProducts({
     },
     {
       name: 'SILVER BANK 999',
-      displayName: 'Silver Bank Peti RTGS (999.9 Sujangarh)',
+      displayName: 'Silver Bank Peti 999 (Sujangarh Ready)',
       symbolHindi: 'SILVER BANK 999',
-      bid: silverBankRtgs - 2000,
-      ask: silverBankRtgs,
+      bid: silverBankCash - 2000,
+      ask: silverBankCash,
       high: silverHigh,
       low: silverLow,
-      diff: symbolConfig.silver_bank_premium,
+      diff: symbolConfig.silver_bank_cash_premium,
+      category: 'bullion',
+      desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+    },
+    {
+      name: 'SILVER BANK RTGS 999',
+      displayName: 'Silver Bank Peti RTGS 999 (Sujangarh Ready)',
+      symbolHindi: 'SILVER BANK RTGS 999',
+      bid: silverBankRtgs - 2000,
+      ask: silverBankRtgs,
+      high: silverHigh - 500,
+      low: silverLow - 500,
+      diff: symbolConfig.silver_bank_rtgs_premium,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
     },
@@ -480,7 +516,7 @@ function buildMosunProducts({
       ask: silverChorsaCash,
       high: silverHigh - 2700,
       low: silverLow - 2700,
-      diff: symbolConfig.silver_chorsa_premium,
+      diff: symbolConfig.silver_chorsa_cash_premium,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
     },
@@ -490,9 +526,9 @@ function buildMosunProducts({
       symbolHindi: 'silver chorsa rtgs',
       bid: silverChorsaRtgs - 2000,
       ask: silverChorsaRtgs,
-      high: silverHigh - 1350,
-      low: silverLow - 1350,
-      diff: symbolConfig.silver_chorsa_premium + 1350,
+      high: silverHigh - 3200,
+      low: silverLow - 3200,
+      diff: symbolConfig.silver_chorsa_rtgs_premium,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
     },
@@ -504,7 +540,7 @@ function buildMosunProducts({
       ask: silverAuctionBank,
       high: silverHigh - 1300,
       low: silverLow - 1300,
-      diff: symbolConfig.silver_bank_premium - 1300,
+      diff: symbolConfig.silver_bank_cash_premium - 1300,
       category: 'bullion',
       desc: 'Ready Stock Available In Sujangarh (Auction Certified)'
     },
@@ -578,10 +614,12 @@ function syncWithMarketTick(marketData) {
   const gold993Cash = gold995Cash - 150;
   const gold993Rtgs = goldRtgs - 150;
 
-  const silverBankRtgs = mcxSilver + symbolConfig.silver_bank_premium;
-  const silverChorsaCash = mcxSilver + symbolConfig.silver_chorsa_premium;
-  const silverChorsaRtgs = silverChorsaCash + 1350;
-  const silverAuctionBank = silverBankRtgs - 1300;
+  // Official Silver Calculations:
+  const silverBankCash = mcxSilver + symbolConfig.silver_bank_cash_premium;
+  const silverBankRtgs = mcxSilver + symbolConfig.silver_bank_rtgs_premium;
+  const silverChorsaCash = mcxSilver + symbolConfig.silver_chorsa_cash_premium;
+  const silverChorsaRtgs = mcxSilver + symbolConfig.silver_chorsa_rtgs_premium;
+  const silverAuctionBank = silverBankCash - 1300;
 
   const gold22kJwl = mcxGold + symbolConfig.gold_22k_sell_premium;
   const gold22kJwlBid = mcxGold + symbolConfig.gold_22k_buy_premium;
@@ -595,8 +633,8 @@ function syncWithMarketTick(marketData) {
 
   const goldHigh = Number(hbRates.gold_995_high || (gold995Cash + 418));
   const goldLow = Number(hbRates.gold_995_low || (gold995Cash - 482));
-  const silverHigh = Number(hbRates.silver_999_1kg ? hbRates.silver_999_1kg + 651 : (silverBankRtgs + 651));
-  const silverLow = Number(hbRates.silver_999_1kg ? hbRates.silver_999_1kg - 949 : (silverBankRtgs - 949));
+  const silverHigh = Number(hbRates.silver_999_1kg ? hbRates.silver_999_1kg + 651 : (silverBankCash + 651));
+  const silverLow = Number(hbRates.silver_999_1kg ? hbRates.silver_999_1kg - 949 : (silverBankCash - 949));
 
   const products = buildMosunProducts({
     gold995Cash,
@@ -606,6 +644,7 @@ function syncWithMarketTick(marketData) {
     gold993Rtgs,
     goldHigh,
     goldLow,
+    silverBankCash,
     silverBankRtgs,
     silverChorsaCash,
     silverChorsaRtgs,
@@ -637,6 +676,7 @@ function syncWithMarketTick(marketData) {
       gold_993_cash: gold993Cash,
       gold_993_rtgs: gold993Rtgs,
       silver_bank_rtgs: silverBankRtgs,
+      silver_bank_cash: silverBankCash,
       silver_chorsa: silverChorsaCash,
       silver_chorsa_rtgs: silverChorsaRtgs,
       silver_auction_bank: silverAuctionBank,
@@ -694,10 +734,12 @@ function calibrateMosunRates({ gold995Rtgs, gold995Cash, silverBankRtgs, silverC
     symbolConfig.gold_rtgs_premium = Number(gold995Rtgs) - mcxGold;
   }
   if (silverBankRtgs) {
-    symbolConfig.silver_bank_premium = Number(silverBankRtgs) - mcxSilver;
+    symbolConfig.silver_bank_rtgs_premium = Number(silverBankRtgs) - mcxSilver;
+    symbolConfig.silver_bank_cash_premium = (Number(silverBankRtgs) - mcxSilver) + 500;
   }
   if (silverChorsa) {
-    symbolConfig.silver_chorsa_premium = Number(silverChorsa) - mcxSilver;
+    symbolConfig.silver_chorsa_cash_premium = Number(silverChorsa) - mcxSilver;
+    symbolConfig.silver_chorsa_rtgs_premium = (Number(silverChorsa) - mcxSilver) - 500;
   }
 
   // Force re-sync with current market store
