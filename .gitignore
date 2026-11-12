@@ -21,6 +21,9 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# runtime data & caches
+/backend/data/*.json
+
 # OS & Editor
 .DS_Store
 .vscode/

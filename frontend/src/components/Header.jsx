@@ -18,7 +18,10 @@ const Header = () => {
     liveRates: contextLiveRates, 
     streamingActive, 
     priceDeltas, 
-    isTickFlashing 
+    isTickFlashing,
+    mosunBullion,
+    spread,
+    mosunRates
   } = useMetalRates();
 
   const liveRates = {
@@ -221,39 +224,72 @@ const Header = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.95 }}
                     transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1.0] }}
-                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-72 bg-white border border-[#E5E2D9] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-5 z-50 rounded-xl space-y-3 pointer-events-auto"
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-80 bg-white border border-[#E5E2D9] shadow-[0_20px_50px_rgba(0,0,0,0.12)] p-4 z-50 rounded-xl space-y-3 pointer-events-auto"
                   >
                     <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                       <span className="font-mono text-[10px] text-[#B59A6C] font-bold uppercase tracking-widest flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        HB JODHPUR REAL-TIME TICKER
+                        HB JODHPUR &amp; MOSUN SUJANGARH
                       </span>
-                      <span className="text-[9px] font-mono text-gray-400">PRIDE STREAM</span>
+                      <span className="text-[9px] font-mono text-gray-400">DUAL FEED</span>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
-                        <div>
-                          <span className="text-[10px] font-mono text-gray-500 block uppercase">GOLD 995 JDR (READY)</span>
-                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.gold995 || 144341) / 10).toLocaleString('en-IN')}/g</span>
+                      <div className="bg-[#FAF9F7] p-2 border border-[#E5E2D9] rounded">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] font-mono text-gray-500 font-bold uppercase">GOLD 995 (10G)</span>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                            SPREAD: {spread?.gold_995_diff != null ? `${spread.gold_995_diff >= 0 ? '+' : ''}₹${spread.gold_995_diff}` : '₹0'}
+                          </span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g</span>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_995 || (liveRates.gold995 - 45)).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
-                        <div>
-                          <span className="text-[10px] font-mono text-gray-500 block uppercase">22K 916 HALLMARK</span>
-                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.gold22k || 132844) / 10).toLocaleString('en-IN')}/g</span>
+                      <div className="bg-[#FAF9F7] p-2 border border-[#E5E2D9] rounded">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] font-mono text-gray-500 font-bold uppercase">22K 916 HALLMARK</span>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            DIFF: {spread?.gold_22k_diff != null ? `${spread.gold_22k_diff >= 0 ? '+' : ''}₹${spread.gold_22k_diff}` : '₹0'}
+                          </span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}/10g</span>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_22k || (liveRates.gold22k - 40)).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between bg-[#FAF9F7] p-2.5 border border-[#E5E2D9]">
-                        <div>
-                          <span className="text-[10px] font-mono text-gray-500 block uppercase">SILVER BANK PETI (999.9)</span>
-                          <span className="font-mono font-bold text-xs text-[#222222]">₹{Math.round((liveRates.silverPeti || 191910) / 1000).toLocaleString('en-IN')}/g</span>
+                      <div className="bg-[#FAF9F7] p-2 border border-[#E5E2D9] rounded">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] font-mono text-gray-500 font-bold uppercase">SILVER BANK PETI (1KG)</span>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            SPREAD: {spread?.silver_peti_diff != null ? `${spread.silver_peti_diff >= 0 ? '+' : ''}₹${spread.silver_peti_diff}` : '₹0'}
+                          </span>
                         </div>
-                        <span className="font-mono text-[11px] text-[#B59A6C] font-bold">₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg</span>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_peti || (liveRates.silverPeti - 110)).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -261,7 +297,7 @@ const Header = () => {
                       to="/live-rates" 
                       className="block text-center text-[10px] font-mono font-bold text-[#222222] hover:text-[#B59A6C] uppercase tracking-wider pt-1 hover:underline"
                     >
-                      OPEN HIMANSHU BULLION DASHBOARD
+                      OPEN REGIONAL SPREAD &amp; RATES TERMINAL
                     </Link>
                   </motion.div>
                 )}

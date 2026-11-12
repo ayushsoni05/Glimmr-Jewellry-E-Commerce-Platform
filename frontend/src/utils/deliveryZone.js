@@ -477,13 +477,15 @@ export function formatConciergeBullionRateLock({
   ratePer10g = 0,
   estimatedTotal = 0,
   patronName = '',
-  patronPhone = ''
+  patronPhone = '',
+  referenceHub = ''
 } = {}) {
   const lines = [
     'Namaste Monika Jewellers Didwana Atelier,',
     '',
     'I would like to consult on live bullion rates and lock-in terms:',
     `Selected Metal: ${metalType}`,
+    referenceHub ? `Trading Benchmark Hub: ${referenceHub}` : '',
     ratePer10g > 0 ? `Current Live Benchmark: Rs. ${Number(ratePer10g).toLocaleString('en-IN')} per 10g` : '',
     weightGrams > 0 ? `Target Grammage: ${weightGrams}g` : '',
     targetBudget > 0 ? `Target Investment Budget: Rs. ${Number(targetBudget).toLocaleString('en-IN')}` : '',

@@ -24,6 +24,14 @@ export const MetalRatesProvider = ({ children }) => {
     mcxSilver: 'same'
   });
 
+  const [mosunPriceDeltas, setMosunPriceDeltas] = useState({
+    gold995: 'same',
+    silverPeti: 'same',
+    silverChorsa: 'same',
+    gold24k: 'same',
+    gold22k: 'same'
+  });
+
   const previousRatesRef = useRef(null);
   const flashTimeoutRef = useRef(null);
   const deltaResetTimeoutRef = useRef(null);
@@ -59,9 +67,21 @@ export const MetalRatesProvider = ({ children }) => {
         mcxSilver: calcDelta(nextHb.mcx_silver, prevHb.mcx_silver),
       };
 
-      const hasChange = Object.values(nextDeltas).some((d) => d !== 'same');
+      const prevMosun = prev.mosunBullion?.rates || {};
+      const nextMosun = newPayload.mosunBullion?.rates || {};
+
+      const nextMosunDeltas = {
+        gold995: calcDelta(nextMosun.gold_995_ask, prevMosun.gold_995_ask),
+        silverPeti: calcDelta(nextMosun.silver_999_1kg, prevMosun.silver_999_1kg),
+        silverChorsa: calcDelta(nextMosun.silver_chorsa_1kg, prevMosun.silver_chorsa_1kg),
+        gold24k: calcDelta(nextMosun.gold_24k_10g, prevMosun.gold_24k_10g),
+        gold22k: calcDelta(nextMosun.gold_22k_10g, prevMosun.gold_22k_10g),
+      };
+
+      const hasChange = Object.values(nextDeltas).some((d) => d !== 'same') || Object.values(nextMosunDeltas).some((d) => d !== 'same');
       if (hasChange) {
         setPriceDeltas(nextDeltas);
+        setMosunPriceDeltas(nextMosunDeltas);
         setIsTickFlashing(true);
 
         if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
@@ -82,6 +102,13 @@ export const MetalRatesProvider = ({ children }) => {
             silver1kg: 'same',
             mcxGold: 'same',
             mcxSilver: 'same'
+          });
+          setMosunPriceDeltas({
+            gold995: 'same',
+            silverPeti: 'same',
+            silverChorsa: 'same',
+            gold24k: 'same',
+            gold22k: 'same'
           });
         }, 3000);
       }
@@ -195,6 +222,11 @@ export const MetalRatesProvider = ({ children }) => {
   const hbProducts = liveRates?.himanshuBullion?.products || [];
   const hbRefProducts = liveRates?.himanshuBullion?.refProduct || [];
 
+  const mosunBullion = liveRates?.mosunBullion || null;
+  const mosunRates = liveRates?.mosunBullion?.rates || null;
+  const mosunProducts = liveRates?.mosunBullion?.products || [];
+  const spread = liveRates?.spread || null;
+
   return (
     <MetalRatesContext.Provider 
       value={{ 
@@ -205,12 +237,17 @@ export const MetalRatesProvider = ({ children }) => {
         lastTickTime,
         isTickFlashing,
         priceDeltas,
+        mosunPriceDeltas,
         fetchMetalRates, 
         getLiveProductPrice,
         himanshuBullion,
         hbRates,
         hbProducts,
-        hbRefProducts
+        hbRefProducts,
+        mosunBullion,
+        mosunRates,
+        mosunProducts,
+        spread
       }}
     >
       {children}

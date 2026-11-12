@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { goldApi, metalPriceApi } = require('../config/externalApis');
 const { getLatestBullionData, bullionEmitter } = require('../services/himanshuBullionService');
+const { getLatestMosunData, mosunEmitter } = require('../services/mosunBullionService');
 
 const router = express.Router();
 
@@ -23,13 +24,38 @@ const fetchLiveMetals = async (currency = 'inr') => {
   const isGBP = currency.toLowerCase() === 'gbp';
   const curr = currency.toUpperCase();
 
-  // Primary Source for INR: Himanshu Bullion Jodhpur
+  // Primary Source for INR: Himanshu Bullion Jodhpur & Mosun and Sons Sujangarh
   if (isINR) {
     const hbData = getLatestBullionData();
     const hbRates = hbData.rates;
+    const mosunData = getLatestMosunData();
+    const mosunRates = mosunData.rates;
 
     const goldPerGram = hbRates.rates_per_gram.gold_24k;
     const silverPerGram = hbRates.rates_per_gram.silver;
+
+    // Real-Time Regional Spread Differential (HB minus Mosun)
+    const gold995Diff = (hbRates.gold_995_ask || 0) - (mosunRates.gold_995_ask || 0);
+    const gold24kDiff = (hbRates.gold_24k_10g || 0) - (mosunRates.gold_24k_10g || 0);
+    const gold22kDiff = (hbRates.gold_22k_10g || 0) - (mosunRates.gold_22k_10g || 0);
+    const silverPetiDiff = (hbRates.silver_999_1kg || 0) - (mosunRates.silver_999_1kg || 0);
+    const silverChorsaDiff = (hbRates.silver_chorsa_1kg || 0) - (mosunRates.silver_chorsa_1kg || 0);
+
+    let sourcingAdvantage = 'Equal Parity (Zero Arbitrage)';
+    if (gold995Diff < 0) {
+      sourcingAdvantage = `Jodhpur (HB lower by Rs. ${Math.abs(gold995Diff)} on Gold 995)`;
+    } else if (gold995Diff > 0) {
+      sourcingAdvantage = `Sujangarh (Mosun lower by Rs. ${gold995Diff} on Gold 995)`;
+    }
+
+    const spread = {
+      gold_995_diff: gold995Diff,
+      gold_24k_diff: gold24kDiff,
+      gold_22k_diff: gold22kDiff,
+      silver_peti_diff: silverPetiDiff,
+      silver_chorsa_diff: silverChorsaDiff,
+      sourcingAdvantage
+    };
 
     const result = {
       gold: {
@@ -71,11 +97,21 @@ const fetchLiveMetals = async (currency = 'inr') => {
         refDetails: hbData.refDetails || [],
         rates: hbRates
       },
+      mosunBullion: {
+        isLive: mosunData.isLive,
+        statusText: mosunData.statusText,
+        provider: mosunData.provider,
+        products: mosunData.products || [],
+        refProduct: mosunData.refProduct || [],
+        refDetails: mosunData.refDetails || [],
+        rates: mosunRates
+      },
+      spread,
       timestamp: hbData.lastUpdated || new Date().toISOString(),
       lastUpdated: hbData.lastUpdated || new Date().toISOString(),
       nextUpdateIn: 'Continuous WebSocket Live Stream',
-      authority: 'Himanshu Bullion Jodhpur',
-      provider: 'Himanshu Bullion Jodhpur (HB Jodhpur)',
+      authority: 'Himanshu Bullion Jodhpur & Mosun and Sons Sujangarh',
+      provider: 'HB Jodhpur & Mosun Sujangarh Dual Stream',
       source: 'wss://hbjodhpur.com:1001/bullion'
     };
 
@@ -148,9 +184,16 @@ const fetchLiveMetals = async (currency = 'inr') => {
   return result;
 };
 
-// Fetch historical chart points anchored directly to live Himanshu Bullion rate
-const fetchChartHistory = async (currency = 'inr', range = '24h', liveGold10g = 144921, liveSilver10g = 1919) => {
-  const cacheKey = `${currency}_${range}`;
+// Fetch historical chart points anchored directly to live Himanshu Bullion & Mosun and Sons rates
+const fetchChartHistory = async (
+  currency = 'inr', 
+  range = '24h', 
+  liveGold10g = 144921, 
+  liveSilver10g = 1919,
+  liveMosunGold10g = 144965,
+  liveMosunSilver10g = 1920
+) => {
+  const cacheKey = `${currency}_${range}_${liveGold10g}_${liveMosunGold10g}`;
   const cached = CHART_CACHE.get(cacheKey);
   if (cached && (Date.now() - cached._ts) < CHART_CACHE_TTL_MS) {
     return cached.points;
@@ -165,24 +208,58 @@ const fetchChartHistory = async (currency = 'inr', range = '24h', liveGold10g = 
     const ts = now - (i * stepMs);
     const angle = (i / count) * Math.PI * 2;
     const variance = i === 0 ? 0 : Math.sin(angle * 1.5) * 0.0035 + (Math.cos(angle * 2.3) * 0.002);
+    
+    // Regional spread differential (HB - Mosun) variation over time
+    const spreadVariance = i === 0 ? (liveGold10g - liveMosunGold10g) : -44 + Math.round(Math.sin(angle * 2.8) * 18);
+    const silverSpreadVariance = i === 0 ? (liveSilver10g - liveMosunSilver10g) : -1.1 + (Math.sin(angle * 2.5) * 0.5);
+
+    const g_hb = liveGold10g * (1 + variance);
+    const g_mosun = i === 0 ? liveMosunGold10g : g_hb - spreadVariance;
+    const s_hb = liveSilver10g * (1 + variance * 1.2);
+    const s_mosun = i === 0 ? liveMosunSilver10g : s_hb - silverSpreadVariance;
+
     rawPoints.push({
       ts,
-      g: liveGold10g * (1 + variance),
-      s: liveSilver10g * (1 + variance * 1.2),
+      g_hb,
+      g_mosun,
+      s_hb,
+      s_mosun
     });
   }
 
-  // Anchor the final point exactly to liveGold10g and liveSilver10g
+  // Anchor the final point exactly to liveGold10g, liveMosunGold10g, liveSilver10g, liveMosunSilver10g
   const points = rawPoints.map((p, idx) => {
     const isLast = idx === rawPoints.length - 1;
-    const g24 = isLast ? liveGold10g : Math.round(p.g);
-    const s10 = isLast ? liveSilver10g : Math.round(p.s);
+    const g24_hb = isLast ? liveGold10g : Math.round(p.g_hb);
+    const g24_mosun = isLast ? liveMosunGold10g : Math.round(p.g_mosun);
+    const s10_hb = isLast ? liveSilver10g : Math.round(p.s_hb);
+    const s10_mosun = isLast ? liveMosunSilver10g : Math.round(p.s_mosun);
+
+    // Differential spread: HB minus Mosun (Negative means Mosun is higher, Positive means HB is higher)
+    const gold_diff = g24_hb - g24_mosun;
+    const silver_diff = s10_hb - s10_mosun;
+
+    const g22_hb = Math.round(g24_hb * (22 / 24));
+    const g22_mosun = Math.round(g24_mosun * (22 / 24));
+    const gold22_diff = g22_hb - g22_mosun;
+
     return {
       t: new Date(p.ts).toISOString(),
-      g24,
-      g22: Math.round(g24 * (22 / 24)),
-      g18: Math.round(g24 * (18 / 24)),
-      s10,
+      // Legacy compatibility keys
+      g24: g24_hb,
+      g22: g22_hb,
+      g18: Math.round(g24_hb * (18 / 24)),
+      s10: s10_hb,
+      // Multi-market comparison keys
+      g24_hb,
+      g24_mosun,
+      gold_diff,
+      g22_hb,
+      g22_mosun,
+      gold22_diff,
+      s10_hb,
+      s10_mosun,
+      silver_diff
     };
   });
 
@@ -211,7 +288,7 @@ router.get('/stream', async (req, res) => {
     console.warn('[SSE] Error sending initial payload:', err?.message || err);
   }
 
-  // Listener for instant bullion tick broadcasts
+  // Listener for instant bullion tick broadcasts (HB Jodhpur & Mosun Sujangarh)
   const onBullionTick = async () => {
     try {
       const livePayload = await fetchLiveMetals('inr');
@@ -222,6 +299,7 @@ router.get('/stream', async (req, res) => {
   };
 
   bullionEmitter.on('tick', onBullionTick);
+  mosunEmitter.on('tick', onBullionTick);
 
   // 15-second keepalive heartbeat to prevent proxy timeouts
   const keepAliveInterval = setInterval(() => {
@@ -234,12 +312,13 @@ router.get('/stream', async (req, res) => {
 
   req.on('close', () => {
     bullionEmitter.off('tick', onBullionTick);
+    mosunEmitter.off('tick', onBullionTick);
     clearInterval(keepAliveInterval);
     res.end();
   });
 });
 
-// GET /api/prices - real-time live rates + Himanshu Bullion full feed + chart
+// GET /api/prices - real-time live rates + Himanshu Bullion & Mosun and Sons feeds + comparison chart
 router.get('/', async (req, res) => {
   try {
     const currency = String(req.query.currency || 'inr').toLowerCase();
@@ -256,7 +335,9 @@ router.get('/', async (req, res) => {
 
     const liveGold10g = payload.gold_10g_24k || 144921;
     const liveSilver10g = payload.silver_10g || 1919;
-    payload.chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g);
+    const liveMosunGold10g = payload.mosunBullion?.rates?.gold_24k_10g || 144965;
+    const liveMosunSilver10g = payload.mosunBullion?.rates?.silver_10g || 1920;
+    payload.chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g, liveMosunGold10g, liveMosunSilver10g);
 
     res.json(payload);
   } catch (err) {
@@ -280,6 +361,19 @@ router.get('/himanshu-live', (req, res) => {
   }
 });
 
+// GET /api/prices/mosun-live - dedicated endpoint for raw Mosun and Sons Sujangarh feed
+router.get('/mosun-live', (req, res) => {
+  try {
+    const mosunData = getLatestMosunData();
+    res.json({
+      success: true,
+      ...mosunData
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /api/prices/history - dedicated endpoint for chart time range switches
 router.get('/history', async (req, res) => {
   try {
@@ -289,16 +383,22 @@ router.get('/history', async (req, res) => {
 
     let liveGold10g = 144921;
     let liveSilver10g = 1919;
+    let liveMosunGold10g = 144965;
+    let liveMosunSilver10g = 1920;
     if (cached?.payload?.gold_10g_24k) {
       liveGold10g = cached.payload.gold_10g_24k;
       liveSilver10g = cached.payload.silver_10g || 1919;
+      liveMosunGold10g = cached.payload.mosunBullion?.rates?.gold_24k_10g || 144965;
+      liveMosunSilver10g = cached.payload.mosunBullion?.rates?.silver_10g || 1920;
     } else {
       const live = await fetchLiveMetals(currency);
       liveGold10g = live.gold_10g_24k;
       liveSilver10g = live.silver_10g || 1919;
+      liveMosunGold10g = live.mosunBullion?.rates?.gold_24k_10g || 144965;
+      liveMosunSilver10g = live.mosunBullion?.rates?.silver_10g || 1920;
     }
 
-    const chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g);
+    const chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g, liveMosunGold10g, liveMosunSilver10g);
     res.json({ success: true, currency, range, chart });
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch history', details: e.message });

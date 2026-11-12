@@ -27,13 +27,15 @@ const customOrderRoutes = require('./routes/customOrders');
 const giftCardRoutes = require('./routes/giftCards');
 const cloudflareSecurity = require('./middleware/cloudflareSecurity');
 const { startBullionService } = require('./services/himanshuBullionService');
+const { startMosunService } = require('./services/mosunBullionService');
 
 const app = express();
 console.log('Starting Glimmr backend...');
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5002;
 
-// Initialize Himanshu Bullion Jodhpur Live Stream Ingestor
+// Initialize Bullion Live Stream Ingestors (Himanshu Bullion Jodhpur & Mosun and Sons Sujangarh)
 startBullionService();
+startMosunService();
 
 // Enable reverse proxy trust for Cloudflare Edge & Render
 app.set('trust proxy', 1);

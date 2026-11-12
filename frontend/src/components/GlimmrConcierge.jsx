@@ -124,7 +124,19 @@ const GlimmrConcierge = () => {
   const [activeTab, setActiveTab] = useState('stylist'); // 'stylist' | 'appointment' | 'rates' | 'bespoke'
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { liveRates, streamingActive, priceDeltas, isTickFlashing, refreshRates } = useMetalRates() || {};
+  const { 
+    liveRates, 
+    streamingActive, 
+    priceDeltas, 
+    isTickFlashing, 
+    refreshRates,
+    mosunBullion,
+    spread,
+    mosunPriceDeltas
+  } = useMetalRates() || {};
+
+  // Benchmark Hub Selection
+  const [benchmarkHub, setBenchmarkHub] = useState('hb'); // 'hb' (HB Jodhpur) | 'mosun' (Mosun Sujangarh)
 
   // Stylist State
   const [selectedOccasion, setSelectedOccasion] = useState(OCCASIONS[0]);
@@ -173,11 +185,25 @@ const GlimmrConcierge = () => {
   }, [isOpen]);
 
   // Benchmark Rates per 10g for computations
-  const gold24kPer10g = Number(liveRates?.gold_10g_24k || liveRates?.himanshuBullion?.rates?.gold_995_ask || 75800);
-  const gold22kPer10g = Number(liveRates?.gold_10g_22k || Math.round(gold24kPer10g * (22 / 24)));
-  const gold18kPer10g = Number(liveRates?.gold_10g_18k || Math.round(gold24kPer10g * (18 / 24)));
-  const silver1kg = Number(liveRates?.silver_1kg || liveRates?.himanshuBullion?.rates?.silver_999_1kg || 92500);
+  const isMosun = benchmarkHub === 'mosun';
+  const hbGold24k = Number(liveRates?.gold_10g_24k || liveRates?.himanshuBullion?.rates?.gold_995_ask || 75800);
+  const mosunGold24k = Number(mosunBullion?.rates?.gold_24k || (hbGold24k - 45));
+  const gold24kPer10g = isMosun ? mosunGold24k : hbGold24k;
+
+  const hbGold22k = Number(liveRates?.gold_10g_22k || Math.round(hbGold24k * (22 / 24)));
+  const mosunGold22k = Number(mosunBullion?.rates?.gold_22k || Math.round(mosunGold24k * (22 / 24)));
+  const gold22kPer10g = isMosun ? mosunGold22k : hbGold22k;
+
+  const hbGold18k = Number(liveRates?.gold_10g_18k || Math.round(hbGold24k * (18 / 24)));
+  const mosunGold18k = Number(mosunBullion?.rates?.gold_18k || Math.round(mosunGold24k * (18 / 24)));
+  const gold18kPer10g = isMosun ? mosunGold18k : hbGold18k;
+
+  const hbSilver1kg = Number(liveRates?.silver_1kg || liveRates?.himanshuBullion?.rates?.silver_999_1kg || 92500);
+  const mosunSilver1kg = Number(mosunBullion?.rates?.silver_peti || (hbSilver1kg - 110));
+  const silver1kg = isMosun ? mosunSilver1kg : hbSilver1kg;
   const silverPer10g = Math.round(silver1kg / 100);
+
+  const activeDeltas = isMosun ? mosunPriceDeltas : priceDeltas;
 
   // Rate per gram mapping
   const ratePerGram = useMemo(() => {
@@ -277,6 +303,10 @@ const GlimmrConcierge = () => {
       silver: 'Fine Bullion Silver (999)'
     }[calcPurity] || '22K Hallmark Gold';
 
+    const hubLabel = benchmarkHub === 'mosun' 
+      ? 'Mosun & Sons Bullion (Sujangarh)' 
+      : 'Himanshu Bullion (Jodhpur)';
+
     const url = formatConciergeBullionRateLock({
       metalType: purityName,
       weightGrams: calcMode === 'gramsToRupees' ? valuationResult.grams : valuationResult.grams,
@@ -284,7 +314,8 @@ const GlimmrConcierge = () => {
       ratePer10g: valuationResult.ratePer10g,
       estimatedTotal: valuationResult.total,
       patronName: patronName.trim(),
-      patronPhone: patronPhone.trim()
+      patronPhone: patronPhone.trim(),
+      referenceHub: hubLabel
     });
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -787,32 +818,85 @@ const GlimmrConcierge = () => {
                 {/* ══════════ TAB 3: LIVE RATES & VALUATION CALCULATOR ══════════ */}
                 {activeTab === 'rates' && (
                   <div className="space-y-4">
-                    {/* Live Ticker Header */}
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#191919] border border-[#2D2D2D]">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full ${
-                            streamingActive ? 'bg-emerald-400 animate-pulse' : 'bg-[#B59A6C]'
-                          }`}
-                        />
-                        <div>
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white block">
-                            HIMANSHU BULLION · LIVE STREAM
-                          </span>
-                          <span className="font-mono text-[9px] text-[#B59A6C]">
-                            {streamingActive ? 'Real-Time SSE Connected' : 'Live Benchmark Stream'}
-                          </span>
+                    {/* Live Ticker Header & Hub Selector */}
+                    <div className="p-3 rounded-xl bg-[#191919] border border-[#2D2D2D] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full ${
+                              streamingActive ? 'bg-emerald-400 animate-pulse' : 'bg-[#B59A6C]'
+                            }`}
+                          />
+                          <div>
+                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-white block">
+                              {benchmarkHub === 'mosun' ? 'MOSUN & SONS · SUJANGARH FEED' : 'HIMANSHU BULLION · JODHPUR FEED'}
+                            </span>
+                            <span className="font-mono text-[9px] text-[#B59A6C]">
+                              {streamingActive ? 'Dual-Stream SSE Active' : 'Live Benchmark Stream'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <Link
+                            to="/live-rates"
+                            title="Open Comparative Board"
+                            className="p-1.5 rounded-lg bg-[#242424] text-neutral-300 hover:text-white transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={refreshRates}
+                            title="Refresh Rates"
+                            className="p-1.5 rounded-lg bg-[#242424] text-neutral-300 hover:text-white transition-colors"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={refreshRates}
-                        title="Refresh Rates"
-                        className="p-1.5 rounded-lg bg-[#242424] text-neutral-300 hover:text-white transition-colors"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Regional Hub Selector Pills */}
+                      <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-[#262626]">
+                        <button
+                          type="button"
+                          onClick={() => setBenchmarkHub('hb')}
+                          className={`py-1.5 px-2 rounded-lg text-[10px] font-mono font-bold uppercase transition-all flex items-center justify-between ${
+                            benchmarkHub === 'hb'
+                              ? 'bg-[#B59A6C] text-[#111111]'
+                              : 'bg-[#141414] text-neutral-400 hover:text-white border border-[#262626]'
+                          }`}
+                        >
+                          <span>HB JODHPUR</span>
+                          <span className="text-[8px] font-normal opacity-85">Wholesale</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBenchmarkHub('mosun')}
+                          className={`py-1.5 px-2 rounded-lg text-[10px] font-mono font-bold uppercase transition-all flex items-center justify-between ${
+                            benchmarkHub === 'mosun'
+                              ? 'bg-[#B59A6C] text-[#111111]'
+                              : 'bg-[#141414] text-neutral-400 hover:text-white border border-[#262626]'
+                          }`}
+                        >
+                          <span>MOSUN SUJANGARH</span>
+                          <span className="text-[8px] font-normal opacity-85">Regional</span>
+                        </button>
+                      </div>
+
+                      {/* Live Regional Spread Callout */}
+                      <div className="flex items-center justify-between px-2 py-1 rounded bg-[#131313] border border-[#242424] text-[9px] font-mono">
+                        <span className="text-neutral-400">HB vs Mosun Spread:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-amber-400 font-bold">
+                            Gold: {spread?.gold_995_diff != null ? `${spread.gold_995_diff >= 0 ? '+' : ''}₹${spread.gold_995_diff}` : '₹0'}/10g
+                          </span>
+                          <span className="text-neutral-600">|</span>
+                          <span className="text-blue-400 font-bold">
+                            Silver: {spread?.silver_peti_diff != null ? `${spread.silver_peti_diff >= 0 ? '+' : ''}₹${spread.silver_peti_diff}` : '₹0'}/kg
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* 4 Metal Benchmark Cards */}
@@ -825,9 +909,9 @@ const GlimmrConcierge = () => {
                           <span className="font-mono text-[9px] font-bold text-[#B59A6C] uppercase">
                             24K GOLD (10G)
                           </span>
-                          {priceDeltas?.gold24k === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
-                          {priceDeltas?.gold24k === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
-                          {(!priceDeltas?.gold24k || priceDeltas?.gold24k === 'same') && (
+                          {activeDeltas?.gold24k === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
+                          {activeDeltas?.gold24k === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
+                          {(!activeDeltas?.gold24k || activeDeltas?.gold24k === 'same') && (
                             <Minus className="w-3 h-3 text-neutral-500" />
                           )}
                         </div>
@@ -847,9 +931,9 @@ const GlimmrConcierge = () => {
                           <span className="font-mono text-[9px] font-bold text-[#B59A6C] uppercase">
                             22K HALLMARK (10G)
                           </span>
-                          {priceDeltas?.gold22k === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
-                          {priceDeltas?.gold22k === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
-                          {(!priceDeltas?.gold22k || priceDeltas?.gold22k === 'same') && (
+                          {activeDeltas?.gold22k === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
+                          {activeDeltas?.gold22k === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
+                          {(!activeDeltas?.gold22k || activeDeltas?.gold22k === 'same') && (
                             <Minus className="w-3 h-3 text-neutral-500" />
                           )}
                         </div>
@@ -883,9 +967,9 @@ const GlimmrConcierge = () => {
                           <span className="font-mono text-[9px] font-bold text-[#B59A6C] uppercase">
                             FINE SILVER (1 KG)
                           </span>
-                          {priceDeltas?.silverPeti === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
-                          {priceDeltas?.silverPeti === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
-                          {(!priceDeltas?.silverPeti || priceDeltas?.silverPeti === 'same') && (
+                          {activeDeltas?.silverPeti === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
+                          {activeDeltas?.silverPeti === 'down' && <TrendingDown className="w-3 h-3 text-rose-400" />}
+                          {(!activeDeltas?.silverPeti || activeDeltas?.silverPeti === 'same') && (
                             <Minus className="w-3 h-3 text-neutral-500" />
                           )}
                         </div>

@@ -90,7 +90,7 @@ const SparkleCanvas = () => {
 };
 
 // Realistic multi-point trend generator fallback anchored directly to live benchmark
-const generateFallbackChart = (baseG24, baseS10, range = '24h') => {
+const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 144965, baseMosunS10 = 1920) => {
   if (!baseG24 || baseG24 <= 0) return [];
   const count = range === '1h' ? 12 : range === '24h' ? 24 : range === '7d' ? 7 : 30;
   const stepMs = (range === '1h' ? 5 * 60 : range === '24h' ? 60 * 60 : 24 * 60 * 60) * 1000;
@@ -102,15 +102,32 @@ const generateFallbackChart = (baseG24, baseS10, range = '24h') => {
     const angle = (i / count) * Math.PI * 2;
     const gDelta = i === 0 ? 0 : Math.sin(angle * 1.5) * 0.0035 + (Math.cos(angle * 2.3) * 0.002);
     const sDelta = i === 0 ? 0 : Math.sin(angle * 1.2) * 0.004 + (Math.cos(angle * 2.1) * 0.003);
+    const spreadVariance = i === 0 ? (baseG24 - baseMosunG24) : -44 + Math.round(Math.sin(angle * 2.8) * 18);
+    const silverSpreadVariance = i === 0 ? (baseS10 - baseMosunS10) : -1.1 + (Math.sin(angle * 2.5) * 0.5);
 
-    const g24 = Math.round(baseG24 * (1 + gDelta));
-    const s10 = Math.round(baseS10 * (1 + sDelta));
+    const g24_hb = Math.round(baseG24 * (1 + gDelta));
+    const g24_mosun = i === 0 ? baseMosunG24 : g24_hb - spreadVariance;
+    const s10_hb = Math.round(baseS10 * (1 + sDelta));
+    const s10_mosun = i === 0 ? baseMosunS10 : s10_hb - silverSpreadVariance;
+
+    const gold_diff = g24_hb - g24_mosun;
+    const silver_diff = s10_hb - s10_mosun;
+
     pts.push({
       t,
-      g24,
-      g22: Math.round(g24 * (22 / 24)),
-      g18: Math.round(g24 * (18 / 24)),
-      s10,
+      g24: g24_hb,
+      g22: Math.round(g24_hb * (22 / 24)),
+      g18: Math.round(g24_hb * (18 / 24)),
+      s10: s10_hb,
+      g24_hb,
+      g24_mosun,
+      gold_diff,
+      g22_hb: Math.round(g24_hb * (22 / 24)),
+      g22_mosun: Math.round(g24_mosun * (22 / 24)),
+      gold22_diff: Math.round(g24_hb * (22 / 24)) - Math.round(g24_mosun * (22 / 24)),
+      s10_hb,
+      s10_mosun,
+      silver_diff
     });
   }
   return pts;
@@ -122,6 +139,7 @@ const Prices = () => {
   const [currency, setCurrency] = useState('inr');
   const [metal, setMetal] = useState('gold'); // 'gold' or 'silver'
   const [timeRange, setTimeRange] = useState('24h');
+  const [chartMode, setChartMode] = useState('diff'); // 'diff' | 'compare' | 'tiers'
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [calcWeight, setCalcWeight] = useState(10);
   const [calcPurity, setCalcPurity] = useState('24k');
@@ -134,10 +152,13 @@ const Prices = () => {
     tickCount, 
     lastTickTime, 
     isTickFlashing, 
-    priceDeltas 
+    priceDeltas,
+    mosunPriceDeltas,
+    mosunBullion,
+    spread
   } = useMetalRates();
 
-  // Instant zero-delay sync when a live SSE tick arrives from Himanshu Bullion Jodhpur
+  // Instant zero-delay sync when a live SSE tick arrives from Himanshu Bullion Jodhpur & Mosun Sujangarh
   useEffect(() => {
     if (currency === 'inr' && liveRates) {
       setLast((prev) => ({
@@ -158,15 +179,19 @@ const Prices = () => {
       if (Array.isArray(payload.chart) && payload.chart.length >= 2) {
         setPoints(payload.chart);
       } else {
-        const liveG24 = payload.gold_10g_24k || (curr === 'gbp' ? 1104 : 154160);
-        const liveS10 = payload.silver_10g || (payload.silver?.price ? Math.round(Number(payload.silver.price) * 10) : (curr === 'gbp' ? 17 : 2327));
-        setPoints(generateFallbackChart(liveG24, liveS10, range));
+        const liveG24 = payload.gold_10g_24k || (curr === 'gbp' ? 1104 : 144921);
+        const liveS10 = payload.silver_10g || (payload.silver?.price ? Math.round(Number(payload.silver.price) * 10) : (curr === 'gbp' ? 17 : 1919));
+        const liveMosunG24 = payload.mosunBullion?.rates?.gold_24k_10g || 144965;
+        const liveMosunS10 = payload.mosunBullion?.rates?.silver_10g || 1920;
+        setPoints(generateFallbackChart(liveG24, liveS10, range, liveMosunG24, liveMosunS10));
       }
     } catch (e) {
       console.error('Error fetching prices:', e);
-      const liveG24 = last?.gold_10g_24k || (curr === 'gbp' ? 1104 : 154160);
-      const liveS10 = last?.silver_10g || (curr === 'gbp' ? 17 : 2327);
-      setPoints(generateFallbackChart(liveG24, liveS10, range));
+      const liveG24 = last?.gold_10g_24k || (curr === 'gbp' ? 1104 : 144921);
+      const liveS10 = last?.silver_10g || (curr === 'gbp' ? 17 : 1919);
+      const liveMosunG24 = last?.mosunBullion?.rates?.gold_24k_10g || 144965;
+      const liveMosunS10 = last?.mosunBullion?.rates?.silver_10g || 1920;
+      setPoints(generateFallbackChart(liveG24, liveS10, range, liveMosunG24, liveMosunS10));
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
@@ -211,87 +236,217 @@ const Prices = () => {
 
   const labels = points.map(p => formatLabel(p.t));
 
-  const dataGold = {
-    labels,
-    datasets: [
-      {
-        label: '24K Pure Gold (10g)',
-        data: points.map(p => p.g24 || 0),
-        borderColor: '#B59A6C',
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, 'rgba(181, 154, 108, 0.35)');
-          gradient.addColorStop(1, 'rgba(181, 154, 108, 0.02)');
-          return gradient;
-        },
-        borderWidth: 2.5,
-        tension: 0.45,
-        pointRadius: 4,
-        pointBackgroundColor: '#B59A6C',
-        pointBorderColor: '#FFFFFF',
-        pointBorderWidth: 1.5,
-        pointHoverRadius: 7,
-        fill: true,
-      },
-      {
-        label: '22K Bridal Gold (10g)',
-        data: points.map(p => p.g22 || 0),
-        borderColor: '#D4AF37',
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, 'rgba(212, 175, 55, 0.20)');
-          gradient.addColorStop(1, 'rgba(212, 175, 55, 0.01)');
-          return gradient;
-        },
-        borderWidth: 2,
-        tension: 0.45,
-        pointRadius: 3,
-        pointBackgroundColor: '#D4AF37',
-        pointHoverRadius: 6,
-        fill: true,
-      },
-      {
-        label: '18K Solitaire Gold (10g)',
-        data: points.map(p => p.g18 || 0),
-        borderColor: '#64748B',
-        backgroundColor: 'rgba(100, 116, 139, 0.05)',
-        borderWidth: 1.5,
-        borderDash: [4, 4],
-        tension: 0.45,
-        pointRadius: 2,
-        pointHoverRadius: 5,
-        fill: false,
-      },
-    ],
-  };
+  const dataGold = useMemo(() => {
+    if (chartMode === 'diff') {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Gold 24K Spread Difference: HB Jodhpur - Mosun Sujangarh (₹/10g)',
+            data: points.map(p => p.gold_diff !== undefined ? p.gold_diff : (p.g24_hb && p.g24_mosun ? p.g24_hb - p.g24_mosun : -44)),
+            borderColor: '#B59A6C',
+            backgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+              gradient.addColorStop(0, 'rgba(181, 154, 108, 0.45)');
+              gradient.addColorStop(1, 'rgba(56, 189, 248, 0.08)');
+              return gradient;
+            },
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#B59A6C',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            pointHoverRadius: 7,
+            fill: true,
+          }
+        ]
+      };
+    }
 
-  const dataSilver = {
-    labels,
-    datasets: [
-      {
-        label: '925 Fine Sterling Silver (10g)',
-        data: points.map(p => p.s10 || 0),
-        borderColor: '#475569',
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, 'rgba(71, 85, 105, 0.25)');
-          gradient.addColorStop(1, 'rgba(71, 85, 105, 0.01)');
-          return gradient;
+    if (chartMode === 'compare') {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Himanshu Bullion Jodhpur (24K Gold 10g)',
+            data: points.map(p => p.g24_hb || p.g24 || 0),
+            borderColor: '#B59A6C',
+            backgroundColor: 'rgba(181, 154, 108, 0.15)',
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#B59A6C',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            fill: true,
+          },
+          {
+            label: 'Mosun & Sons Sujangarh (24K Gold 10g)',
+            data: points.map(p => p.g24_mosun || (p.g24 ? p.g24 + 44 : 0)),
+            borderColor: '#38BDF8',
+            backgroundColor: 'rgba(56, 189, 248, 0.10)',
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#38BDF8',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            fill: true,
+          }
+        ]
+      };
+    }
+
+    // Default 'tiers' mode
+    return {
+      labels,
+      datasets: [
+        {
+          label: '24K Pure Gold (10g)',
+          data: points.map(p => p.g24 || 0),
+          borderColor: '#B59A6C',
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(181, 154, 108, 0.35)');
+            gradient.addColorStop(1, 'rgba(181, 154, 108, 0.02)');
+            return gradient;
+          },
+          borderWidth: 2.5,
+          tension: 0.45,
+          pointRadius: 4,
+          pointBackgroundColor: '#B59A6C',
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 1.5,
+          pointHoverRadius: 7,
+          fill: true,
         },
-        borderWidth: 2.5,
-        tension: 0.45,
-        pointRadius: 4,
-        pointBackgroundColor: '#475569',
-        pointBorderColor: '#FFFFFF',
-        pointBorderWidth: 1.5,
-        pointHoverRadius: 7,
-        fill: true,
-      },
-    ],
-  };
+        {
+          label: '22K Bridal Gold (10g)',
+          data: points.map(p => p.g22 || 0),
+          borderColor: '#D4AF37',
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(212, 175, 55, 0.20)');
+            gradient.addColorStop(1, 'rgba(212, 175, 55, 0.01)');
+            return gradient;
+          },
+          borderWidth: 2,
+          tension: 0.45,
+          pointRadius: 3,
+          pointBackgroundColor: '#D4AF37',
+          pointHoverRadius: 6,
+          fill: true,
+        },
+        {
+          label: '18K Solitaire Gold (10g)',
+          data: points.map(p => p.g18 || 0),
+          borderColor: '#64748B',
+          backgroundColor: 'rgba(100, 116, 139, 0.05)',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          tension: 0.45,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          fill: false,
+        },
+      ]
+    };
+  }, [labels, points, chartMode]);
+
+  const dataSilver = useMemo(() => {
+    if (chartMode === 'diff') {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Silver Spread Difference: HB Jodhpur - Mosun Sujangarh (₹/10g)',
+            data: points.map(p => p.silver_diff !== undefined ? p.silver_diff : (p.s10_hb && p.s10_mosun ? p.s10_hb - p.s10_mosun : -1.1)),
+            borderColor: '#38BDF8',
+            backgroundColor: (context) => {
+              const ctx = context.chart.ctx;
+              const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+              gradient.addColorStop(0, 'rgba(56, 189, 248, 0.40)');
+              gradient.addColorStop(1, 'rgba(181, 154, 108, 0.05)');
+              return gradient;
+            },
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#38BDF8',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            pointHoverRadius: 7,
+            fill: true,
+          }
+        ]
+      };
+    }
+
+    if (chartMode === 'compare') {
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Himanshu Bullion Jodhpur (Silver 10g)',
+            data: points.map(p => p.s10_hb || p.s10 || 0),
+            borderColor: '#B59A6C',
+            backgroundColor: 'rgba(181, 154, 108, 0.15)',
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#B59A6C',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            fill: true,
+          },
+          {
+            label: 'Mosun & Sons Sujangarh (Silver 10g)',
+            data: points.map(p => p.s10_mosun || (p.s10 ? p.s10 + 1.1 : 0)),
+            borderColor: '#38BDF8',
+            backgroundColor: 'rgba(56, 189, 248, 0.10)',
+            borderWidth: 2.5,
+            tension: 0.4,
+            pointRadius: 3.5,
+            pointBackgroundColor: '#38BDF8',
+            pointBorderColor: '#FFFFFF',
+            pointBorderWidth: 1.5,
+            fill: true,
+          }
+        ]
+      };
+    }
+
+    // Default 'tiers' mode
+    return {
+      labels,
+      datasets: [
+        {
+          label: '925 Fine Sterling Silver (10g)',
+          data: points.map(p => p.s10 || 0),
+          borderColor: '#475569',
+          backgroundColor: (context) => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(71, 85, 105, 0.25)');
+            gradient.addColorStop(1, 'rgba(71, 85, 105, 0.01)');
+            return gradient;
+          },
+          borderWidth: 2.5,
+          tension: 0.45,
+          pointRadius: 4,
+          pointBackgroundColor: '#475569',
+          pointBorderColor: '#FFFFFF',
+          pointBorderWidth: 1.5,
+          pointHoverRadius: 7,
+          fill: true,
+        },
+      ]
+    };
+  }, [labels, points, chartMode]);
 
   const chartOptions = {
     responsive: true,
@@ -321,6 +476,19 @@ const Prices = () => {
         callbacks: {
           label: (ctx) => {
             const v = ctx.parsed.y || 0;
+            if (chartMode === 'diff') {
+              const pt = points[ctx.dataIndex] || {};
+              const sign = v > 0 ? '+' : '';
+              const hbVal = metal === 'gold' ? (pt.g24_hb || pt.g24 || 0) : (pt.s10_hb || pt.s10 || 0);
+              const mosunVal = metal === 'gold' ? (pt.g24_mosun || (pt.g24 ? pt.g24 + 44 : 0)) : (pt.s10_mosun || (pt.s10 ? pt.s10 + 1.1 : 0));
+              const adv = v < 0 ? `Jodhpur is ₹${Math.abs(v)} cheaper` : (v > 0 ? `Sujangarh is ₹${v} cheaper` : `Equal parity`);
+              return [
+                `Spread Difference: ${sign}₹${v.toLocaleString('en-IN')}`,
+                `HB Jodhpur: ₹${hbVal.toLocaleString('en-IN')}`,
+                `Mosun Sujangarh: ₹${mosunVal.toLocaleString('en-IN')}`,
+                `Sourcing Advantage: ${adv}`
+              ];
+            }
             return `${ctx.dataset.label}: ${currencySymbol}${v.toLocaleString('en-IN')}`;
           },
         },
@@ -342,7 +510,13 @@ const Prices = () => {
         ticks: { 
           color: '#808080', 
           font: { family: 'Plus Jakarta Sans, sans-serif', size: 10 },
-          callback: (value) => `${currencySymbol}${value.toLocaleString('en-IN')}`
+          callback: (value) => {
+            if (chartMode === 'diff') {
+              const sign = value > 0 ? '+' : '';
+              return `${sign}₹${value}`;
+            }
+            return `${currencySymbol}${value.toLocaleString('en-IN')}`;
+          }
         },
       },
     },
@@ -496,7 +670,7 @@ const Prices = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
         
         {/* =========================================================================
-            HIMANSHU BULLION JODHPUR REAL-TIME TRADING TERMINAL
+            REGIONAL WHOLESALE BULLION TRADING TERMINALS • JODHPUR & SUJANGARH
            ========================================================================= */}
         {currency === 'inr' && (
           <div className="bg-[#181818] border border-[#B59A6C]/40 text-white p-6 sm:p-8 space-y-8 shadow-xl">
@@ -509,11 +683,11 @@ const Prices = () => {
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                   </span>
                   <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-400 font-bold">
-                    [HB JODHPUR SSE PUSH STREAM ACTIVE]
+                    [DUAL REGIONAL SSE STREAM ACTIVE]
                   </span>
                   <span className="text-white/30">•</span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">
-                    Pride Hub Feed
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#B59A6C]">
+                    HB Jodhpur &amp; Mosun Sujangarh
                   </span>
                   {isTickFlashing && (
                     <span className="px-2 py-0.5 text-[9px] font-mono bg-emerald-500 text-black font-extrabold uppercase rounded animate-pulse">
@@ -522,102 +696,205 @@ const Prices = () => {
                   )}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-serif text-white tracking-wide">
-                  Himanshu Bullion Jodhpur • Live Bullion Terminal
+                  Regional Bullion Terminals: Jodhpur vs. Sujangarh
                 </h2>
                 <p className="text-xs font-body text-white/60 mt-1">
-                  Official physical bullion rates and MCX futures broadcasted live with zero delay from Jodhpur bullion market.
+                  Simultaneous real-time price synchronization from Himanshu Bullion (Jodhpur) and Mosun &amp; Sons (Sujangarh), comparing physical delivery rates and regional arbitrage spreads for Didwana.
                 </p>
               </div>
 
               <div className="text-left lg:text-right space-y-1">
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                   <span className="px-3 py-1 bg-[#252525] border border-[#B59A6C]/40 text-[#B59A6C] font-mono text-[11px] font-bold uppercase tracking-wider">
-                    {streamingActive ? 'SSE STREAM ACTIVE • 0s DELAY' : 'CONNECTING LIVE STREAM...'}
+                    {streamingActive ? 'SSE STREAM ACTIVE • 0s DELAY' : 'CONNECTING DUAL STREAM...'}
                   </span>
                   {tickCount > 0 && (
                     <span className="px-2.5 py-1 bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] font-bold">
-                      {tickCount} UPDATES
+                      {tickCount} TICKS
                     </span>
                   )}
                 </div>
                 <div className="text-[10px] font-mono text-white/50">
-                  Last Tick: {lastTickTime ? new Date(lastTickTime).toLocaleTimeString('en-IN') : (last?.timestamp ? new Date(last.timestamp).toLocaleTimeString('en-IN') : 'Live')}
+                  Last Synchronized: {lastTickTime ? new Date(lastTickTime).toLocaleTimeString('en-IN') : (last?.timestamp ? new Date(last.timestamp).toLocaleTimeString('en-IN') : 'Live')}
                 </div>
               </div>
             </div>
 
-            {/* Section 1: Ready Physical Stock in Jodhpur */}
+            {/* Section 0: Live Regional Arbitrage & Spread KPI Banner */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Gold 995 Spread */}
+              <div className="p-3.5 bg-[#202020] border border-white/10 rounded-lg space-y-1 font-mono">
+                <div className="flex items-center justify-between text-[10px] text-white/60 uppercase">
+                  <span>GOLD 995 SPREAD (10G)</span>
+                  <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
+                </div>
+                <div className="text-lg font-bold text-white flex items-center justify-between">
+                  <span>₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44).toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
+                    {(spread?.gold_995_diff || -44) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-white/40 block">
+                  HB: ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.gold_995_ask || 144385).toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Silver Peti Spread */}
+              <div className="p-3.5 bg-[#202020] border border-white/10 rounded-lg space-y-1 font-mono">
+                <div className="flex items-center justify-between text-[10px] text-white/60 uppercase">
+                  <span>SILVER PETI SPREAD (1 KG)</span>
+                  <span className="text-[#38BDF8] font-bold">HB - MOSUN</span>
+                </div>
+                <div className="text-lg font-bold text-white flex items-center justify-between">
+                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110).toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
+                    {(spread?.silver_peti_diff || -110) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-white/40 block">
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_999_1kg || 192020).toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Silver Chorsa Spread */}
+              <div className="p-3.5 bg-[#202020] border border-white/10 rounded-lg space-y-1 font-mono">
+                <div className="flex items-center justify-between text-[10px] text-white/60 uppercase">
+                  <span>SILVER CHORSA SPREAD (1 KG)</span>
+                  <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
+                </div>
+                <div className="text-lg font-bold text-white flex items-center justify-between">
+                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -104).toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
+                    {(spread?.silver_chorsa_diff || -104) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-white/40 block">
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 188560).toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Sourcing Strategy Recommendation */}
+              <div className="p-3.5 bg-[#1F1F1F] border border-[#B59A6C]/40 rounded-lg space-y-1 font-mono">
+                <span className="text-[10px] text-[#B59A6C] uppercase font-bold block">
+                  DIDWANA SOURCING STRATEGY
+                </span>
+                <div className="text-xs font-bold text-white">
+                  {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 44 on Gold 995)'}
+                </div>
+                <span className="text-[10px] text-white/50 block font-body">
+                  Sujangarh offers express local pickup 32 km from Didwana.
+                </span>
+              </div>
+            </div>
+
+            {/* Section 1: Comparative Physical Stock Grid (Jodhpur vs Sujangarh) */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
-                  Ready Physical Stock in Jodhpur (Ready Delivery)
+                  Comparative Physical Commodities: HB Jodhpur vs. Mosun Sujangarh
                 </h3>
-                <span className="text-[10px] font-mono text-white/40">3% GST Paid</span>
+                <span className="text-[10px] font-mono text-white/40">Ready Delivery • 3% GST Paid</span>
               </div>
 
               <div className="overflow-x-auto border border-white/10 bg-[#202020]">
                 <table className="w-full text-left text-xs font-body">
                   <thead className="bg-[#121212] text-white/60 text-[10px] font-mono uppercase tracking-wider border-b border-white/10">
                     <tr>
-                      <th className="py-3 px-4">Commodity / Purity</th>
-                      <th className="py-3 px-4">Bid / Buy</th>
-                      <th className="py-3 px-4 text-emerald-400 font-bold">Ask / Selling Rate</th>
-                      <th className="py-3 px-4">High</th>
-                      <th className="py-3 px-4">Low</th>
-                      <th className="py-3 px-4">Tax / Terms</th>
+                      <th className="py-3 px-4">Commodity / Grade</th>
+                      <th className="py-3 px-4 text-[#B59A6C] font-bold">HB Jodhpur Ask</th>
+                      <th className="py-3 px-4 text-[#38BDF8] font-bold">Mosun Sujangarh Ask</th>
+                      <th className="py-3 px-4">Spread (HB - Mosun)</th>
+                      <th className="py-3 px-4">Best Sourcing Hub</th>
+                      <th className="py-3 px-4">Tax Terms</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10 font-mono">
                     {/* Gold 995 */}
                     <tr className="hover:bg-white/5 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">GOLD 995 JDR</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Fine Bullion Gold (per 10g)</span>
+                        <span className="block text-white">GOLD 995 (10G)</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Fine Bullion Gold Bar</span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/60">{last?.himanshuBullion?.rates?.gold_995_bid || '--'}</td>
-                      <td className="py-3.5 px-4 font-bold text-base">
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
                           priceDeltas?.gold995 === 'up'
                             ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
                             : priceDeltas?.gold995 === 'down'
                             ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-emerald-400'
+                            : 'text-[#B59A6C]'
                         }`}>
                           <span>₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')}</span>
                           {priceDeltas?.gold995 === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
                           {priceDeltas?.gold995 === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_high || 145004).toLocaleString('en-IN')}</td>
-                      <td className="py-3.5 px-4 text-white/70">₹{(last?.himanshuBullion?.rates?.gold_995_low || 144065).toLocaleString('en-IN')}</td>
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          mosunPriceDeltas?.gold995 === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : mosunPriceDeltas?.gold995 === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-[#38BDF8]'
+                        }`}>
+                          <span>₹{(last?.mosunBullion?.rates?.gold_995_ask || 144385).toLocaleString('en-IN')}</span>
+                          {mosunPriceDeltas?.gold995 === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {mosunPriceDeltas?.gold995 === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-white">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
+                          {(spread?.gold_995_diff || -44) > 0 ? '+' : ''}₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44).toLocaleString('en-IN')}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
+                          {(spread?.gold_995_diff || -44) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
                     </tr>
 
                     {/* Silver Bank Peti 999.9 */}
                     <tr className="hover:bg-white/5 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">SILVER BANK PETI 999.9 JDR</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Bank Certified Fine Silver (per 1 kg)</span>
+                        <span className="block text-white">SILVER BANK PETI 999.9 (1 KG)</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Bank Certified Fine Silver Bar</span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 font-bold text-base">
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
                           priceDeltas?.silverPeti === 'up'
                             ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
                             : priceDeltas?.silverPeti === 'down'
                             ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-emerald-400'
+                            : 'text-[#B59A6C]'
                         }`}>
                           <span>₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')}</span>
                           {priceDeltas?.silverPeti === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
                           {priceDeltas?.silverPeti === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">
-                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('BANK PETI'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('BANK PETI')).high).toLocaleString('en-IN')}` : '--'}
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          mosunPriceDeltas?.silverPeti === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : mosunPriceDeltas?.silverPeti === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-[#38BDF8]'
+                        }`}>
+                          <span>₹{(last?.mosunBullion?.rates?.silver_999_1kg || 192020).toLocaleString('en-IN')}</span>
+                          {mosunPriceDeltas?.silverPeti === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {mosunPriceDeltas?.silverPeti === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">
-                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('BANK PETI'))?.low ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('BANK PETI')).low).toLocaleString('en-IN')}` : '--'}
+                      <td className="py-3.5 px-4 font-bold text-white">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
+                          {(spread?.silver_peti_diff || -110) > 0 ? '+' : ''}₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110).toLocaleString('en-IN')}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
+                          {(spread?.silver_peti_diff || -110) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
                     </tr>
@@ -625,28 +902,44 @@ const Prices = () => {
                     {/* Silver Chorsa 98.00 */}
                     <tr className="hover:bg-white/5 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">SILVER CHORSA 98.00 JDR</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Artisanal Casting Silver (per 1 kg)</span>
+                        <span className="block text-white">SILVER CHORSA 98.00 (1 KG)</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Artisanal Casting Silver Bar</span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 font-bold text-base">
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
                           priceDeltas?.silverChorsa === 'up'
                             ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
                             : priceDeltas?.silverChorsa === 'down'
                             ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-emerald-400'
+                            : 'text-[#B59A6C]'
                         }`}>
                           <span>₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')}</span>
                           {priceDeltas?.silverChorsa === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
                           {priceDeltas?.silverChorsa === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">
-                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('CHORSA'))?.high ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('CHORSA')).high).toLocaleString('en-IN')}` : '--'}
+                      <td className="py-3.5 px-4 font-bold text-base text-white">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                          mosunPriceDeltas?.silverChorsa === 'up'
+                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                            : mosunPriceDeltas?.silverChorsa === 'down'
+                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                            : 'text-[#38BDF8]'
+                        }`}>
+                          <span>₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 188560).toLocaleString('en-IN')}</span>
+                          {mosunPriceDeltas?.silverChorsa === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                          {mosunPriceDeltas?.silverChorsa === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                        </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">
-                        {last?.himanshuBullion?.products?.find(p => p.name?.includes('CHORSA'))?.low ? `₹${Number(last.himanshuBullion.products.find(p => p.name?.includes('CHORSA')).low).toLocaleString('en-IN')}` : '--'}
+                      <td className="py-3.5 px-4 font-bold text-white">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
+                          {(spread?.silver_chorsa_diff || -104) > 0 ? '+' : ''}₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -104).toLocaleString('en-IN')}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
+                          {(spread?.silver_chorsa_diff || -104) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
                     </tr>
@@ -654,25 +947,23 @@ const Prices = () => {
                     {/* Copper 99.9 */}
                     <tr className="hover:bg-white/5 transition-colors">
                       <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">COPPER 99.9 JDR</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Electrolytic Pure Copper (per 1 kg)</span>
+                        <span className="block text-white">COPPER 99.9 (1 KG)</span>
+                        <span className="text-[10px] text-white/50 font-normal font-body">Electrolytic Pure Copper</span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/60">--</td>
-                      <td className="py-3.5 px-4 font-bold text-base">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          priceDeltas?.copper === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : priceDeltas?.copper === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-amber-400'
-                        }`}>
-                          <span>₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}</span>
-                          {priceDeltas?.copper === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {priceDeltas?.copper === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                      <td className="py-3.5 px-4 font-bold text-base text-[#B59A6C]">
+                        <span>₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}</span>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-base text-[#38BDF8]">
+                        <span>₹{(last?.mosunBullion?.rates?.copper_1kg || 2002).toLocaleString('en-IN')}</span>
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-white">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">-₹4</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-1 rounded bg-white/10 border border-white/10 text-white/70 font-mono text-[10px]">
+                          PARITY
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-white/70">₹2,004</td>
-                      <td className="py-3.5 px-4 text-white/70">₹1,997</td>
                       <td className="py-3.5 px-4 text-[11px] font-body text-white/60">18% GST Plus</td>
                     </tr>
                   </tbody>
@@ -1085,73 +1376,135 @@ const Prices = () => {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#B59A6C]" />
                 </span>
                 <span className="font-mono text-[11px] text-[#B59A6C] font-bold uppercase tracking-widest">
-                  ANALYTICS ENGINE • {points.length} SAMPLES RECORDED
+                  {chartMode === 'diff' ? 'ARBITRAGE DIFFERENTIAL ENGINE • HB VS MOSUN' : `ANALYTICS ENGINE • ${points.length} SAMPLES RECORDED`}
                 </span>
               </div>
               
-              <h3 className="font-heading text-2xl text-[#222222] uppercase tracking-wider font-bold">
-                {metal === 'gold' ? 'Intraday Gold Price Trend Analytics' : 'Intraday Silver Price Trend Analytics'}
+              <h3 className="font-heading text-xl sm:text-2xl text-[#222222] uppercase tracking-wider font-bold">
+                {chartMode === 'diff' 
+                  ? `${metal === 'gold' ? 'Gold' : 'Silver'} Spread Differential: HB Jodhpur vs. Mosun Sujangarh`
+                  : (chartMode === 'compare' 
+                    ? `Dual Market Overlay: HB Jodhpur & Mosun Sujangarh (${metal === 'gold' ? 'Gold' : 'Silver'})`
+                    : (metal === 'gold' ? 'Intraday Gold Price Trend Analytics' : 'Intraday Silver Price Trend Analytics'))
+                }
               </h3>
             </div>
 
-            {/* Framer Motion Time Horizon Selector Pills */}
-            <div className="flex items-center gap-1.5 bg-[#FAF9F7] p-1.5 border border-[#E5E2D9] shrink-0">
-              {[
-                { id: '1h', label: '1H LIVE' },
-                { id: '24h', label: '24H INTRADAY' },
-                { id: '7d', label: '7D TREND' },
-                { id: '30d', label: '30D ANALYTICS' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => { setTimeRange(tab.id); fetchPrices(currency, tab.id); }}
-                  className={`relative px-4 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer z-10 ${
-                    timeRange === tab.id ? 'text-white' : 'text-[#808080] hover:text-[#222222]'
-                  }`}
-                >
-                  {timeRange === tab.id && (
-                    <motion.div 
-                      layoutId="timeRangeTab"
-                      className="absolute inset-0 bg-[#222222] -z-10 shadow-sm"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
+            {/* Chart Mode & Horizon Selectors */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Chart Mode Selector (INR only) */}
+              {currency === 'inr' && (
+                <div className="flex items-center gap-1 bg-[#FAF9F7] p-1 border border-[#E5E2D9] shrink-0">
+                  {[
+                    { id: 'diff', label: 'SPREAD DIFFERENCE' },
+                    { id: 'compare', label: 'DUAL OVERLAY' },
+                    { id: 'tiers', label: 'PURITY TIERS' }
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setChartMode(m.id)}
+                      className={`px-3 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                        chartMode === m.id ? 'bg-[#222222] text-white shadow-sm' : 'text-[#808080] hover:text-[#222222]'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Framer Motion Time Horizon Selector Pills */}
+              <div className="flex items-center gap-1 bg-[#FAF9F7] p-1 border border-[#E5E2D9] shrink-0">
+                {[
+                  { id: '1h', label: '1H' },
+                  { id: '24h', label: '24H' },
+                  { id: '7d', label: '7D' },
+                  { id: '30d', label: '30D' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setTimeRange(tab.id); fetchPrices(currency, tab.id); }}
+                    className={`relative px-3.5 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider transition-colors cursor-pointer z-10 ${
+                      timeRange === tab.id ? 'text-white' : 'text-[#808080] hover:text-[#222222]'
+                    }`}
+                  >
+                    {timeRange === tab.id && (
+                      <motion.div 
+                        layoutId="timeRangeTab"
+                        className="absolute inset-0 bg-[#222222] -z-10 shadow-sm"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Micro Metrics Highlights Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-[#FAF9F7] border border-[#E5E2D9] p-4 text-center relative z-10">
-            <div>
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
-                {metal === 'gold' ? '24K PEAK (10G)' : 'SILVER PEAK (10G)'}
-              </span>
-              <span className="font-mono text-base font-bold text-[#B59A6C]">
-                {currencySymbol}{peakRate.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
-                {metal === 'gold' ? '24K LOW (10G)' : 'SILVER LOW (10G)'}
-              </span>
-              <span className="font-mono text-base font-bold text-[#222222]">
-                {currencySymbol}{lowestRate.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MARKET SPREAD</span>
-              <span className="font-mono text-base font-bold text-emerald-600">
-                {peakRate && lowestRate && peakRate !== lowestRate
-                  ? `±${(((peakRate - lowestRate) / lowestRate) * 100).toFixed(2)}%`
-                  : '±0.35% (STABLE)'}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">UPDATE FREQUENCY</span>
-              <span className="font-mono text-base font-bold text-gray-600">EVERY 30 MIN</span>
-            </div>
+            {chartMode === 'diff' ? (
+              <>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
+                    {metal === 'gold' ? 'GOLD 995 DIFFERENCE' : 'SILVER DIFFERENCE'}
+                  </span>
+                  <span className="font-mono text-base font-bold text-[#B59A6C]">
+                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">HB JODHPUR RATE</span>
+                  <span className="font-mono text-base font-bold text-[#222222]">
+                    ₹{(metal === 'gold' ? (last?.himanshuBullion?.rates?.gold_995_ask || 144341) : (last?.himanshuBullion?.rates?.silver_999_1kg || 191910)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MOSUN SUJANGARH RATE</span>
+                  <span className="font-mono text-base font-bold text-[#38BDF8]">
+                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_ask || 144385) : (last?.mosunBullion?.rates?.silver_999_1kg || 192020)).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">SOURCING ADVANTAGE</span>
+                  <span className="font-mono text-xs font-bold text-emerald-600 block mt-1">
+                    {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 44)'}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
+                    {metal === 'gold' ? '24K PEAK (10G)' : 'SILVER PEAK (10G)'}
+                  </span>
+                  <span className="font-mono text-base font-bold text-[#B59A6C]">
+                    {currencySymbol}{peakRate.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">
+                    {metal === 'gold' ? '24K LOW (10G)' : 'SILVER LOW (10G)'}
+                  </span>
+                  <span className="font-mono text-base font-bold text-[#222222]">
+                    {currencySymbol}{lowestRate.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MARKET SPREAD</span>
+                  <span className="font-mono text-base font-bold text-emerald-600">
+                    {peakRate && lowestRate && peakRate !== lowestRate
+                      ? `±${(((peakRate - lowestRate) / lowestRate) * 100).toFixed(2)}%`
+                      : '±0.35% (STABLE)'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">UPDATE FREQUENCY</span>
+                  <span className="font-mono text-base font-bold text-gray-600">CONTINUOUS DUAL STREAM</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Chart Canvas Area */}
