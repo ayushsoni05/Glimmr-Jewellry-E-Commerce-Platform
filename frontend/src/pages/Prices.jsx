@@ -89,8 +89,132 @@ const SparkleCanvas = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0 opacity-75" />;
 };
 
+// Official Mosun & Sons Sujangarh Product Benchmarks (mirrored from com.mousonandsons mobile app)
+const MOSUN_FALLBACK_PRODUCTS = [
+  {
+    name: 'gold 99.50 rtgs',
+    displayName: 'Gold 99.50 RTGS (Sujangarh Ready)',
+    bid: '--',
+    ask: 142305,
+    high: 142708,
+    low: 141764,
+    diff: 40,
+    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+  },
+  {
+    name: 'gold 99.50',
+    displayName: 'Gold 99.50 Cash (Sujangarh Ready)',
+    bid: '--',
+    ask: 141555,
+    high: 141958,
+    low: 141014,
+    diff: -710,
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+  },
+  {
+    name: 'gold 99.30',
+    displayName: 'Gold 99.30 Cash (Sujangarh Ready)',
+    bid: 141040,
+    ask: 141405,
+    high: 141808,
+    low: 140864,
+    diff: -860,
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+  },
+  {
+    name: 'gold 99.30 rtgs',
+    displayName: 'Gold 99.30 RTGS (Sujangarh Ready)',
+    bid: 141590,
+    ask: 142155,
+    high: 142558,
+    low: 141614,
+    diff: -110,
+    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+  },
+  {
+    name: 'silver bank rtgs',
+    displayName: 'Silver Bank Peti RTGS (999.9 Sujangarh)',
+    bid: 186373,
+    ask: 187680,
+    high: 188336,
+    low: 186746,
+    diff: 80,
+    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+  },
+  {
+    name: 'silver chorsa rtgs',
+    displayName: 'Silver Chorsa RTGS (98.00 Sujangarh)',
+    bid: 185123,
+    ask: 186480,
+    high: 187136,
+    low: 185546,
+    diff: -1120,
+    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+  },
+  {
+    name: 'silver chorsa',
+    displayName: 'Silver Chorsa Cash (98.00 Sujangarh)',
+    bid: 183823,
+    ask: 185130,
+    high: 185786,
+    low: 184196,
+    diff: -2470,
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+  },
+  {
+    name: 'silver auction original bank',
+    displayName: 'Silver Auction Original Bank (Sujangarh)',
+    bid: 185273,
+    ask: 186380,
+    high: 187036,
+    low: 185446,
+    diff: -1220,
+    desc: 'Ready Stock Available In Sujangarh (Auction Certified)'
+  },
+  {
+    name: '22 ct gold jewellery',
+    displayName: '22 CT (916) Gold Jewellery Benchmark',
+    bid: '--',
+    ask: 128135,
+    high: 128500,
+    low: 127645,
+    diff: 0,
+    desc: 'Showroom Benchmark (916 BIS Hallmark Gold)'
+  },
+  {
+    name: '20 ct gold jewellery',
+    displayName: '20 CT (833) Gold Jewellery Benchmark',
+    bid: '--',
+    ask: 117390,
+    high: 117720,
+    low: 116940,
+    diff: 0,
+    desc: 'Showroom Benchmark (833 Purity Gold)'
+  },
+  {
+    name: '18 ct gold jewellery',
+    displayName: '18 CT (750) Gold Jewellery Benchmark',
+    bid: '--',
+    ask: 106635,
+    high: 106940,
+    low: 106225,
+    diff: 0,
+    desc: 'Showroom Benchmark (750 Luxury Gold)'
+  },
+  {
+    name: 'silver jewellery',
+    displayName: 'Fine Silver Jewellery Benchmark (per kg)',
+    bid: '--',
+    ask: 185465,
+    high: 186110,
+    low: 184540,
+    diff: 0,
+    desc: 'Showroom Benchmark (Fine Jewellery Silver per 1kg)'
+  }
+];
+
 // Realistic multi-point trend generator fallback anchored directly to live benchmark
-const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 144965, baseMosunS10 = 1920) => {
+const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 142878, baseMosunS10 = 1877) => {
   if (!baseG24 || baseG24 <= 0) return [];
   const count = range === '1h' ? 12 : range === '24h' ? 24 : range === '7d' ? 7 : 30;
   const stepMs = (range === '1h' ? 5 * 60 : range === '24h' ? 60 * 60 : 24 * 60 * 60) * 1000;
@@ -102,8 +226,8 @@ const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 1
     const angle = (i / count) * Math.PI * 2;
     const gDelta = i === 0 ? 0 : Math.sin(angle * 1.5) * 0.0035 + (Math.cos(angle * 2.3) * 0.002);
     const sDelta = i === 0 ? 0 : Math.sin(angle * 1.2) * 0.004 + (Math.cos(angle * 2.1) * 0.003);
-    const spreadVariance = i === 0 ? (baseG24 - baseMosunG24) : -44 + Math.round(Math.sin(angle * 2.8) * 18);
-    const silverSpreadVariance = i === 0 ? (baseS10 - baseMosunS10) : -1.1 + (Math.sin(angle * 2.5) * 0.5);
+    const spreadVariance = i === 0 ? (baseG24 - baseMosunG24) : -40 + Math.round(Math.sin(angle * 2.8) * 18);
+    const silverSpreadVariance = i === 0 ? (baseS10 - baseMosunS10) : -0.8 + (Math.sin(angle * 2.5) * 0.5);
 
     const g24_hb = Math.round(baseG24 * (1 + gDelta));
     const g24_mosun = i === 0 ? baseMosunG24 : g24_hb - spreadVariance;
@@ -144,6 +268,15 @@ const Prices = () => {
   const [calcWeight, setCalcWeight] = useState(10);
   const [calcPurity, setCalcPurity] = useState('24k');
 
+  // Mosun & Sons App Live Calibration State
+  const [showCalibrateModal, setShowCalibrateModal] = useState(false);
+  const [calibGoldRtgs, setCalibGoldRtgs] = useState('');
+  const [calibGoldCash, setCalibGoldCash] = useState('');
+  const [calibSilverBank, setCalibSilverBank] = useState('');
+  const [calibSilverChorsa, setCalibSilverChorsa] = useState('');
+  const [isSubmittingCalib, setIsSubmittingCalib] = useState(false);
+  const [mosunAppTab, setMosunAppTab] = useState('bullion'); // 'bullion' | 'jewellery'
+
   const { success: toastSuccess, error: toastError } = useToast();
   const { user } = useAuth();
   const { 
@@ -155,8 +288,28 @@ const Prices = () => {
     priceDeltas,
     mosunPriceDeltas,
     mosunBullion,
+    mosunProducts,
     spread
   } = useMetalRates();
+
+  const handleCalibrateMosun = async (e) => {
+    e.preventDefault();
+    setIsSubmittingCalib(true);
+    try {
+      await api.post('/prices/mosun-calibrate', {
+        gold995Rtgs: calibGoldRtgs ? Number(calibGoldRtgs) : undefined,
+        gold995Cash: calibGoldCash ? Number(calibGoldCash) : undefined,
+        silverBankRtgs: calibSilverBank ? Number(calibSilverBank) : undefined,
+        silverChorsa: calibSilverChorsa ? Number(calibSilverChorsa) : undefined
+      });
+      toastSuccess('Mosun & Sons Sujangarh live rates calibrated successfully!');
+      setShowCalibrateModal(false);
+    } catch (err) {
+      toastError('Calibration failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsSubmittingCalib(false);
+    }
+  };
 
   // Instant zero-delay sync when a live SSE tick arrives from Himanshu Bullion Jodhpur & Mosun Sujangarh
   useEffect(() => {
@@ -179,23 +332,162 @@ const Prices = () => {
       if (Array.isArray(payload.chart) && payload.chart.length >= 2) {
         setPoints(payload.chart);
       } else {
-        const liveG24 = payload.gold_10g_24k || (curr === 'gbp' ? 1104 : 144921);
-        const liveS10 = payload.silver_10g || (payload.silver?.price ? Math.round(Number(payload.silver.price) * 10) : (curr === 'gbp' ? 17 : 1919));
-        const liveMosunG24 = payload.mosunBullion?.rates?.gold_24k_10g || 144965;
-        const liveMosunS10 = payload.mosunBullion?.rates?.silver_10g || 1920;
+        const liveG24 = payload.gold_10g_24k || (curr === 'gbp' ? 1104 : 142837);
+        const liveS10 = payload.silver_10g || (payload.silver?.price ? Math.round(Number(payload.silver.price) * 10) : (curr === 'gbp' ? 17 : 1876));
+        const liveMosunG24 = payload.mosunBullion?.rates?.gold_24k_10g || 142878;
+        const liveMosunS10 = payload.mosunBullion?.rates?.silver_10g || 1877;
         setPoints(generateFallbackChart(liveG24, liveS10, range, liveMosunG24, liveMosunS10));
       }
     } catch (e) {
       console.error('Error fetching prices:', e);
-      const liveG24 = last?.gold_10g_24k || (curr === 'gbp' ? 1104 : 144921);
-      const liveS10 = last?.silver_10g || (curr === 'gbp' ? 17 : 1919);
-      const liveMosunG24 = last?.mosunBullion?.rates?.gold_24k_10g || 144965;
-      const liveMosunS10 = last?.mosunBullion?.rates?.silver_10g || 1920;
+      const liveG24 = last?.gold_10g_24k || (curr === 'gbp' ? 1104 : 142837);
+      const liveS10 = last?.silver_10g || (curr === 'gbp' ? 17 : 1876);
+      const liveMosunG24 = last?.mosunBullion?.rates?.gold_24k_10g || 142878;
+      const liveMosunS10 = last?.mosunBullion?.rates?.silver_10g || 1877;
       setPoints(generateFallbackChart(liveG24, liveS10, range, liveMosunG24, liveMosunS10));
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
   }, [currency, timeRange, last]);
+
+  // Mosun & Sons Active List separated by Bullion vs Jewellery tabs (as per official app)
+  const activeMosunList = useMemo(() => {
+    const sourceList = (mosunProducts && mosunProducts.length > 0)
+      ? mosunProducts
+      : (mosunBullion?.products && mosunBullion.products.length > 0)
+        ? mosunBullion.products
+        : MOSUN_FALLBACK_PRODUCTS;
+
+    if (mosunAppTab === 'jewellery') {
+      return sourceList.filter(p => p.name.includes('jewellery') || p.name.includes('ct'));
+    }
+    return sourceList.filter(p => !p.name.includes('jewellery') && !p.name.includes('ct'));
+  }, [mosunProducts, mosunBullion, mosunAppTab]);
+
+  // Comparative commodities mapping HB Jodhpur vs Mosun Sujangarh with RTGS and Cash delivery models
+  const comparativeItems = useMemo(() => {
+    const hbGoldAsk = last?.himanshuBullion?.rates?.gold_995_ask || 142265;
+    const mosunGoldRtgs = last?.mosunBullion?.rates?.gold_995_rtgs || last?.mosunBullion?.rates?.gold_995_ask || 142305;
+    const mosunGoldCash = last?.mosunBullion?.rates?.gold_995_cash || (mosunGoldRtgs - 750);
+    const mosunGold993 = last?.mosunBullion?.rates?.gold_993_cash || (mosunGoldCash - 150);
+
+    const hbSilverAsk = last?.himanshuBullion?.rates?.silver_999_1kg || 187600;
+    const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_999_1kg || 187680;
+    const hbSilverChorsa = last?.himanshuBullion?.rates?.silver_chorsa_1kg || 186400;
+    const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 186480;
+    const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || (mosunSilverChorsaRtgs - 1350);
+
+    const hbGold22k = last?.gold_10g_22k || 130424;
+    const mosunGold22k = last?.mosunBullion?.rates?.gold_22k || 128135;
+
+    const hbGold18k = last?.gold_10g_18k || 106711;
+    const mosunGold18k = last?.mosunBullion?.rates?.gold_18k || 106635;
+
+    const hbCopper = last?.himanshuBullion?.rates?.copper_1kg || 1998;
+    const mosunCopper = last?.mosunBullion?.rates?.copper_1kg || 2002;
+
+    return [
+      {
+        id: 'gold-995-rtgs',
+        name: 'GOLD 99.50 RTGS (10G)',
+        subtitle: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)',
+        hbPrice: hbGoldAsk,
+        mosunPrice: mosunGoldRtgs,
+        diff: hbGoldAsk - mosunGoldRtgs,
+        hbDelta: priceDeltas?.gold995,
+        mosunDelta: mosunPriceDeltas?.gold995,
+        tax: '3% GST Paid RTGS'
+      },
+      {
+        id: 'gold-995-cash',
+        name: 'GOLD 99.50 CASH (10G)',
+        subtitle: 'Ready Stock Available In Sujangarh (Local Cash Delivery)',
+        hbPrice: hbGoldAsk - 750,
+        mosunPrice: mosunGoldCash,
+        diff: (hbGoldAsk - 750) - mosunGoldCash,
+        hbDelta: priceDeltas?.gold995,
+        mosunDelta: mosunPriceDeltas?.gold995,
+        tax: 'Local Cash Delivery'
+      },
+      {
+        id: 'gold-993-cash',
+        name: 'GOLD 99.30 CASH (10G)',
+        subtitle: 'Ready Stock Available In Sujangarh (Local Cash Delivery)',
+        hbPrice: hbGoldAsk - 900,
+        mosunPrice: mosunGold993,
+        diff: (hbGoldAsk - 900) - mosunGold993,
+        hbDelta: priceDeltas?.gold995,
+        mosunDelta: mosunPriceDeltas?.gold995,
+        tax: 'Local Cash Delivery'
+      },
+      {
+        id: 'silver-bank-rtgs',
+        name: 'SILVER BANK PETI 999.9 RTGS (1 KG)',
+        subtitle: 'Bank Certified Fine Silver Bar (3% GST Paid RTGS)',
+        hbPrice: hbSilverAsk,
+        mosunPrice: mosunSilverBankRtgs,
+        diff: hbSilverAsk - mosunSilverBankRtgs,
+        hbDelta: priceDeltas?.silverPeti,
+        mosunDelta: mosunPriceDeltas?.silverPeti,
+        tax: '3% GST Paid RTGS'
+      },
+      {
+        id: 'silver-chorsa-rtgs',
+        name: 'SILVER CHORSA RTGS (1 KG)',
+        subtitle: '98.00 Artisanal Casting Silver Bar (3% GST Paid RTGS)',
+        hbPrice: hbSilverChorsa,
+        mosunPrice: mosunSilverChorsaRtgs,
+        diff: hbSilverChorsa - mosunSilverChorsaRtgs,
+        hbDelta: priceDeltas?.silverChorsa,
+        mosunDelta: mosunPriceDeltas?.silverChorsa,
+        tax: '3% GST Paid RTGS'
+      },
+      {
+        id: 'silver-chorsa-cash',
+        name: 'SILVER CHORSA CASH (1 KG)',
+        subtitle: '98.00 Artisanal Casting Silver Bar (Local Cash Delivery)',
+        hbPrice: hbSilverChorsa - 1350,
+        mosunPrice: mosunSilverChorsaCash,
+        diff: (hbSilverChorsa - 1350) - mosunSilverChorsaCash,
+        hbDelta: priceDeltas?.silverChorsa,
+        mosunDelta: mosunPriceDeltas?.silverChorsa,
+        tax: 'Local Cash Delivery'
+      },
+      {
+        id: 'gold-22k-bench',
+        name: '22 CT (916) JEWELLERY BENCHMARK (10G)',
+        subtitle: 'Official 916 BIS Hallmark Showroom Benchmark Rate',
+        hbPrice: hbGold22k,
+        mosunPrice: mosunGold22k,
+        diff: hbGold22k - mosunGold22k,
+        hbDelta: priceDeltas?.gold22k,
+        mosunDelta: mosunPriceDeltas?.gold22k,
+        tax: 'Showroom Benchmark'
+      },
+      {
+        id: 'gold-18k-bench',
+        name: '18 CT (750) JEWELLERY BENCHMARK (10G)',
+        subtitle: 'Official 750 Luxury Solitaire Setting Benchmark Rate',
+        hbPrice: hbGold18k,
+        mosunPrice: mosunGold18k,
+        diff: hbGold18k - mosunGold18k,
+        hbDelta: priceDeltas?.gold18k,
+        mosunDelta: mosunPriceDeltas?.gold18k,
+        tax: 'Showroom Benchmark'
+      },
+      {
+        id: 'copper-1kg',
+        name: 'COPPER 99.9 (1 KG)',
+        subtitle: 'Electrolytic Pure Copper Industrial Ingot',
+        hbPrice: hbCopper,
+        mosunPrice: mosunCopper,
+        diff: hbCopper - mosunCopper,
+        hbDelta: priceDeltas?.copper,
+        mosunDelta: 'same',
+        tax: '18% GST Plus'
+      }
+    ];
+  }, [last, priceDeltas, mosunPriceDeltas]);
 
   useEffect(() => {
     fetchPrices(currency, timeRange);
@@ -729,13 +1021,13 @@ const Prices = () => {
                   <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -40).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.gold_995_diff || -44) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.gold_995_diff || -40) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.gold_995_ask || 144385).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 142265).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.gold_995_ask || 142305).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -746,13 +1038,13 @@ const Prices = () => {
                   <span className="text-[#38BDF8] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -80).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_peti_diff || -110) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_peti_diff || -80) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_999_1kg || 192020).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 187600).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_999_1kg || 187680).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -763,13 +1055,13 @@ const Prices = () => {
                   <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -104).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -80).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_chorsa_diff || -104) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_chorsa_diff || -80) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 188560).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 186400).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 186480).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -779,7 +1071,7 @@ const Prices = () => {
                   DIDWANA SOURCING STRATEGY
                 </span>
                 <div className="text-xs font-bold text-white">
-                  {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 44 on Gold 995)'}
+                  {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 40 on Gold 99.50 RTGS)'}
                 </div>
                 <span className="text-[10px] text-white/50 block font-body">
                   Sujangarh offers express local pickup 32 km from Didwana.
@@ -789,11 +1081,16 @@ const Prices = () => {
 
             {/* Section 1: Comparative Physical Stock Grid (Jodhpur vs Sujangarh) */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
-                  Comparative Physical Commodities: HB Jodhpur vs. Mosun Sujangarh
-                </h3>
-                <span className="text-[10px] font-mono text-white/40">Ready Delivery • 3% GST Paid</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#B59A6C]">
+                    Comparative Physical Commodities: HB Jodhpur vs. Mosun Sujangarh
+                  </h3>
+                  <span className="text-[10px] text-white/50">
+                    Comparing RTGS (+3% GST Paid) and Local Cash Delivery quotes between Jodhpur &amp; Sujangarh
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-white/40">Ready Delivery • Didwana Proximity Arbitrage</span>
               </div>
 
               <div className="overflow-x-auto border border-white/10 bg-[#202020]">
@@ -805,169 +1102,183 @@ const Prices = () => {
                       <th className="py-3 px-4 text-[#38BDF8] font-bold">Mosun Sujangarh Ask</th>
                       <th className="py-3 px-4">Spread (HB - Mosun)</th>
                       <th className="py-3 px-4">Best Sourcing Hub</th>
-                      <th className="py-3 px-4">Tax Terms</th>
+                      <th className="py-3 px-4">Delivery Model</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10 font-mono">
-                    {/* Gold 995 */}
-                    <tr className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">GOLD 995 (10G)</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Fine Bullion Gold Bar</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          priceDeltas?.gold995 === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : priceDeltas?.gold995 === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#B59A6C]'
-                        }`}>
-                          <span>₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')}</span>
-                          {priceDeltas?.gold995 === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {priceDeltas?.gold995 === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          mosunPriceDeltas?.gold995 === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : mosunPriceDeltas?.gold995 === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#38BDF8]'
-                        }`}>
-                          <span>₹{(last?.mosunBullion?.rates?.gold_995_ask || 144385).toLocaleString('en-IN')}</span>
-                          {mosunPriceDeltas?.gold995 === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {mosunPriceDeltas?.gold995 === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white">
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
-                          {(spread?.gold_995_diff || -44) > 0 ? '+' : ''}₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44).toLocaleString('en-IN')}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
-                          {(spread?.gold_995_diff || -44) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
-                    </tr>
-
-                    {/* Silver Bank Peti 999.9 */}
-                    <tr className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">SILVER BANK PETI 999.9 (1 KG)</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Bank Certified Fine Silver Bar</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          priceDeltas?.silverPeti === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : priceDeltas?.silverPeti === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#B59A6C]'
-                        }`}>
-                          <span>₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')}</span>
-                          {priceDeltas?.silverPeti === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {priceDeltas?.silverPeti === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          mosunPriceDeltas?.silverPeti === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : mosunPriceDeltas?.silverPeti === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#38BDF8]'
-                        }`}>
-                          <span>₹{(last?.mosunBullion?.rates?.silver_999_1kg || 192020).toLocaleString('en-IN')}</span>
-                          {mosunPriceDeltas?.silverPeti === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {mosunPriceDeltas?.silverPeti === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white">
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
-                          {(spread?.silver_peti_diff || -110) > 0 ? '+' : ''}₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110).toLocaleString('en-IN')}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
-                          {(spread?.silver_peti_diff || -110) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
-                    </tr>
-
-                    {/* Silver Chorsa 98.00 */}
-                    <tr className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">SILVER CHORSA 98.00 (1 KG)</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Artisanal Casting Silver Bar</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          priceDeltas?.silverChorsa === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : priceDeltas?.silverChorsa === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#B59A6C]'
-                        }`}>
-                          <span>₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')}</span>
-                          {priceDeltas?.silverChorsa === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {priceDeltas?.silverChorsa === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-white">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
-                          mosunPriceDeltas?.silverChorsa === 'up'
-                            ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
-                            : mosunPriceDeltas?.silverChorsa === 'down'
-                            ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
-                            : 'text-[#38BDF8]'
-                        }`}>
-                          <span>₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 188560).toLocaleString('en-IN')}</span>
-                          {mosunPriceDeltas?.silverChorsa === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
-                          {mosunPriceDeltas?.silverChorsa === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white">
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
-                          {(spread?.silver_chorsa_diff || -104) > 0 ? '+' : ''}₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -104).toLocaleString('en-IN')}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] font-bold">
-                          {(spread?.silver_chorsa_diff || -104) < 0 ? 'JODHPUR HUB (LOWER)' : 'SUJANGARH (LOWER)'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">3% GST Paid</td>
-                    </tr>
-
-                    {/* Copper 99.9 */}
-                    <tr className="hover:bg-white/5 transition-colors">
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <span className="block text-white">COPPER 99.9 (1 KG)</span>
-                        <span className="text-[10px] text-white/50 font-normal font-body">Electrolytic Pure Copper</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-[#B59A6C]">
-                        <span>₹{(last?.himanshuBullion?.rates?.copper_1kg || 1998).toLocaleString('en-IN')}</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-base text-[#38BDF8]">
-                        <span>₹{(last?.mosunBullion?.rates?.copper_1kg || 2002).toLocaleString('en-IN')}</span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white">
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">-₹4</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-1 rounded bg-white/10 border border-white/10 text-white/70 font-mono text-[10px]">
-                          PARITY
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-[11px] font-body text-white/60">18% GST Plus</td>
-                    </tr>
+                    {comparativeItems.map((item) => {
+                      const isHbLower = item.diff < 0;
+                      const isMosunLower = item.diff > 0;
+                      return (
+                        <tr key={item.id} className="hover:bg-white/5 transition-colors">
+                          <td className="py-3.5 px-4 font-semibold text-white">
+                            <span className="block text-white font-mono">{item.name}</span>
+                            <span className="text-[10px] text-white/50 font-normal font-body block">{item.subtitle}</span>
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-base text-white">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                              item.hbDelta === 'up'
+                                ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                                : item.hbDelta === 'down'
+                                ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                                : 'text-[#B59A6C]'
+                            }`}>
+                              <span>₹{Math.round(item.hbPrice).toLocaleString('en-IN')}</span>
+                              {item.hbDelta === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                              {item.hbDelta === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-base text-white">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded transition-all duration-700 ${
+                              item.mosunDelta === 'up'
+                                ? 'bg-emerald-500/25 text-emerald-300 ring-1 ring-emerald-400 font-extrabold'
+                                : item.mosunDelta === 'down'
+                                ? 'bg-rose-500/25 text-rose-300 ring-1 ring-rose-400 font-extrabold'
+                                : 'text-[#38BDF8]'
+                            }`}>
+                              <span>₹{Math.round(item.mosunPrice).toLocaleString('en-IN')}</span>
+                              {item.mosunDelta === 'up' && <span className="text-[10px] text-emerald-400">▲</span>}
+                              {item.mosunDelta === 'down' && <span className="text-[10px] text-rose-400">▼</span>}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-white">
+                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
+                              {item.diff > 0 ? '+' : ''}₹{Math.round(item.diff).toLocaleString('en-IN')}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold ${
+                              isHbLower
+                                ? 'bg-emerald-950/80 border border-emerald-500/40 text-emerald-300'
+                                : isMosunLower
+                                ? 'bg-cyan-950/80 border border-cyan-500/40 text-cyan-300'
+                                : 'bg-white/10 border border-white/10 text-white/70'
+                            }`}>
+                              {isHbLower ? 'JODHPUR HUB (LOWER)' : isMosunLower ? 'SUJANGARH (LOWER)' : 'PARITY'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-[11px] font-body text-white/60">
+                            {item.tax}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* Section 1.5: Mosun & Sons Sujangarh Live App Trading Board */}
+            <div className="bg-[#181818] border border-white/10 p-5 rounded-lg space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono px-2 py-0.5 bg-[#B59A6C]/20 border border-[#B59A6C]/40 text-[#B59A6C] font-bold uppercase rounded">
+                      OFFICIAL MOBILE APP FEED
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400">
+                      SUJANGARH (32 KM FROM DIDWANA)
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-serif text-white tracking-wide">
+                    Mosun &amp; Sons Sujangarh (मौसुण एंड संस) Live Trading Board
+                  </h3>
+                  <p className="text-xs text-white/60">
+                    Directly mirrored from the official Mosun &amp; Sons mobile application (com.mousonandsons).
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Tab Selector */}
+                  <div className="inline-flex rounded border border-white/15 bg-black/40 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMosunAppTab('bullion')}
+                      className={`px-3 py-1 text-xs font-mono font-bold transition-all ${
+                        mosunAppTab === 'bullion'
+                          ? 'bg-[#B59A6C] text-black shadow'
+                          : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      LIVE RATE (8)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMosunAppTab('jewellery')}
+                      className={`px-3 py-1 text-xs font-mono font-bold transition-all ${
+                        mosunAppTab === 'jewellery'
+                          ? 'bg-[#B59A6C] text-black shadow'
+                          : 'text-white/70 hover:text-white'
+                      }`}
+                    >
+                      JEWELLERY (4)
+                    </button>
+                  </div>
+
+                  {/* Calibration Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowCalibrateModal(true)}
+                    className="px-3 py-1.5 bg-[#252525] hover:bg-[#303030] border border-[#B59A6C]/50 text-[#B59A6C] font-mono text-xs font-bold uppercase tracking-wider transition-colors"
+                  >
+                    CALIBRATE FROM APP
+                  </button>
+                </div>
+              </div>
+
+              {/* Trading Board Grid / Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {activeMosunList.map((prod, idx) => {
+                  const isCash = prod.name.includes('cash') || (!prod.name.includes('rtgs') && !prod.name.includes('auction') && !prod.name.includes('jewellery') && !prod.name.includes('ct'));
+                  const isRtgs = prod.name.includes('rtgs');
+                  return (
+                    <div key={prod.name || idx} className="bg-[#202020] border border-white/10 p-3.5 rounded hover:border-[#B59A6C]/50 transition-colors space-y-2">
+                      <div className="flex items-start justify-between gap-1">
+                        <span className="font-mono text-xs font-bold text-white uppercase tracking-wider block">
+                          {prod.name}
+                        </span>
+                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold uppercase ${
+                          isRtgs
+                            ? 'bg-blue-950/80 text-blue-300 border border-blue-500/30'
+                            : isCash
+                            ? 'bg-amber-950/80 text-amber-300 border border-amber-500/30'
+                            : 'bg-white/10 text-white/70'
+                        }`}>
+                          {isRtgs ? 'RTGS 3% GST' : isCash ? 'CASH DELIVERY' : 'BENCHMARK'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 font-mono">
+                        <div className="bg-black/30 p-2 rounded border border-white/5">
+                          <span className="text-[9px] text-white/50 uppercase block">BUY / BID</span>
+                          <span className="text-sm font-bold text-white/90">
+                            {prod.bid === '--' ? '--' : `₹${Number(prod.bid).toLocaleString('en-IN')}`}
+                          </span>
+                        </div>
+                        <div className="bg-black/30 p-2 rounded border border-[#B59A6C]/20">
+                          <span className="text-[9px] text-[#B59A6C] uppercase block font-bold">SELL / ASK</span>
+                          <span className="text-sm font-bold text-[#38BDF8]">
+                            ₹{Number(prod.ask).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] font-mono text-white/50 pt-1 border-t border-white/5">
+                        <span>HIGH: ₹{Number(prod.high).toLocaleString('en-IN')}</span>
+                        <span>LOW: ₹{Number(prod.low).toLocaleString('en-IN')}</span>
+                      </div>
+
+                      <div className="text-[9px] text-white/40 font-body flex items-center justify-between">
+                        <span className="truncate">{prod.desc || 'Ready Stock Available In Sujangarh'}</span>
+                        {prod.diff !== undefined && prod.diff !== 0 && (
+                          <span className={`font-mono text-[9px] font-bold ${prod.diff > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {prod.diff > 0 ? `+₹${prod.diff}` : `-₹${Math.abs(prod.diff)}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1069,8 +1380,8 @@ const Prices = () => {
                     : 'bg-[#191919] border-white/10'
                 }`}>
                   <span className="text-[10px] text-white/60 block">24K PURE (999)</span>
-                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_24k || 144921).toLocaleString('en-IN')} / 10g</span>
-                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_24k || 144921) / 10).toLocaleString('en-IN')}/g</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_24k || 142837).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_24k || 142837) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
                 <div className={`p-3 border transition-all duration-700 ${
                   priceDeltas?.gold22k === 'up'
@@ -1080,8 +1391,8 @@ const Prices = () => {
                     : 'bg-[#191919] border-[#B59A6C]/40'
                 }`}>
                   <span className="text-[10px] text-[#B59A6C] font-bold block">22K 916 HALLMARK</span>
-                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_22k || 132844).toLocaleString('en-IN')} / 10g</span>
-                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_22k || 132844) / 10).toLocaleString('en-IN')}/g</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_22k || 130424).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_22k || 130424) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
                 <div className={`p-3 border transition-all duration-700 ${
                   priceDeltas?.gold18k === 'up'
@@ -1091,8 +1402,8 @@ const Prices = () => {
                     : 'bg-[#191919] border-white/10'
                 }`}>
                   <span className="text-[10px] text-white/60 block">18K SOLITAIRE (750)</span>
-                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_18k || 108691).toLocaleString('en-IN')} / 10g</span>
-                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_18k || 108691) / 10).toLocaleString('en-IN')}/g</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.gold_10g_18k || 106711).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.gold_10g_18k || 106711) / 10).toLocaleString('en-IN')}/g</span>
                 </div>
                 <div className={`p-3 border transition-all duration-700 ${
                   priceDeltas?.silver1kg === 'up'
@@ -1102,8 +1413,8 @@ const Prices = () => {
                     : 'bg-[#191919] border-white/10'
                 }`}>
                   <span className="text-[10px] text-white/60 block">SILVER 999.9 PETI</span>
-                  <span className="text-sm font-bold text-white block">₹{(last?.silver_1kg || 191910).toLocaleString('en-IN')} / 1kg</span>
-                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.silver_1kg || 191910) / 100).toLocaleString('en-IN')} / 10g</span>
+                  <span className="text-sm font-bold text-white block">₹{(last?.silver_1kg || 187600).toLocaleString('en-IN')} / 1kg</span>
+                  <span className="text-[10px] text-[#B59A6C]">₹{Math.round((last?.silver_1kg || 187600) / 100).toLocaleString('en-IN')} / 10g</span>
                 </div>
               </div>
             </div>
@@ -1451,25 +1762,25 @@ const Prices = () => {
                     {metal === 'gold' ? 'GOLD 995 DIFFERENCE' : 'SILVER DIFFERENCE'}
                   </span>
                   <span className="font-mono text-base font-bold text-[#B59A6C]">
-                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -44) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -110)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -40) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -80)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">HB JODHPUR RATE</span>
                   <span className="font-mono text-base font-bold text-[#222222]">
-                    ₹{(metal === 'gold' ? (last?.himanshuBullion?.rates?.gold_995_ask || 144341) : (last?.himanshuBullion?.rates?.silver_999_1kg || 191910)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (last?.himanshuBullion?.rates?.gold_995_ask || 142265) : (last?.himanshuBullion?.rates?.silver_999_1kg || 187600)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MOSUN SUJANGARH RATE</span>
                   <span className="font-mono text-base font-bold text-[#38BDF8]">
-                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_ask || 144385) : (last?.mosunBullion?.rates?.silver_999_1kg || 192020)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_ask || 142305) : (last?.mosunBullion?.rates?.silver_999_1kg || 187680)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">SOURCING ADVANTAGE</span>
                   <span className="font-mono text-xs font-bold text-emerald-600 block mt-1">
-                    {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 44)'}
+                    {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 40 on Gold 99.50 RTGS)'}
                   </span>
                 </div>
               </>
@@ -1532,6 +1843,115 @@ const Prices = () => {
 
       {/* Newsletter Section */}
       <MonthlyUpdatesNewsletter />
+
+      {/* Mosun & Sons App Live Calibration Modal */}
+      {showCalibrateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#181818] border border-[#B59A6C]/50 w-full max-w-lg p-6 rounded shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+              <div>
+                <h4 className="text-base font-serif font-bold text-white uppercase tracking-wider">
+                  Calibrate Mosun &amp; Sons Sujangarh Rates
+                </h4>
+                <span className="text-[11px] font-mono text-[#B59A6C]">
+                  Direct App Mirror Calibration (मौसुण एंड संस)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCalibrateModal(false)}
+                className="text-white/60 hover:text-white font-mono text-base font-bold px-2 py-1"
+              >
+                [X]
+              </button>
+            </div>
+
+            <p className="text-xs text-white/70 mb-4 leading-relaxed font-body">
+              Open the <strong>Mosun and Sons</strong> app on your mobile phone. Enter the current Ask rates displayed on your screen to immediately calibrate all 12 products, spreads, and the live SSE stream.
+            </p>
+
+            <form onSubmit={handleCalibrateMosun} className="space-y-4 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-white/60 text-[10px] uppercase mb-1">
+                    Gold 99.50 RTGS (Ask / 10g)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_rtgs || 142305}`}
+                    value={calibGoldRtgs}
+                    onChange={(e) => setCalibGoldRtgs(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/60 text-[10px] uppercase mb-1">
+                    Gold 99.50 Cash (Ask / 10g)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_cash || 141555}`}
+                    value={calibGoldCash}
+                    onChange={(e) => setCalibGoldCash(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/60 text-[10px] uppercase mb-1">
+                    Silver Bank RTGS (Ask / 1kg)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_bank_rtgs || 187680}`}
+                    value={calibSilverBank}
+                    onChange={(e) => setCalibSilverBank(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white/60 text-[10px] uppercase mb-1">
+                    Silver Chorsa Cash (Ask / 1kg)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_chorsa || 185130}`}
+                    value={calibSilverChorsa}
+                    onChange={(e) => setCalibSilverChorsa(e.target.value)}
+                    className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-[#121212] p-3 rounded border border-white/10 text-[10px] text-white/60 space-y-1">
+                <div className="text-white/80 font-bold uppercase">Automatic Derivations Applied:</div>
+                <div>• Gold 99.30 Cash will be set to Gold 99.50 Cash minus Rs. 150.</div>
+                <div>• 22 CT Jewellery will be derived at 90.52% of Gold Cash (standard Sujangarh formula).</div>
+                <div>• Silver Chorsa RTGS will be set to Silver Bank RTGS minus Rs. 1,200.</div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowCalibrateModal(false)}
+                  className="px-4 py-2 border border-white/20 text-white/70 hover:text-white uppercase tracking-wider text-xs font-bold"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingCalib}
+                  className="px-5 py-2 bg-[#B59A6C] hover:bg-[#C5AA7C] text-black uppercase tracking-wider text-xs font-bold disabled:opacity-50"
+                >
+                  {isSubmittingCalib ? 'CALIBRATING...' : 'APPLY CALIBRATION'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

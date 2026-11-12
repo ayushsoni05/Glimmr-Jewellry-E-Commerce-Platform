@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { goldApi, metalPriceApi } = require('../config/externalApis');
 const { getLatestBullionData, bullionEmitter } = require('../services/himanshuBullionService');
-const { getLatestMosunData, mosunEmitter } = require('../services/mosunBullionService');
+const { getLatestMosunData, mosunEmitter, calibrateMosunRates } = require('../services/mosunBullionService');
 
 const router = express.Router();
 
@@ -374,6 +374,26 @@ router.get('/mosun-live', (req, res) => {
   }
 });
 
+// POST /api/prices/mosun-calibrate - manually or dynamically calibrate Mosun & Sons rates
+router.post('/mosun-calibrate', (req, res) => {
+  try {
+    const { gold995Rtgs, gold995Cash, silverBankRtgs, silverChorsa, goldSpread, silverSpread } = req.body || {};
+    const updated = calibrateMosunRates({
+      gold995Rtgs,
+      gold995Cash,
+      silverBankRtgs,
+      silverChorsa,
+      goldSpread,
+      silverSpread
+    });
+    // Invalidate local cache
+    PRICE_CACHE.delete('inr');
+    return res.json({ success: true, message: 'Mosun & Sons Sujangarh rates calibrated', data: updated });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to calibrate Mosun rates', details: err.message });
+  }
+});
+
 // GET /api/prices/history - dedicated endpoint for chart time range switches
 router.get('/history', async (req, res) => {
   try {
@@ -381,21 +401,21 @@ router.get('/history', async (req, res) => {
     const range = String(req.query.range || '24h').toLowerCase();
     const cached = PRICE_CACHE.get(`${currency}`);
 
-    let liveGold10g = 144921;
-    let liveSilver10g = 1919;
-    let liveMosunGold10g = 144965;
-    let liveMosunSilver10g = 1920;
+    let liveGold10g = 142837;
+    let liveSilver10g = 1876;
+    let liveMosunGold10g = 142878;
+    let liveMosunSilver10g = 1877;
     if (cached?.payload?.gold_10g_24k) {
       liveGold10g = cached.payload.gold_10g_24k;
-      liveSilver10g = cached.payload.silver_10g || 1919;
-      liveMosunGold10g = cached.payload.mosunBullion?.rates?.gold_24k_10g || 144965;
-      liveMosunSilver10g = cached.payload.mosunBullion?.rates?.silver_10g || 1920;
+      liveSilver10g = cached.payload.silver_10g || 1876;
+      liveMosunGold10g = cached.payload.mosunBullion?.rates?.gold_24k_10g || 142878;
+      liveMosunSilver10g = cached.payload.mosunBullion?.rates?.silver_10g || 1877;
     } else {
       const live = await fetchLiveMetals(currency);
       liveGold10g = live.gold_10g_24k;
-      liveSilver10g = live.silver_10g || 1919;
-      liveMosunGold10g = live.mosunBullion?.rates?.gold_24k_10g || 144965;
-      liveMosunSilver10g = live.mosunBullion?.rates?.silver_10g || 1920;
+      liveSilver10g = live.silver_10g || 1876;
+      liveMosunGold10g = live.mosunBullion?.rates?.gold_24k_10g || 142878;
+      liveMosunSilver10g = live.mosunBullion?.rates?.silver_10g || 1877;
     }
 
     const chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g, liveMosunGold10g, liveMosunSilver10g);

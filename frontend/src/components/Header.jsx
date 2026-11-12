@@ -25,14 +25,14 @@ const Header = () => {
   } = useMetalRates();
 
   const liveRates = {
-    gold: contextLiveRates?.gold?.price || 14492,
-    silver: contextLiveRates?.silver?.price || 192,
-    gold995: contextLiveRates?.himanshuBullion?.rates?.gold_995_ask || contextLiveRates?.gold_10g_24k || 144341,
-    gold22k: contextLiveRates?.gold_10g_22k || 132844,
-    gold18k: contextLiveRates?.gold_10g_18k || 108691,
-    silverPeti: contextLiveRates?.himanshuBullion?.rates?.silver_999_1kg || contextLiveRates?.silver_1kg || 191910,
-    silverChorsa: contextLiveRates?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456,
-    mcxGold: contextLiveRates?.himanshuBullion?.rates?.mcx_gold || 141426
+    gold: contextLiveRates?.gold?.price || 14284,
+    silver: contextLiveRates?.silver?.price || 188,
+    gold995: contextLiveRates?.himanshuBullion?.rates?.gold_995_ask || contextLiveRates?.gold_10g_24k || 142265,
+    gold22k: contextLiveRates?.gold_10g_22k || 130424,
+    gold18k: contextLiveRates?.gold_10g_18k || 106711,
+    silverPeti: contextLiveRates?.himanshuBullion?.rates?.silver_999_1kg || contextLiveRates?.silver_1kg || 187600,
+    silverChorsa: contextLiveRates?.himanshuBullion?.rates?.silver_chorsa_1kg || 186400,
+    mcxGold: contextLiveRates?.himanshuBullion?.rates?.mcx_gold || 138897
   };
   const [isLiveRatesHovered, setIsLiveRatesHovered] = useState(false);
   
@@ -132,17 +132,17 @@ const Header = () => {
                 HB JODHPUR:
               </span>
               <span className={`font-mono text-xs font-bold transition-colors ${priceDeltas?.gold995 === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.gold995 === 'down' ? 'text-rose-600 font-extrabold' : 'text-[#B59A6C]'}`}>
-                Gold 995 ₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}/10g
+                Gold 995 ₹{(liveRates.gold995 || 142265).toLocaleString('en-IN')}/10g
                 {priceDeltas?.gold995 === 'up' && ' ▲'}
                 {priceDeltas?.gold995 === 'down' && ' ▼'}
               </span>
               <span className="hidden lg:inline text-gray-400">•</span>
               <span className={`hidden lg:inline font-mono text-xs transition-colors ${priceDeltas?.gold22k === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.gold22k === 'down' ? 'text-rose-600 font-extrabold' : 'text-[#222222]'}`}>
-                22K ₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}
+                22K ₹{(liveRates.gold22k || 130424).toLocaleString('en-IN')}
               </span>
               <span className="hidden xl:inline text-gray-400">•</span>
               <span className={`hidden xl:inline font-mono text-xs transition-colors ${priceDeltas?.silverPeti === 'up' ? 'text-emerald-600 font-extrabold' : priceDeltas?.silverPeti === 'down' ? 'text-rose-600 font-extrabold' : 'text-emerald-700'}`}>
-                Silver ₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}/kg
+                Silver ₹{(liveRates.silverPeti || 187600).toLocaleString('en-IN')}/kg
               </span>
             </Link>
             <span className="hidden sm:inline font-mono font-medium">+91 9351214851</span>
@@ -245,11 +245,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold995 || 142265).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_995 || (liveRates.gold995 - 45)).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_995 || (liveRates.gold995 - 45) || 142305).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
@@ -264,11 +264,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold22k || 130424).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_22k || (liveRates.gold22k - 40)).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_22k || (liveRates.gold22k - 40) || 128135).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
@@ -283,11 +283,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.silverPeti || 187600).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_peti || (liveRates.silverPeti - 110)).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_peti || (liveRates.silverPeti - 110) || 187680).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
