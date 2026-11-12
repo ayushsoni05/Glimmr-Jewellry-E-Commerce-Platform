@@ -92,129 +92,153 @@ const SparkleCanvas = () => {
 // Official Mosun & Sons Sujangarh Product Benchmarks (mirrored from com.mousonandsons mobile app)
 const MOSUN_FALLBACK_PRODUCTS = [
   {
-    name: 'gold 99.50 rtgs',
-    displayName: 'Gold 99.50 RTGS (Sujangarh Ready)',
-    bid: '--',
-    ask: 142305,
-    high: 142708,
-    low: 141764,
-    diff: 40,
-    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+    name: '24 कैरेट (99.50)',
+    displayName: '24 कैरेट (99.50) Local Cash',
+    symbolHindi: '24 कैरेट (99.50)',
+    bid: 137732,
+    ask: 138732,
+    high: 139150,
+    low: 138250,
+    diff: 0,
+    category: 'bullion',
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
   },
   {
-    name: 'gold 99.50',
-    displayName: 'Gold 99.50 Cash (Sujangarh Ready)',
+    name: 'GOLD (रेडी स्टॉक RTGS)',
+    displayName: 'Gold 99.50 RTGS (Sujangarh Ready)',
+    symbolHindi: 'GOLD',
     bid: '--',
-    ask: 141555,
-    high: 141958,
-    low: 141014,
-    diff: -710,
-    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
+    ask: 140982,
+    high: 141400,
+    low: 140500,
+    diff: 2250,
+    category: 'bullion',
+    desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
   },
   {
     name: 'gold 99.30',
     displayName: 'Gold 99.30 Cash (Sujangarh Ready)',
-    bid: 141040,
-    ask: 141405,
-    high: 141808,
-    low: 140864,
-    diff: -860,
+    symbolHindi: 'gold 99.30',
+    bid: 137582,
+    ask: 138582,
+    high: 139000,
+    low: 138100,
+    diff: -150,
+    category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
   },
   {
     name: 'gold 99.30 rtgs',
     displayName: 'Gold 99.30 RTGS (Sujangarh Ready)',
-    bid: 141590,
-    ask: 142155,
-    high: 142558,
-    low: 141614,
-    diff: -110,
+    symbolHindi: 'gold 99.30 rtgs',
+    bid: 139832,
+    ask: 140832,
+    high: 141250,
+    low: 140350,
+    diff: 2100,
+    category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
   },
   {
-    name: 'silver bank rtgs',
+    name: 'SILVER BANK 999',
     displayName: 'Silver Bank Peti RTGS (999.9 Sujangarh)',
-    bid: 186373,
-    ask: 187680,
-    high: 188336,
-    low: 186746,
-    diff: 80,
+    symbolHindi: 'SILVER BANK 999',
+    bid: 187099,
+    ask: 189099,
+    high: 189750,
+    low: 188150,
+    diff: 6500,
+    category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
+  },
+  {
+    name: 'SILVER CHORSA',
+    displayName: 'Silver Chorsa (98.00 Sujangarh)',
+    symbolHindi: 'SILVER CHORSA',
+    bid: 184399,
+    ask: 186399,
+    high: 187050,
+    low: 185450,
+    diff: 3800,
+    category: 'bullion',
+    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
   },
   {
     name: 'silver chorsa rtgs',
     displayName: 'Silver Chorsa RTGS (98.00 Sujangarh)',
-    bid: 185123,
-    ask: 186480,
-    high: 187136,
-    low: 185546,
-    diff: -1120,
+    symbolHindi: 'silver chorsa rtgs',
+    bid: 185749,
+    ask: 187749,
+    high: 188400,
+    low: 186800,
+    diff: 5150,
+    category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (3% GST Paid RTGS)'
-  },
-  {
-    name: 'silver chorsa',
-    displayName: 'Silver Chorsa Cash (98.00 Sujangarh)',
-    bid: 183823,
-    ask: 185130,
-    high: 185786,
-    low: 184196,
-    diff: -2470,
-    desc: 'Ready Stock Available In Sujangarh (Local Cash Delivery)'
   },
   {
     name: 'silver auction original bank',
     displayName: 'Silver Auction Original Bank (Sujangarh)',
-    bid: 185273,
-    ask: 186380,
-    high: 187036,
-    low: 185446,
-    diff: -1220,
+    symbolHindi: 'silver auction',
+    bid: 186499,
+    ask: 187799,
+    high: 188450,
+    low: 186850,
+    diff: 5200,
+    category: 'bullion',
     desc: 'Ready Stock Available In Sujangarh (Auction Certified)'
   },
   {
-    name: '22 ct gold jewellery',
-    displayName: '22 CT (916) Gold Jewellery Benchmark',
-    bid: '--',
-    ask: 128135,
-    high: 128500,
-    low: 127645,
-    diff: 0,
-    desc: 'Showroom Benchmark (916 BIS Hallmark Gold)'
+    name: '22 कैरेट ज्वैलरी HUID',
+    displayName: '22 CT (916) Gold Jewellery HUID Benchmark',
+    symbolHindi: '22 कैरेट ज्वैलरी HUID',
+    bid: 126932,
+    ask: 127932,
+    high: 128350,
+    low: 127450,
+    diff: -10800,
+    category: 'jewellery',
+    desc: 'Showroom Benchmark (916 BIS Hallmark Gold with HUID)'
   },
   {
-    name: '20 ct gold jewellery',
-    displayName: '20 CT (833) Gold Jewellery Benchmark',
-    bid: '--',
-    ask: 117390,
-    high: 117720,
-    low: 116940,
-    diff: 0,
-    desc: 'Showroom Benchmark (833 Purity Gold)'
+    name: '20 कैरेट ज्वैलरी HUID',
+    displayName: '20 CT (833) Gold Jewellery HUID Benchmark',
+    symbolHindi: '20 कैरेट ज्वैलरी HUID',
+    bid: 114232,
+    ask: 115232,
+    high: 115650,
+    low: 114750,
+    diff: -23500,
+    category: 'jewellery',
+    desc: 'Showroom Benchmark (833 Purity Gold with HUID)'
   },
   {
-    name: '18 ct gold jewellery',
-    displayName: '18 CT (750) Gold Jewellery Benchmark',
-    bid: '--',
-    ask: 106635,
-    high: 106940,
-    low: 106225,
-    diff: 0,
-    desc: 'Showroom Benchmark (750 Luxury Gold)'
+    name: '18 कैरेट ज्वैलरी HUID',
+    displayName: '18 CT (750) Gold Jewellery HUID Benchmark',
+    symbolHindi: '18 कैरेट ज्वैलरी HUID',
+    bid: 102532,
+    ask: 103532,
+    high: 103950,
+    low: 103050,
+    diff: -35200,
+    category: 'jewellery',
+    desc: 'Showroom Benchmark (750 Luxury Gold with HUID)'
   },
   {
-    name: 'silver jewellery',
-    displayName: 'Fine Silver Jewellery Benchmark (per kg)',
-    bid: '--',
-    ask: 185465,
-    high: 186110,
-    low: 184540,
+    name: 'चांदी ज्वैलरी/ बर्तन',
+    displayName: 'चांदी ज्वैलरी/ बर्तन (Fine Silver Jewellery / Utensils per kg)',
+    symbolHindi: 'चांदी ज्वैलरी/ बर्तन',
+    bid: 180599,
+    ask: 182599,
+    high: 183250,
+    low: 181650,
     diff: 0,
-    desc: 'Showroom Benchmark (Fine Jewellery Silver per 1kg)'
+    category: 'jewellery',
+    desc: 'Showroom Benchmark (Fine Jewellery & Silver Utensils per 1kg)'
   }
 ];
 
 // Realistic multi-point trend generator fallback anchored directly to live benchmark
-const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 142878, baseMosunS10 = 1877) => {
+const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 138732, baseMosunS10 = 1891) => {
   if (!baseG24 || baseG24 <= 0) return [];
   const count = range === '1h' ? 12 : range === '24h' ? 24 : range === '7d' ? 7 : 30;
   const stepMs = (range === '1h' ? 5 * 60 : range === '24h' ? 60 * 60 : 24 * 60 * 60) * 1000;
@@ -226,8 +250,8 @@ const generateFallbackChart = (baseG24, baseS10, range = '24h', baseMosunG24 = 1
     const angle = (i / count) * Math.PI * 2;
     const gDelta = i === 0 ? 0 : Math.sin(angle * 1.5) * 0.0035 + (Math.cos(angle * 2.3) * 0.002);
     const sDelta = i === 0 ? 0 : Math.sin(angle * 1.2) * 0.004 + (Math.cos(angle * 2.1) * 0.003);
-    const spreadVariance = i === 0 ? (baseG24 - baseMosunG24) : -40 + Math.round(Math.sin(angle * 2.8) * 18);
-    const silverSpreadVariance = i === 0 ? (baseS10 - baseMosunS10) : -0.8 + (Math.sin(angle * 2.5) * 0.5);
+    const spreadVariance = i === 0 ? (baseG24 - baseMosunG24) : (baseG24 - baseMosunG24) + Math.round(Math.sin(angle * 2.8) * 18);
+    const silverSpreadVariance = i === 0 ? (baseS10 - baseMosunS10) : (baseS10 - baseMosunS10) + (Math.sin(angle * 2.5) * 0.5);
 
     const g24_hb = Math.round(baseG24 * (1 + gDelta));
     const g24_mosun = i === 0 ? baseMosunG24 : g24_hb - spreadVariance;
@@ -359,29 +383,29 @@ const Prices = () => {
         : MOSUN_FALLBACK_PRODUCTS;
 
     if (mosunAppTab === 'jewellery') {
-      return sourceList.filter(p => p.name.includes('jewellery') || p.name.includes('ct'));
+      return sourceList.filter(p => p.category === 'jewellery' || p.name.includes('jewellery') || p.name.includes('ज्वैलरी') || (p.name.includes('कैरेट') && !p.name.includes('24')));
     }
-    return sourceList.filter(p => !p.name.includes('jewellery') && !p.name.includes('ct'));
+    return sourceList.filter(p => p.category !== 'jewellery' && !p.name.includes('jewellery') && !p.name.includes('ज्वैलरी') && (!p.name.includes('कैरेट') || p.name.includes('24')));
   }, [mosunProducts, mosunBullion, mosunAppTab]);
 
   // Comparative commodities mapping HB Jodhpur vs Mosun Sujangarh with RTGS and Cash delivery models
   const comparativeItems = useMemo(() => {
-    const hbGoldAsk = last?.himanshuBullion?.rates?.gold_995_ask || 142265;
-    const mosunGoldRtgs = last?.mosunBullion?.rates?.gold_995_rtgs || last?.mosunBullion?.rates?.gold_995_ask || 142305;
-    const mosunGoldCash = last?.mosunBullion?.rates?.gold_995_cash || (mosunGoldRtgs - 750);
+    const hbGoldAsk = last?.himanshuBullion?.rates?.gold_995_ask || 144341;
+    const mosunGoldRtgs = last?.mosunBullion?.rates?.gold_995_rtgs || 140982;
+    const mosunGoldCash = last?.mosunBullion?.rates?.gold_995_cash || last?.mosunBullion?.rates?.gold_995 || last?.mosunBullion?.rates?.gold_995_ask || 138732;
     const mosunGold993 = last?.mosunBullion?.rates?.gold_993_cash || (mosunGoldCash - 150);
 
-    const hbSilverAsk = last?.himanshuBullion?.rates?.silver_999_1kg || 187600;
-    const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_999_1kg || 187680;
-    const hbSilverChorsa = last?.himanshuBullion?.rates?.silver_chorsa_1kg || 186400;
-    const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 186480;
-    const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || (mosunSilverChorsaRtgs - 1350);
+    const hbSilverAsk = last?.himanshuBullion?.rates?.silver_999_1kg || 191910;
+    const mosunSilverBankRtgs = last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 189099;
+    const hbSilverChorsa = last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456;
+    const mosunSilverChorsaRtgs = last?.mosunBullion?.rates?.silver_chorsa_rtgs || 187749;
+    const mosunSilverChorsaCash = last?.mosunBullion?.rates?.silver_chorsa || 186399;
 
-    const hbGold22k = last?.gold_10g_22k || 130424;
-    const mosunGold22k = last?.mosunBullion?.rates?.gold_22k || 128135;
+    const hbGold22k = last?.gold_10g_22k || 132844;
+    const mosunGold22k = last?.mosunBullion?.rates?.gold_22k || 127932;
 
-    const hbGold18k = last?.gold_10g_18k || 106711;
-    const mosunGold18k = last?.mosunBullion?.rates?.gold_18k || 106635;
+    const hbGold18k = last?.gold_10g_18k || 108691;
+    const mosunGold18k = last?.mosunBullion?.rates?.gold_18k || 103532;
 
     const hbCopper = last?.himanshuBullion?.rates?.copper_1kg || 1998;
     const mosunCopper = last?.mosunBullion?.rates?.copper_1kg || 2002;
@@ -1021,13 +1045,13 @@ const Prices = () => {
                   <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -40).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : (144341 - 138732)).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.gold_995_diff || -40) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.gold_995_diff !== undefined ? spread.gold_995_diff : (144341 - 138732)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 142265).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.gold_995_ask || 142305).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.gold_995_ask || 144341).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.gold_995_cash || last?.mosunBullion?.rates?.gold_995_ask || 138732).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -1038,13 +1062,13 @@ const Prices = () => {
                   <span className="text-[#38BDF8] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -80).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099)).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_peti_diff || -80) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 187600).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_999_1kg || 187680).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_999_1kg || 191910).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_peti || last?.mosunBullion?.rates?.silver_999_1kg || 189099).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -1055,13 +1079,13 @@ const Prices = () => {
                   <span className="text-[#B59A6C] font-bold">HB - MOSUN</span>
                 </div>
                 <div className="text-lg font-bold text-white flex items-center justify-between">
-                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : -80).toLocaleString('en-IN')}</span>
+                  <span>₹{(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 186399)).toLocaleString('en-IN')}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-normal">
-                    {(spread?.silver_chorsa_diff || -80) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
+                    {(spread?.silver_chorsa_diff !== undefined ? spread.silver_chorsa_diff : (188456 - 186399)) < 0 ? 'HB LOWER' : 'MOSUN LOWER'}
                   </span>
                 </div>
                 <span className="text-[10px] text-white/40 block">
-                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 186400).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa_1kg || 186480).toLocaleString('en-IN')}
+                  HB: ₹{(last?.himanshuBullion?.rates?.silver_chorsa_1kg || 188456).toLocaleString('en-IN')} | Mosun: ₹{(last?.mosunBullion?.rates?.silver_chorsa || 186399).toLocaleString('en-IN')}
                 </span>
               </div>
 
@@ -1762,25 +1786,25 @@ const Prices = () => {
                     {metal === 'gold' ? 'GOLD 995 DIFFERENCE' : 'SILVER DIFFERENCE'}
                   </span>
                   <span className="font-mono text-base font-bold text-[#B59A6C]">
-                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : -40) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : -80)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (spread?.gold_995_diff !== undefined ? spread.gold_995_diff : (144341 - 138732)) : (spread?.silver_peti_diff !== undefined ? spread.silver_peti_diff : (191910 - 189099))).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">HB JODHPUR RATE</span>
                   <span className="font-mono text-base font-bold text-[#222222]">
-                    ₹{(metal === 'gold' ? (last?.himanshuBullion?.rates?.gold_995_ask || 142265) : (last?.himanshuBullion?.rates?.silver_999_1kg || 187600)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (last?.himanshuBullion?.rates?.gold_995_ask || 144341) : (last?.himanshuBullion?.rates?.silver_999_1kg || 191910)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">MOSUN SUJANGARH RATE</span>
                   <span className="font-mono text-base font-bold text-[#38BDF8]">
-                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_ask || 142305) : (last?.mosunBullion?.rates?.silver_999_1kg || 187680)).toLocaleString('en-IN')}
+                    ₹{(metal === 'gold' ? (last?.mosunBullion?.rates?.gold_995_cash || last?.mosunBullion?.rates?.gold_995_ask || 138732) : (last?.mosunBullion?.rates?.silver_bank_rtgs || last?.mosunBullion?.rates?.silver_999_1kg || 189099)).toLocaleString('en-IN')}
                   </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">SOURCING ADVANTAGE</span>
                   <span className="font-mono text-xs font-bold text-emerald-600 block mt-1">
-                    {spread?.sourcingAdvantage || 'Jodhpur (HB lower by Rs. 40 on Gold 99.50 RTGS)'}
+                    {spread?.sourcingAdvantage || 'Sujangarh (Mosun lower by Rs. 5,609 on Gold 99.50 Cash)'}
                   </span>
                 </div>
               </>
@@ -1878,7 +1902,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_rtgs || 142305}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_rtgs || 140982}`}
                     value={calibGoldRtgs}
                     onChange={(e) => setCalibGoldRtgs(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
@@ -1891,7 +1915,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_cash || 141555}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.gold_995_cash || 138732}`}
                     value={calibGoldCash}
                     onChange={(e) => setCalibGoldCash(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
@@ -1904,7 +1928,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_bank_rtgs || 187680}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_bank_rtgs || 189099}`}
                     value={calibSilverBank}
                     onChange={(e) => setCalibSilverBank(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"
@@ -1917,7 +1941,7 @@ const Prices = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_chorsa || 185130}`}
+                    placeholder={`Current: ${last?.mosunBullion?.rates?.silver_chorsa || 186399}`}
                     value={calibSilverChorsa}
                     onChange={(e) => setCalibSilverChorsa(e.target.value)}
                     className="w-full bg-[#121212] border border-white/20 focus:border-[#B59A6C] px-3 py-2 text-white outline-none rounded font-mono"

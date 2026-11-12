@@ -190,8 +190,8 @@ const fetchChartHistory = async (
   range = '24h', 
   liveGold10g = 144921, 
   liveSilver10g = 1919,
-  liveMosunGold10g = 144965,
-  liveMosunSilver10g = 1920
+  liveMosunGold10g = 138732,
+  liveMosunSilver10g = 1891
 ) => {
   const cacheKey = `${currency}_${range}_${liveGold10g}_${liveMosunGold10g}`;
   const cached = CHART_CACHE.get(cacheKey);
@@ -335,8 +335,8 @@ router.get('/', async (req, res) => {
 
     const liveGold10g = payload.gold_10g_24k || 144921;
     const liveSilver10g = payload.silver_10g || 1919;
-    const liveMosunGold10g = payload.mosunBullion?.rates?.gold_24k_10g || 144965;
-    const liveMosunSilver10g = payload.mosunBullion?.rates?.silver_10g || 1920;
+    const liveMosunGold10g = payload.mosunBullion?.rates?.gold_24k_10g || 138732;
+    const liveMosunSilver10g = payload.mosunBullion?.rates?.silver_10g || 1891;
     payload.chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g, liveMosunGold10g, liveMosunSilver10g);
 
     res.json(payload);
@@ -401,21 +401,21 @@ router.get('/history', async (req, res) => {
     const range = String(req.query.range || '24h').toLowerCase();
     const cached = PRICE_CACHE.get(`${currency}`);
 
-    let liveGold10g = 142837;
-    let liveSilver10g = 1876;
-    let liveMosunGold10g = 142878;
-    let liveMosunSilver10g = 1877;
+    let liveGold10g = 144921;
+    let liveSilver10g = 1919;
+    let liveMosunGold10g = 138732;
+    let liveMosunSilver10g = 1891;
     if (cached?.payload?.gold_10g_24k) {
       liveGold10g = cached.payload.gold_10g_24k;
-      liveSilver10g = cached.payload.silver_10g || 1876;
-      liveMosunGold10g = cached.payload.mosunBullion?.rates?.gold_24k_10g || 142878;
-      liveMosunSilver10g = cached.payload.mosunBullion?.rates?.silver_10g || 1877;
+      liveSilver10g = cached.payload.silver_10g || 1919;
+      liveMosunGold10g = cached.payload.mosunBullion?.rates?.gold_24k_10g || 138732;
+      liveMosunSilver10g = cached.payload.mosunBullion?.rates?.silver_10g || 1891;
     } else {
       const live = await fetchLiveMetals(currency);
       liveGold10g = live.gold_10g_24k;
-      liveSilver10g = live.silver_10g || 1876;
-      liveMosunGold10g = live.mosunBullion?.rates?.gold_24k_10g || 142878;
-      liveMosunSilver10g = live.mosunBullion?.rates?.silver_10g || 1877;
+      liveSilver10g = live.silver_10g || 1919;
+      liveMosunGold10g = live.mosunBullion?.rates?.gold_24k_10g || 138732;
+      liveMosunSilver10g = live.mosunBullion?.rates?.silver_10g || 1891;
     }
 
     const chart = await fetchChartHistory(currency, range, liveGold10g, liveSilver10g, liveMosunGold10g, liveMosunSilver10g);

@@ -245,11 +245,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.gold995 || 142265).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold995 || 144341).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_995 || (liveRates.gold995 - 45) || 142305).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_995_cash || mosunBullion?.rates?.gold_995 || mosunBullion?.rates?.gold_995_ask || 138732).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
@@ -264,11 +264,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.gold22k || 130424).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.gold22k || 132844).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_22k || (liveRates.gold22k - 40) || 128135).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.gold_22k || 127932).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
@@ -283,11 +283,11 @@ const Header = () => {
                         <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
                           <div>
                             <span className="text-[9px] text-gray-400 block">HB Jodhpur</span>
-                            <span className="font-bold text-[#222222]">₹{(liveRates.silverPeti || 187600).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#222222]">₹{(liveRates.silverPeti || 191910).toLocaleString('en-IN')}</span>
                           </div>
                           <div>
                             <span className="text-[9px] text-gray-400 block">Mosun Sujangarh</span>
-                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_peti || (liveRates.silverPeti - 110) || 187680).toLocaleString('en-IN')}</span>
+                            <span className="font-bold text-[#B59A6C]">₹{(mosunBullion?.rates?.silver_bank_rtgs || mosunBullion?.rates?.silver_peti || mosunBullion?.rates?.silver_999_1kg || 189099).toLocaleString('en-IN')}</span>
                           </div>
                         </div>
                       </div>
