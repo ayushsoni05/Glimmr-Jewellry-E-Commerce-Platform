@@ -111,23 +111,35 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
+    const logoPromise = loadImageAsBase64('/monika-jewellers-luxury-logo.jpg');
     const imagePromises = safeItems.map((d) => loadImageAsBase64(d.image));
-    const imageDataArr = await Promise.all(imagePromises);
+    const [logoBase64, ...imageDataArr] = await Promise.all([logoPromise, ...imagePromises]);
 
     doc.setFillColor(181, 154, 108);
     doc.rect(0, 0, 210, 4, 'F');
 
+    let textStartX = 15;
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'JPEG', 15, 12, 18, 18);
+        doc.setDrawColor(181, 154, 108);
+        doc.setLineWidth(0.3);
+        doc.rect(15, 12, 18, 18, 'S');
+        textStartX = 36;
+      } catch { /* skip */ }
+    }
+
     doc.setFont('times', 'bold');
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setTextColor(17, 17, 17);
-    doc.text(STORE_CONFIG.name.toUpperCase(), 15, 20);
+    doc.text(STORE_CONFIG.name.toUpperCase(), textStartX, 19);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(120, 120, 120);
-    doc.text(STORE_CONFIG.tagline.toUpperCase(), 15, 25);
-    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN Code: ${STORE_CONFIG.hsn}   |   BIS License: ${STORE_CONFIG.bisLicense}`, 15, 29);
-    doc.text(STORE_CONFIG.address.full, 15, 33);
+    doc.text(STORE_CONFIG.tagline.toUpperCase(), textStartX, 23.5);
+    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN: ${STORE_CONFIG.hsn}   |   BIS: ${STORE_CONFIG.bisLicense}`, textStartX, 27);
+    doc.text(STORE_CONFIG.address.full, textStartX, 30.5);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
@@ -453,27 +465,70 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;700&family=Fragment+Mono:wght@400;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'DM Sans', sans-serif; color: #111; padding: 14mm 16mm; font-size: 9px; line-height: 1.35; }
-    .gold-bar { height: 4px; background: #B59A6C; margin-bottom: 14px; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .brand { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #07162C; letter-spacing: 0.05em; }
+    body { font-family: 'DM Sans', sans-serif; color: #111; padding: 14mm 16mm; font-size: 9px; line-height: 1.35; position: relative; }
+    .gold-bar { height: 4px; background: #B59A6C; margin-bottom: 12px; }
+    .watermark-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 440px;
+      max-width: 80%;
+      opacity: 0.055;
+      z-index: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .watermark-container img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative; z-index: 1; }
+    .header-brand-block { display: flex; align-items: flex-start; }
+    .official-header-logo {
+      width: 54px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #B59A6C;
+      margin-right: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+    .brand { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: #07162C; letter-spacing: 0.05em; line-height: 1.15; }
     .sub { font-size: 7.5px; color: #555; margin-top: 2px; }
     .bill-meta { text-align: right; }
     .bill-meta .badge { font-size: 8.5px; color: #B59A6C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
     .bill-meta .number { font-size: 14px; font-weight: 700; font-family: 'Fragment Mono', monospace; color: #07162C; margin-top: 2px; }
     .bill-meta .date { font-size: 8px; color: #666; margin-top: 2px; }
     .bill-meta .payment-badge { font-size: 8px; color: #147a3b; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+    .microprint-security-strip {
+      font-size: 5.5px;
+      font-family: 'Fragment Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #8C6D37;
+      text-align: center;
+      padding: 3px 0;
+      border-top: 0.5px solid #E5E2D9;
+      border-bottom: 0.5px solid #E5E2D9;
+      margin: 8px 0;
+      position: relative;
+      z-index: 1;
+    }
 
-    .customer-box { background: #FAF9F7; border: 1px solid #E5E2D9; padding: 10px 14px; margin: 10px 0; display: flex; justify-content: space-between; gap: 16px; border-radius: 2px; }
+    .customer-box { background: #FAF9F7; border: 1px solid #E5E2D9; padding: 10px 14px; margin: 8px 0; display: flex; justify-content: space-between; gap: 16px; border-radius: 2px; position: relative; z-index: 1; }
     .customer-box .sec-title { font-size: 7.5px; color: #B59A6C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
     .customer-box .name { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: #111; }
     .customer-box .detail { font-size: 8px; color: #555; margin-top: 1.5px; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; position: relative; z-index: 1; }
     th { background: #07162C; color: #fff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 6px; text-align: left; }
     th.center { text-align: center; }
     th.right { text-align: right; }
-    td { padding: 6px; font-size: 8.5px; border-bottom: 1px solid #E8E5DD; vertical-align: middle; }
+    td { padding: 6px; font-size: 8.5px; border-bottom: 1px solid #E8E5DD; vertical-align: middle; background: rgba(255, 255, 255, 0.85); }
     td.center { text-align: center; }
     td.right { text-align: right; font-family: 'Fragment Mono', monospace; }
     td.bold { font-weight: 700; }
@@ -486,7 +541,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     .huid-code { display: inline-block; padding: 0.5px 3.5px; background: #FFF8E7; border: 0.5px solid #B59A6C; border-radius: 2px; font-family: 'Fragment Mono', monospace; font-size: 7.5px; font-weight: 700; color: #8C6D37; }
     .item-breakdown { font-size: 7px; color: #666; margin-top: 2px; }
 
-    .summary-section { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 12px; gap: 20px; }
+    .summary-section { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 10px; gap: 20px; position: relative; z-index: 1; }
     .declaration-box { flex: 1; max-width: 320px; }
     .totals-box { min-width: 230px; font-size: 8.5px; }
     .totals-box .row { display: flex; justify-content: space-between; margin-bottom: 3px; color: #555; }
@@ -495,13 +550,13 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     .totals-box .grand .label { font-family: 'Playfair Display', serif; font-size: 11px; font-weight: 700; color: #07162C; }
     .totals-box .grand .val { font-family: 'Fragment Mono', monospace; font-size: 13px; font-weight: 700; color: #07162C; }
 
-    .anti-fraud-banner { margin-top: 14px; padding: 8px 12px; background: #FCFAF6; border: 1px solid #B59A6C; border-left: 4px solid #B59A6C; border-radius: 2px; }
+    .anti-fraud-banner { margin-top: 12px; padding: 8px 12px; background: #FCFAF6; border: 1px solid #B59A6C; border-left: 4px solid #B59A6C; border-radius: 2px; position: relative; z-index: 1; }
     .anti-fraud-title { font-size: 8px; font-weight: 700; color: #07162C; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
     .anti-fraud-text { font-size: 7px; line-height: 1.4; color: #444; }
 
-    .signatures-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 8px; }
+    .signatures-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; padding-top: 8px; position: relative; z-index: 1; }
     .sig-block { width: 200px; text-align: center; }
-    .sig-line { border-top: 1px solid #777; margin-top: 32px; margin-bottom: 3px; }
+    .sig-line { border-top: 1px solid #777; margin-top: 28px; margin-bottom: 3px; }
     .sig-title { font-size: 7.5px; font-weight: 700; color: #111; text-transform: uppercase; letter-spacing: 0.06em; }
     .sig-sub { font-size: 6.5px; color: #777; }
 
@@ -509,20 +564,31 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
   </style>
 </head>
 <body>
+  <div class="watermark-container">
+    <img src="/monika-jewellers-luxury-logo.jpg" alt="Monika Jewellers Watermark" />
+  </div>
   <div class="gold-bar"></div>
   <div class="header">
-    <div>
-      <div class="brand">${STORE_CONFIG.name.toUpperCase()}</div>
-      <div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div>
-      <div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div>
-      <div class="sub">${STORE_CONFIG.address.full}</div>
+    <div class="header-brand-block">
+      <img src="/monika-jewellers-luxury-logo.jpg" class="official-header-logo" alt="Monika Jewellers Logo" />
+      <div>
+        <div class="brand">${STORE_CONFIG.name.toUpperCase()}</div>
+        <div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div>
+        <div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div>
+        <div class="sub">${STORE_CONFIG.address.full}</div>
+      </div>
     </div>
     <div class="bill-meta">
       <div class="badge">${rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</div>
       <div class="number">${billNumber}</div>
       <div class="date">${invoiceDate} | ${invoiceTime}</div>
       <div class="payment-badge">Payment: ${paymentMethod.toUpperCase()}</div>
+      <div style="font-size: 7px; color: #8C6D37; font-weight: bold; margin-top: 3px; font-family: 'Fragment Mono', monospace;">ANTI-COUNTERFEIT BILL</div>
     </div>
+  </div>
+
+  <div class="microprint-security-strip">
+    MONIKA JEWELLERS DIDWANA • 100% BIS HALLMARKED • OFFICIAL CERTIFIED GST TAX INVOICE • TAMPER PROOF COUNTER BILL
   </div>
 
   <div class="customer-box">
@@ -801,24 +867,52 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.97 }}
           transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
-          className="w-full max-w-3xl bg-white border border-gray-200 shadow-[0_25px_70px_rgba(0,0,0,0.2)] my-auto max-h-[95vh] overflow-y-auto"
+          className="w-full max-w-3xl bg-white border border-gray-200 shadow-[0_25px_70px_rgba(0,0,0,0.2)] my-auto max-h-[95vh] overflow-y-auto relative"
         >
-          <div className="h-1 bg-[#B59A6C] w-full" />
-          <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+          {/* Subtle Anti-Counterfeit Background Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
+            <img
+              src="/monika-jewellers-luxury-logo.jpg"
+              alt=""
+              className="w-[420px] max-w-[80%] opacity-[0.055] grayscale-[15%] object-contain"
+            />
+          </div>
+
+          <div className="h-1 bg-[#B59A6C] w-full relative z-10" />
+          <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 relative z-10">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div>
-                <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] tracking-wider">{STORE_CONFIG.name.toUpperCase()}</h2>
-                <p className="text-[10px] font-body text-gray-400 uppercase tracking-[0.15em] mt-0.5">{STORE_CONFIG.tagline}</p>
-                <p className="text-[9px] font-body text-gray-400 mt-1">GSTIN: {STORE_CONFIG.gstin} | HSN: {STORE_CONFIG.hsn} | BIS: {STORE_CONFIG.bisLicense}</p>
-                <p className="text-[9px] font-body text-gray-400">{STORE_CONFIG.address.full}</p>
+              <div className="flex items-start gap-3.5">
+                <img
+                  src="/monika-jewellers-luxury-logo.jpg"
+                  alt="Monika Jewellers Logo"
+                  className="w-13 h-13 sm:w-15 sm:h-15 object-cover rounded border border-[#B59A6C]/40 shadow-xs shrink-0"
+                />
+                <div>
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] tracking-wider leading-tight">
+                    {STORE_CONFIG.name.toUpperCase()}
+                  </h2>
+                  <p className="text-[10px] font-body text-gray-500 uppercase tracking-[0.15em] mt-0.5">{STORE_CONFIG.tagline}</p>
+                  <p className="text-[9px] font-body text-gray-500 mt-0.5">
+                    GSTIN: <span className="font-mono font-bold text-slate-800">{STORE_CONFIG.gstin}</span> | HSN: {STORE_CONFIG.hsn} | BIS: {STORE_CONFIG.bisLicense}
+                  </p>
+                  <p className="text-[9px] font-body text-gray-400">{STORE_CONFIG.address.full}</p>
+                </div>
               </div>
-              <div className="text-left sm:text-right">
+              <div className="text-left sm:text-right shrink-0">
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">{rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</span>
                 <span className="font-mono text-base sm:text-lg font-extrabold text-[#111111] block mt-0.5">{billNumber}</span>
                 <span className="text-[10px] font-body text-gray-500 block mt-0.5">{invoiceDate} | {invoiceTime}</span>
                 <span className="text-[10px] font-body font-bold text-emerald-700 uppercase block mt-0.5">Payment: {paymentMethod.toUpperCase()}</span>
+                <span className="text-[8px] font-mono px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded inline-block mt-1 font-bold">
+                  OFFICIAL REGISTERED BILL
+                </span>
               </div>
+            </div>
+
+            {/* Tamper-Proof Security Microprint Strip */}
+            <div className="text-[8px] font-mono uppercase tracking-[0.18em] text-[#8C6D37] text-center py-1 border-y border-[#E5E2D9] bg-[#FAF9F7]/70">
+              MONIKA JEWELLERS DIDWANA • 100% BIS HALLMARKED • OFFICIAL CERTIFIED GST TAX INVOICE • TAMPER PROOF COUNTER BILL
             </div>
 
             {/* Customer & Rates */}

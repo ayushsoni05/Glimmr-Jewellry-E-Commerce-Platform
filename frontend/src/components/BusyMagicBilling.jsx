@@ -28,8 +28,13 @@ import {
   X,
   Minimize2,
   Maximize2,
-  RotateCcw
+  RotateCcw,
+  Camera,
+  Sparkles,
+  Eye,
+  ZoomIn
 } from 'lucide-react';
+import PhotoCaptureModal from './PhotoCaptureModal';
 
 const KARATS_OPTIONS = [
   { value: 24, label: '24K (99.9% Pure Gold)', purity: 99.9, material: 'gold' },
@@ -137,6 +142,29 @@ export default function BusyMagicBilling({
   const [quickCatalogSearch, setQuickCatalogSearch] = useState('');
   const [showCatalogDropdown, setShowCatalogDropdown] = useState(false);
 
+  // Live Camera & AI Studio Photo Capture State
+  const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
+  const [photoCaptureTargetIndex, setPhotoCaptureTargetIndex] = useState(null); // null = quick item, number = row index
+  const [activePhotoPreview, setActivePhotoPreview] = useState(null);
+
+  const handlePhotoCaptured = (dataUrl) => {
+    if (photoCaptureTargetIndex === null) {
+      setQuickImage(dataUrl);
+      setCatalogAlert('AI Studio: Ornament photo attached to entry bar.');
+      setTimeout(() => setCatalogAlert(''), 3000);
+    } else {
+      setBillItems(prev => prev.map((item, idx) => {
+        if (idx !== photoCaptureTargetIndex) return item;
+        return {
+          ...item,
+          image: dataUrl
+        };
+      }));
+      setCatalogAlert(`Voucher Grid: Photo attached to row #${photoCaptureTargetIndex + 1}.`);
+      setTimeout(() => setCatalogAlert(''), 3000);
+    }
+  };
+
   // Old Gold Extended Fields
   const [oldGoldDescription, setOldGoldDescription] = useState('Old Gold Ornaments Exchange');
   const [oldGoldDustDeduction, setOldGoldDustDeduction] = useState('0.100');
@@ -227,6 +255,7 @@ export default function BusyMagicBilling({
       totalPrice: quickItemTotal,
       quantity: 1,
       image: quickImage || '',
+      fineWeight: parseFloat(((quickNetWt * quickPurityPercent) / 100).toFixed(3)),
       isCustomItem: true,
       huid: quickHuid.trim().toUpperCase()
     };
@@ -315,25 +344,25 @@ export default function BusyMagicBilling({
     <div className="min-h-screen bg-[#0B1E36] text-[#1E293B] font-sans text-xs pb-24 sm:pb-20 selection:bg-[#B59A6C] selection:text-white">
 
       {/* ========================================================================= */}
-      {/* 1. TOP BUSY MAGIC ENTERPRISE APPLICATION TITLE BAR                        */}
+      {/* 1. TOP BUSY 21 ENTERPRISE APPLICATION TITLE BAR                           */}
       {/* ========================================================================= */}
       <header className="bg-[#07162C] text-white border-b border-[#1E3A5F] px-4 py-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="bg-[#B59A6C] text-[#07162C] font-black px-2 py-0.5 rounded text-xs tracking-wider uppercase flex items-center gap-1 shadow-sm font-mono">
+          <div className="bg-[#B59A6C] text-[#07162C] font-black px-2.5 py-1 rounded text-xs tracking-wider uppercase flex items-center gap-1.5 shadow-sm font-mono">
             <span>BUSY</span>
-            <span className="bg-[#07162C] text-[#B59A6C] px-1 rounded text-[10px]">MAGIC</span>
+            <span className="bg-[#07162C] text-[#B59A6C] px-1.5 rounded text-[10px]">21</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm font-bold uppercase tracking-wider text-white">
-                {STORE_CONFIG.name.toUpperCase()}
+                {STORE_CONFIG.name.toUpperCase()} (DIDWANA)
               </h1>
               <span className="text-[10px] text-[#B59A6C] font-mono font-semibold">
-                [Gems & Jewellery ERP Edition v2.0]
+                [BUSY 21 Jewellery Edition - Release 21.0]
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">
-              GSTIN: {STORE_CONFIG.gstin} | State: {STORE_CONFIG.address.state} | BIS Reg: {STORE_CONFIG.bisLicense}
+              Vch Series: Main | Mat. Centre: Main Vault (Shop Floor) | GSTIN: {STORE_CONFIG.gstin} | BIS Reg: {STORE_CONFIG.bisLicense}
             </p>
           </div>
         </div>
@@ -812,19 +841,52 @@ export default function BusyMagicBilling({
                           {idx + 1}
                         </td>
 
-                        {/* Dedicated Item Photo */}
+                        {/* Dedicated Item Photo (Click to zoom, snap or retake) */}
                         <td className="p-1.5 text-center">
                           {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-10 h-10 object-cover rounded border border-slate-300 mx-auto bg-white shadow-2xs"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded border border-dashed border-slate-300 mx-auto flex items-center justify-center bg-slate-100 text-[8px] text-slate-400 font-sans">
-                              No Pic
+                            <div className="relative group mx-auto w-11 h-11">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-11 h-11 object-cover rounded border border-[#B59A6C] mx-auto bg-white shadow-2xs hover:scale-105 transition-transform"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActivePhotoPreview({
+                                    image: item.image,
+                                    name: item.name,
+                                    huid: item.huid || item.sku,
+                                    weight: netWeight
+                                  });
+                                }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                              <button
+                                type="button"
+                                title="Change or retake photo with AI studio"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPhotoCaptureTargetIndex(idx);
+                                  setIsPhotoCaptureOpen(true);
+                                }}
+                                className="absolute -bottom-1 -right-1 p-0.5 bg-[#0B2545] hover:bg-[#B59A6C] text-white rounded-full border border-white/60 shadow-xs cursor-pointer opacity-80 group-hover:opacity-100"
+                              >
+                                <Camera className="w-2.5 h-2.5" />
+                              </button>
                             </div>
+                          ) : (
+                            <button
+                              type="button"
+                              title="Click to snap or upload ornament photo"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPhotoCaptureTargetIndex(idx);
+                                setIsPhotoCaptureOpen(true);
+                              }}
+                              className="w-11 h-11 rounded border border-dashed border-[#B59A6C] hover:border-amber-500 mx-auto flex flex-col items-center justify-center bg-amber-50/50 hover:bg-amber-100 text-[8px] text-amber-800 font-sans cursor-pointer transition-colors"
+                            >
+                              <Camera className="w-3.5 h-3.5 text-amber-700 mb-0.5" />
+                              <span>Snap</span>
+                            </button>
                           )}
                         </td>
 
@@ -988,31 +1050,42 @@ export default function BusyMagicBilling({
               {/* Fast Input Grid */}
               <div className="flex flex-wrap items-center gap-2">
                 {/* Product Photo Preview / Selector */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {quickImage ? (
-                    <div className="relative group" title="Attached genuine product photo">
+                    <div className="relative group">
                       <img
                         src={quickImage}
                         alt="Piece"
-                        className="w-8 h-8 object-cover rounded border border-amber-400 bg-white shadow-2xs"
+                        className="w-8 h-8 object-cover rounded border border-amber-400 bg-white shadow-2xs cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => {
+                          setPhotoCaptureTargetIndex(null);
+                          setIsPhotoCaptureOpen(true);
+                        }}
+                        title="Click to edit with AI Studio or retake"
                       />
                       <button
                         type="button"
                         onClick={() => setQuickImage('')}
                         title="Remove attached photo"
-                        className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center leading-none hover:bg-rose-700"
+                        className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center leading-none hover:bg-rose-700 cursor-pointer"
                       >
                         x
                       </button>
                     </div>
-                  ) : (
-                    <div
-                      title="No photo attached"
-                      className="w-8 h-8 rounded border border-dashed border-slate-300 flex items-center justify-center text-[8px] text-slate-400 text-center leading-tight bg-slate-50 shrink-0"
-                    >
-                      Photo
-                    </div>
-                  )}
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoCaptureTargetIndex(null);
+                      setIsPhotoCaptureOpen(true);
+                    }}
+                    className="px-2 py-1 bg-[#0B2545] hover:bg-[#153B6C] text-amber-300 rounded border border-[#1E3A5F] flex items-center gap-1 cursor-pointer text-[10px] font-bold shrink-0 shadow-2xs"
+                    title="Capture live camera photo or upload from device"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{quickImage ? 'AI Edit' : 'Snap / Upload Photo'}</span>
+                  </button>
                 </div>
 
                 {/* Catalog Picker / Search */}
@@ -1675,6 +1748,62 @@ export default function BusyMagicBilling({
           <span className="text-amber-300 font-bold">100% BIS Hallmarked</span>
         </div>
       </footer>
+
+      {/* ========================================================================= */}
+      {/* 9. LIVE CAMERA & AI STUDIO PHOTO CAPTURE MODAL                            */}
+      {/* ========================================================================= */}
+      <PhotoCaptureModal
+        isOpen={isPhotoCaptureOpen}
+        onClose={() => setIsPhotoCaptureOpen(false)}
+        onPhotoCaptured={handlePhotoCaptured}
+        initialPhoto={photoCaptureTargetIndex !== null ? billItems[photoCaptureTargetIndex]?.image : quickImage}
+        title={photoCaptureTargetIndex !== null ? `Photograph Piece #${photoCaptureTargetIndex + 1}: ${billItems[photoCaptureTargetIndex]?.name || 'Ornament'}` : 'Photograph Piece for Entry Bar'}
+      />
+
+      {/* ========================================================================= */}
+      {/* 10. PHOTO PREVIEW ZOOM INSPECTOR                                         */}
+      {/* ========================================================================= */}
+      {activePhotoPreview && (
+        <div
+          className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setActivePhotoPreview(null)}
+        >
+          <div
+            className="max-w-md w-full bg-[#0D1B2A] border border-[#B59A6C] rounded-2xl p-4 shadow-2xl space-y-3 font-mono cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#1E3A5F]">
+              <div>
+                <h4 className="text-sm font-bold text-white uppercase">{activePhotoPreview.name}</h4>
+                <p className="text-[10px] text-[#B59A6C]">
+                  HUID: {activePhotoPreview.huid || 'BIS Certified'} | Net Wt: {Number(activePhotoPreview.weight || 0).toFixed(3)}g
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActivePhotoPreview(null)}
+                className="w-7 h-7 rounded-full bg-[#102A4C] hover:bg-rose-900 text-slate-300 hover:text-white flex items-center justify-center"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="aspect-square w-full rounded-xl overflow-hidden bg-black flex items-center justify-center border border-[#1E3A5F]">
+              <img
+                src={activePhotoPreview.image}
+                alt={activePhotoPreview.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="p-2 bg-[#07162C] rounded border border-[#1E3A5F] text-[10px] text-slate-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Verified Counter Photo Proof
+              </span>
+              <span className="text-slate-400">Printed on GST Invoice</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
