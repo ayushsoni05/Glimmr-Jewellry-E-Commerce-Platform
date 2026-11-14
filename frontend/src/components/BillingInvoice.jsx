@@ -794,7 +794,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto"
       >
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
@@ -804,25 +804,25 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
           className="w-full max-w-3xl bg-white border border-gray-200 shadow-[0_25px_70px_rgba(0,0,0,0.2)] my-auto max-h-[95vh] overflow-y-auto"
         >
           <div className="h-1 bg-[#B59A6C] w-full" />
-          <div className="p-6 sm:p-8 space-y-6">
+          <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div>
-                <h2 className="font-heading text-2xl font-bold text-[#111111] tracking-wider">{STORE_CONFIG.name.toUpperCase()}</h2>
+                <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] tracking-wider">{STORE_CONFIG.name.toUpperCase()}</h2>
                 <p className="text-[10px] font-body text-gray-400 uppercase tracking-[0.15em] mt-0.5">{STORE_CONFIG.tagline}</p>
                 <p className="text-[9px] font-body text-gray-400 mt-1">GSTIN: {STORE_CONFIG.gstin} | HSN: {STORE_CONFIG.hsn} | BIS: {STORE_CONFIG.bisLicense}</p>
                 <p className="text-[9px] font-body text-gray-400">{STORE_CONFIG.address.full}</p>
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right">
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">{rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</span>
-                <span className="font-mono text-lg font-extrabold text-[#111111] block mt-0.5">{billNumber}</span>
+                <span className="font-mono text-base sm:text-lg font-extrabold text-[#111111] block mt-0.5">{billNumber}</span>
                 <span className="text-[10px] font-body text-gray-500 block mt-0.5">{invoiceDate} | {invoiceTime}</span>
                 <span className="text-[10px] font-body font-bold text-emerald-700 uppercase block mt-0.5">Payment: {paymentMethod.toUpperCase()}</span>
               </div>
             </div>
 
             {/* Customer & Rates */}
-            <div className="bg-[#FAF9F7] border border-gray-200 p-4 flex flex-col sm:flex-row justify-between gap-4">
+            <div className="bg-[#FAF9F7] border border-gray-200 p-3 sm:p-4 flex flex-col sm:flex-row justify-between gap-4">
               <div>
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block mb-1">Customer Details</span>
                 <p className="font-heading font-bold text-sm text-[#111111]">{customer.name || 'Walk-in Customer'}</p>
@@ -831,7 +831,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
                 {customer.address && <p className="text-[10px] font-body text-gray-500 mt-0.5">Address: {customer.address}</p>}
                 {customer.gstin && <p className="text-[10px] font-mono text-[#B59A6C] font-bold mt-0.5">GSTIN: {customer.gstin}</p>}
               </div>
-              <div className="text-right sm:text-right">
+              <div className="text-left sm:text-right">
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block mb-1">Metal Rates Applied</span>
                 <p className="text-[10px] font-mono font-bold text-[#111111]">Gold: Rs.{Number(goldRateUsed).toLocaleString('en-IN')}/g</p>
                 <p className="text-[10px] font-mono font-bold text-[#111111]">Silver: Rs.{Number(silverRateUsed).toLocaleString('en-IN')}/g</p>
@@ -841,7 +841,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
 
             {/* Item Table with Dedicated Photo Column */}
             <div className="overflow-x-auto">
-              <table className="w-full text-xs font-body">
+              <table className="w-full text-xs font-body min-w-[620px]">
                 <thead>
                   <tr className="bg-[#111111] text-white">
                     <th className="py-2.5 px-2 text-center font-bold uppercase tracking-wider text-[10px] w-7">#</th>

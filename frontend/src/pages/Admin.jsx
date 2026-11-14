@@ -430,7 +430,7 @@ const Admin = () => {
         />
 
         {/* Webflow & Framer Motion Luxury Sliding Tabs */}
-        <div className="flex border-b border-gray-200 mb-10 overflow-x-auto">
+        <div className="flex border-b border-gray-200 mb-8 sm:mb-10 overflow-x-auto no-scrollbar">
           {[
             { id: 'products', label: 'PRODUCTS' },
             { id: 'stock-management', label: 'STOCK / INVENTORY' },
@@ -1165,7 +1165,7 @@ const Admin = () => {
           ) : (
             <div className="bg-white rounded-2xl shadow-soft overflow-hidden border border-gray-100">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[700px]">
                   <thead>
                     <tr className="bg-cream border-b border-gray-200">
                       <th className="px-6 py-4 text-left text-sm font-heading text-dark uppercase tracking-wider">Order ID</th>

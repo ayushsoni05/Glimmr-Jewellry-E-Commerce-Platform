@@ -908,7 +908,7 @@ const Prices = () => {
       </section>
 
       {/* Control Bar: Metal Toggle, Currency Filter & Refresh Action */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E5E2D9] py-4 px-4 sm:px-6 lg:px-8">
+      <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-[#E5E2D9] py-3 sm:py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
           {/* Framer Motion Sliding Metal Selector */}
@@ -1142,7 +1142,7 @@ const Prices = () => {
               </div>
 
               <div className="overflow-x-auto border border-white/10 bg-[#202020]">
-                <table className="w-full text-left text-xs font-body">
+                <table className="w-full text-left text-xs font-body min-w-[650px]">
                   <thead className="bg-[#121212] text-white/60 text-[10px] font-mono uppercase tracking-wider border-b border-white/10">
                     <tr>
                       <th className="py-3 px-4">Commodity / Grade</th>

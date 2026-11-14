@@ -288,7 +288,7 @@ export default function BillingAnalytics({ api }) {
         <div className={cardClass}>
           <h3 className={headerClass}>Rate-wise Breakdown</h3>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead>
                 <tr>
                   <th className={tableHeaderClass}>Rate</th>
@@ -359,7 +359,7 @@ export default function BillingAnalytics({ api }) {
           <div className={cardClass}>
             <h3 className={headerClass}>Method Distribution</h3>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[500px]">
                 <thead>
                   <tr>
                     <th className={tableHeaderClass}>Method</th>
@@ -413,7 +413,7 @@ export default function BillingAnalytics({ api }) {
           <div className={`lg:col-span-2 ${cardClass}`}>
             <h3 className={headerClass}>Karat-wise Breakdown</h3>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[600px]">
                 <thead>
                   <tr>
                     <th className={tableHeaderClass}>Material</th>
@@ -454,7 +454,7 @@ export default function BillingAnalytics({ api }) {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={cardClass}>
         <h3 className={headerClass}>Top Customers</h3>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[650px]">
             <thead>
               <tr>
                 <th className={tableHeaderClass}>Name</th>
@@ -517,7 +517,7 @@ export default function BillingAnalytics({ api }) {
         <div className={cardClass}>
           <h3 className={headerClass}>Pending & Overdue Bills</h3>
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[650px]">
               <thead>
                 <tr>
                   <th className={tableHeaderClass}>Bill #</th>

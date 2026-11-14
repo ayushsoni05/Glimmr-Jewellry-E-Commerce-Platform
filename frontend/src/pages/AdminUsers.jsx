@@ -254,7 +254,7 @@ const AdminUsers = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[750px]">
               <thead>
                 <tr className="bg-cream border-b border-gray-200">
                   <th className="px-6 py-4 text-sm font-heading text-dark uppercase tracking-wider">Patron ID</th>

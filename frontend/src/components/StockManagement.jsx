@@ -532,7 +532,7 @@ export default function StockManagement({ api }) {
       {/* Main Stock Table */}
       <div className="bg-white border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-heading">
+          <table className="w-full text-left text-xs font-heading min-w-[700px]">
             <thead className="bg-[#111111] text-white uppercase text-[9px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Item & SKU</th>

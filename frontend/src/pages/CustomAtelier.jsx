@@ -1641,7 +1641,7 @@ const CustomAtelier = () => {
                         <SubLabel>Shoulder Pavé Diamond Count</SubLabel>
                         <span className="font-mono text-xs font-bold text-[#222222]">{paveCount === 0 ? 'None' : `${paveCount} Stones`}</span>
                       </div>
-                      <div className="grid grid-cols-6 gap-1.5">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                         {PAVE_COUNT_OPTIONS.map((count) => (
                           <button
                             type="button"

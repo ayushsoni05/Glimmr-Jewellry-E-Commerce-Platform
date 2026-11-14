@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Sparkles, 
   Calendar, 
@@ -123,6 +123,10 @@ const GlimmrConcierge = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('stylist'); // 'stylist' | 'appointment' | 'rates' | 'bespoke'
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide floating concierge on POS billing screen to keep cashier controls unobstructed
+  if (location.pathname === '/billing') return null;
   const { showToast } = useToast();
   const { 
     liveRates, 

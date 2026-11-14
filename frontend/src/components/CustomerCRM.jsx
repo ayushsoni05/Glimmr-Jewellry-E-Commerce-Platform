@@ -349,7 +349,7 @@ export default function CustomerCRM({ api }) {
       {/* Customers Table */}
       <div className="bg-white border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-heading">
+          <table className="w-full text-left text-xs font-heading min-w-[750px]">
             <thead className="bg-[#111111] text-white uppercase text-[9px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Patron Details</th>

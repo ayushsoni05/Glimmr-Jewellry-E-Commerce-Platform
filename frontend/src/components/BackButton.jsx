@@ -5,8 +5,14 @@ const BackButton = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on Home page
-  if (location.pathname === '/') return null;
+  // Hide on Home page, POS billing, and Admin consoles
+  if (
+    location.pathname === '/' || 
+    location.pathname === '/billing' || 
+    location.pathname.startsWith('/admin')
+  ) {
+    return null;
+  }
 
   const handleBack = () => {
     if (window.history.state && window.history.state.idx > 0) {
@@ -27,7 +33,7 @@ const BackButton = () => {
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 350, damping: 22 }}
         onClick={handleBack}
-        className="fixed top-20 sm:top-24 left-3 sm:left-6 z-[60] flex items-center gap-2 px-3 sm:px-3.5 py-1.5 bg-[#111111]/90 hover:bg-[#111111] text-[#FAF9F7] shadow-lg backdrop-blur-md border border-white/20 transition-all font-body text-[11px] font-bold uppercase tracking-[0.15em] cursor-pointer group"
+        className="fixed top-18 sm:top-24 left-2 sm:left-6 z-[60] flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 bg-[#111111]/90 hover:bg-[#111111] text-[#FAF9F7] shadow-lg backdrop-blur-md border border-white/20 transition-all font-body text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] cursor-pointer group"
         aria-label="Go Back"
         title="Go back to previous page"
       >
