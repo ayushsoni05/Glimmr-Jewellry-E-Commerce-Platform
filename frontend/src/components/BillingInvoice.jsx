@@ -52,13 +52,19 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
   const cgstPercent = Number((rateNum / 2).toFixed(2));
   const sgstPercent = Number((rateNum / 2).toFixed(2));
 
-  const invoiceDate = new Date(date || Date.now()).toLocaleDateString('en-IN', {
+  const getSafeDateObj = (val) => {
+    if (!val) return new Date();
+    const parsed = new Date(val);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  const invoiceDate = getSafeDateObj(date).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
   });
 
-  const invoiceTime = new Date(date || Date.now()).toLocaleTimeString('en-IN', {
+  const invoiceTime = getSafeDateObj(date).toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit'
   });

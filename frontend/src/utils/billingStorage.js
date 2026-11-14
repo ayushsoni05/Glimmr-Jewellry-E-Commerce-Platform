@@ -67,7 +67,11 @@ export function getSavedBills() {
   try {
     const billsJson = localStorage.getItem('glimmr_bills');
     const bills = billsJson ? JSON.parse(billsJson) : [];
-    return Array.isArray(bills) ? bills.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)) : [];
+    return Array.isArray(bills) ? bills.sort((a, b) => {
+      const da = new Date(a.date || a.createdAt || 0).getTime();
+      const db = new Date(b.date || b.createdAt || 0).getTime();
+      return (isNaN(db) ? 0 : db) - (isNaN(da) ? 0 : da);
+    }) : [];
   } catch (err) {
     console.warn('LocalStorage getSavedBills error:', err);
     return [];

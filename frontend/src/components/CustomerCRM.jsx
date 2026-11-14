@@ -97,6 +97,17 @@ export default function CustomerCRM({ api }) {
     fetchStats();
   }, [fetchStats]);
 
+  const safeFormatDateInput = (val) => {
+    if (!val) return '';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    try {
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
   const handleOpenDossier = async (cust) => {
     setSelectedCustomer(cust);
     setIsEditingCustomer(false);
@@ -107,8 +118,8 @@ export default function CustomerCRM({ api }) {
       city: cust.city || 'Mumbai',
       panNumber: cust.panNumber || '',
       gstin: cust.gstin || '',
-      anniversaryDate: cust.anniversaryDate ? new Date(cust.anniversaryDate).toISOString().split('T')[0] : '',
-      birthdayDate: cust.birthdayDate ? new Date(cust.birthdayDate).toISOString().split('T')[0] : '',
+      anniversaryDate: safeFormatDateInput(cust.anniversaryDate),
+      birthdayDate: safeFormatDateInput(cust.birthdayDate),
       preferredCategory: cust.preferredCategory || 'All',
       notes: cust.notes || ''
     });

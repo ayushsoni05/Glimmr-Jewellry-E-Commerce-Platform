@@ -3,29 +3,60 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getSavedBills } from '../utils/billingStorage';
 import { downloadGSTR1, generateHSNSummary } from '../utils/gstrExport';
 
+function safeGetDateString(raw) {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '';
+  try {
+    return d.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+}
+
+function safeGetMonthString(raw) {
+  if (!raw) return '';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 const DayEndReport = ({ isOpen, onClose }) => {
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    try {
+      return new Date().toISOString().split('T')[0];
+    } catch {
+      return '2026-11-14';
+    }
+  });
+
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const allBills = useMemo(() => getSavedBills(), [isOpen]);
+  const allBills = useMemo(() => {
+    if (!isOpen) return [];
+    return getSavedBills();
+  }, [isOpen]);
 
   const dayBills = useMemo(() => {
+    if (!isOpen) return [];
     return allBills.filter(b => {
-      const billDate = new Date(b.date).toISOString().split('T')[0];
-      return billDate === selectedDate;
+      const billDate = safeGetDateString(b.date || b.createdAt);
+      return billDate && billDate === selectedDate;
     });
-  }, [allBills, selectedDate]);
+  }, [allBills, selectedDate, isOpen]);
 
   const monthBills = useMemo(() => {
+    if (!isOpen) return [];
     return allBills.filter(b => {
-      const d = new Date(b.date);
-      const billMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      return billMonth === selectedMonth;
+      const billMonth = safeGetMonthString(b.date || b.createdAt);
+      return billMonth && billMonth === selectedMonth;
     });
-  }, [allBills, selectedMonth]);
+  }, [allBills, selectedMonth, isOpen]);
+
+  if (!isOpen) return null;
 
   const computeStats = (bills) => {
     const totalRevenue = bills.reduce((sum, b) => sum + (b.totalPayable || 0), 0);

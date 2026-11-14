@@ -22,8 +22,10 @@ export function generateGSTR1CSV(bills) {
   ];
 
   const rows = bills.map(bill => {
-    const invoiceDate = new Date(bill.date);
-    const formattedDate = `${String(invoiceDate.getDate()).padStart(2, '0')}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}-${invoiceDate.getFullYear()}`;
+    const rawDate = bill.date || bill.createdAt;
+    const parsedDate = rawDate ? new Date(rawDate) : new Date();
+    const validD = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    const formattedDate = `${String(validD.getDate()).padStart(2, '0')}-${String(validD.getMonth() + 1).padStart(2, '0')}-${validD.getFullYear()}`;
     
     return [
       bill.customer?.gstin || '',           // GSTIN (empty for B2C)

@@ -1370,7 +1370,7 @@ const OfflineBilling = () => {
       paymentStatus: isPartialPayment ? ((parseFloat(advanceAmount) || 0) <= 0 ? 'pending' : (parseFloat(advanceAmount) || 0) >= billTotals.totalPayable ? 'paid' : 'partially_paid') : 'paid',
       amountPaid: isPartialPayment ? (parseFloat(advanceAmount) || 0) : billTotals.totalPayable,
       balanceRemaining: isPartialPayment ? Math.max(0, billTotals.totalPayable - (parseFloat(advanceAmount) || 0)) : 0,
-      dueDate: isPartialPayment && dueDate ? new Date(dueDate).toISOString() : null,
+      dueDate: (isPartialPayment && dueDate && !isNaN(new Date(dueDate).getTime())) ? new Date(dueDate).toISOString() : null,
       paymentEntries: [{
         amount: isPartialPayment ? (parseFloat(advanceAmount) || 0) : billTotals.totalPayable,
         method: isPartialPayment ? advanceMethod : paymentMethod,
