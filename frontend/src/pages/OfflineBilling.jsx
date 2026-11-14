@@ -2195,6 +2195,7 @@ const OfflineBilling = () => {
           handleGenerateInvoice={handleGenerateInvoice}
           handleClearBill={handleClearBill}
           products={products}
+          setProducts={setProducts}
           addProductToBill={addProductToBill}
           handleHardwareScan={handleHardwareScan}
           lastScannedTag={lastScannedTag}

@@ -35,6 +35,7 @@ import {
   ZoomIn
 } from 'lucide-react';
 import PhotoCaptureModal from './PhotoCaptureModal';
+import ItemMasterModal from './ItemMasterModal';
 
 const KARATS_OPTIONS = [
   { value: 24, label: '24K (99.9% Pure Gold)', purity: 99.9, material: 'gold' },
@@ -113,6 +114,7 @@ export default function BusyMagicBilling({
   handleGenerateInvoice,
   handleClearBill,
   products = [],
+  setProducts,
   addProductToBill,
   handleHardwareScan,
   lastScannedTag,
@@ -127,6 +129,9 @@ export default function BusyMagicBilling({
 }) {
   // Selected line item for highlight / delete
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+
+  // BUSY 21 Item Master Creation Modal State
+  const [isItemMasterModalOpen, setIsItemMasterModalOpen] = useState(false);
 
   // Fast Add Line Item Bar (BUSY Magic Direct Entry)
   const [quickItemName, setQuickItemName] = useState('');
@@ -276,7 +281,26 @@ export default function BusyMagicBilling({
     setTimeout(() => setCatalogAlert(''), 3000);
   };
 
-  // Standard Escape Key Listener for Modals / Drawers (Function key shortcuts removed)
+  // Handlers for BUSY 21 Item Master Creation
+  const handleItemCreatedAndAdded = (billItem, savedProduct) => {
+    setBillItems(prev => [...prev, billItem]);
+    setSelectedRowIndex(billItems.length);
+    if (setProducts && savedProduct) {
+      setProducts(prev => [savedProduct, ...(Array.isArray(prev) ? prev : [])]);
+    }
+    setCatalogAlert(`BUSY 21 Master Created & Billed: "${billItem.name}" (${billItem.netWeight.toFixed(3)}g)`);
+    setTimeout(() => setCatalogAlert(''), 3500);
+  };
+
+  const handleItemCreatedOnly = (savedProduct) => {
+    if (setProducts && savedProduct) {
+      setProducts(prev => [savedProduct, ...(Array.isArray(prev) ? prev : [])]);
+    }
+    setCatalogAlert(`BUSY 21 Master Created: "${savedProduct.name}" saved to showroom inventory.`);
+    setTimeout(() => setCatalogAlert(''), 3500);
+  };
+
+  // Keyboard Navigation: F3 for Item Master, Escape for Modals / Drawers
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -284,13 +308,18 @@ export default function BusyMagicBilling({
           setShowRatesEditor(false);
         } else if (showCatalogDropdown) {
           setShowCatalogDropdown(false);
+        } else if (isItemMasterModalOpen) {
+          setIsItemMasterModalOpen(false);
         }
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setIsItemMasterModalOpen(true);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showRatesEditor, showCatalogDropdown]);
+  }, [showRatesEditor, showCatalogDropdown, isItemMasterModalOpen]);
 
   // Old Gold Calculation
   const computedOldGoldNetWt = useMemo(() => {
@@ -396,6 +425,16 @@ export default function BusyMagicBilling({
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Sales Voucher</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsItemMasterModalOpen(true)}
+            className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded shadow-xs flex items-center gap-1 cursor-pointer border border-amber-400/50"
+            title="Create New Item Master (F3)"
+          >
+            <Plus className="w-3.5 h-3.5 text-white" />
+            <span>+ New Item Master (F3)</span>
           </button>
 
           <button
@@ -1086,6 +1125,16 @@ export default function BusyMagicBilling({
                     <Camera className="w-3.5 h-3.5 text-amber-400" />
                     <span>{quickImage ? 'AI Edit' : 'Snap / Upload Photo'}</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsItemMasterModalOpen(true)}
+                    className="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded border border-amber-400/50 flex items-center gap-1 cursor-pointer text-[10px] font-bold shrink-0 shadow-2xs"
+                    title="Create Brand New Item Master & Add to Bill (F3)"
+                  >
+                    <Plus className="w-3 h-3 text-white" />
+                    <span>+ Item Master (F3)</span>
+                  </button>
                 </div>
 
                 {/* Catalog Picker / Search */}
@@ -1103,8 +1152,18 @@ export default function BusyMagicBilling({
                     placeholder="Description / Search inventory..."
                     className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-800 focus:outline-none focus:border-[#0B2545]"
                   />
-                  {showCatalogDropdown && quickCatalogMatches.length > 0 && (
+                  {showCatalogDropdown && (
                     <div className="absolute left-0 bottom-full mb-1 z-50 w-[calc(100vw-32px)] max-w-sm sm:w-80 bg-white border border-slate-300 shadow-xl rounded max-h-56 overflow-y-auto">
+                      <div
+                        onClick={() => {
+                          setShowCatalogDropdown(false);
+                          setIsItemMasterModalOpen(true);
+                        }}
+                        className="p-2 bg-amber-50 hover:bg-amber-100 cursor-pointer border-b border-amber-200 flex items-center gap-2 text-xs text-amber-900 font-bold transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-amber-700" />
+                        <span>+ Create New Item Master (F3)</span>
+                      </div>
                       <div className="p-1.5 bg-slate-100 text-[9px] font-bold uppercase text-slate-600 border-b border-slate-200 flex justify-between items-center">
                         <span>Real Store Inventory ({quickCatalogMatches.length} items):</span>
                         <span className="text-[8px] text-slate-400 font-normal">Click to load</span>
@@ -1804,6 +1863,18 @@ export default function BusyMagicBilling({
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 11. BUSY 21 ITEM MASTER CREATION MODAL                                    */}
+      {/* ========================================================================= */}
+      <ItemMasterModal
+        isOpen={isItemMasterModalOpen}
+        onClose={() => setIsItemMasterModalOpen(false)}
+        liveRates={liveRates}
+        gstRate={gstRate}
+        onItemCreatedAndAdded={handleItemCreatedAndAdded}
+        onItemCreatedOnly={handleItemCreatedOnly}
+      />
     </div>
   );
 }

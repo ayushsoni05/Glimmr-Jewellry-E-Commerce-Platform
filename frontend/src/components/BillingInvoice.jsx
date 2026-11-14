@@ -117,35 +117,30 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    const logoPromise = loadImageAsBase64('/monika-jewellers-luxury-logo.jpg');
+    const logoPromise = loadImageAsBase64('/logo-mj-horizontal.png');
     const imagePromises = safeItems.map((d) => loadImageAsBase64(d.image));
     const [logoBase64, ...imageDataArr] = await Promise.all([logoPromise, ...imagePromises]);
 
     doc.setFillColor(181, 154, 108);
     doc.rect(0, 0, 210, 4, 'F');
 
-    let textStartX = 15;
     if (logoBase64) {
       try {
-        doc.addImage(logoBase64, 'JPEG', 15, 12, 18, 18);
-        doc.setDrawColor(181, 154, 108);
-        doc.setLineWidth(0.3);
-        doc.rect(15, 12, 18, 18, 'S');
-        textStartX = 36;
+        doc.addImage(logoBase64, 'PNG', 15, 9, 45, 11);
       } catch { /* skip */ }
     }
 
     doc.setFont('times', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(13);
     doc.setTextColor(17, 17, 17);
-    doc.text(STORE_CONFIG.name.toUpperCase(), textStartX, 19);
+    doc.text(STORE_CONFIG.name.toUpperCase(), 15, 24);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
-    doc.text(STORE_CONFIG.tagline.toUpperCase(), textStartX, 23.5);
-    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN: ${STORE_CONFIG.hsn}   |   BIS: ${STORE_CONFIG.bisLicense}`, textStartX, 27);
-    doc.text(STORE_CONFIG.address.full, textStartX, 30.5);
+    doc.text(STORE_CONFIG.tagline.toUpperCase(), 15, 28);
+    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN: ${STORE_CONFIG.hsn}   |   BIS: ${STORE_CONFIG.bisLicense}`, 15, 31.5);
+    doc.text(STORE_CONFIG.address.full, 15, 35);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
@@ -478,9 +473,9 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 440px;
-      max-width: 80%;
-      opacity: 0.055;
+      width: 420px;
+      max-width: 70%;
+      opacity: 0.04;
       z-index: 0;
       pointer-events: none;
       display: flex;
@@ -493,17 +488,14 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       object-fit: contain;
     }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative; z-index: 1; }
-    .header-brand-block { display: flex; align-items: flex-start; }
+    .header-brand-block { display: flex; flex-direction: column; align-items: flex-start; }
     .official-header-logo {
-      width: 54px;
-      height: 54px;
-      object-fit: cover;
-      border-radius: 4px;
-      border: 1px solid #B59A6C;
-      margin-right: 12px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      height: 42px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 4px;
     }
-    .brand { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: #07162C; letter-spacing: 0.05em; line-height: 1.15; }
+    .brand { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: #07162C; letter-spacing: 0.05em; line-height: 1.15; }
     .sub { font-size: 7.5px; color: #555; margin-top: 2px; }
     .bill-meta { text-align: right; }
     .bill-meta .badge { font-size: 8.5px; color: #B59A6C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; }
@@ -571,25 +563,22 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
 </head>
 <body>
   <div class="watermark-container">
-    <img src="/monika-jewellers-luxury-logo.jpg" alt="Monika Jewellers Watermark" />
+    <img src="/logo-mj-horizontal.png" alt="Monika Jewellers Watermark" />
   </div>
   <div class="gold-bar"></div>
   <div class="header">
     <div class="header-brand-block">
-      <img src="/monika-jewellers-luxury-logo.jpg" class="official-header-logo" alt="Monika Jewellers Logo" />
-      <div>
-        <div class="brand">${STORE_CONFIG.name.toUpperCase()}</div>
-        <div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div>
-        <div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div>
-        <div class="sub">${STORE_CONFIG.address.full}</div>
-      </div>
+      <img src="/logo-mj-horizontal.png" class="official-header-logo" alt="Monika Jewellers Logo" />
+      <div class="sub">${STORE_CONFIG.tagline.toUpperCase()}</div>
+      <div class="sub">GSTIN: ${STORE_CONFIG.gstin} | HSN Code: ${STORE_CONFIG.hsn} | BIS License: ${STORE_CONFIG.bisLicense}</div>
+      <div class="sub">${STORE_CONFIG.address.full}</div>
     </div>
     <div class="bill-meta">
       <div class="badge">${rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</div>
       <div class="number">${billNumber}</div>
       <div class="date">${invoiceDate} | ${invoiceTime}</div>
       <div class="payment-badge">Payment: ${paymentMethod.toUpperCase()}</div>
-      <div style="font-size: 7px; color: #8C6D37; font-weight: bold; margin-top: 3px; font-family: 'Fragment Mono', monospace;">ANTI-COUNTERFEIT BILL</div>
+      <div style="font-size: 7px; color: #8C6D37; font-weight: bold; margin-top: 3px; font-family: 'Fragment Mono', monospace;">OFFICIAL REGISTERED BILL</div>
     </div>
   </div>
 
@@ -878,9 +867,9 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
           {/* Subtle Anti-Counterfeit Background Watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
             <img
-              src="/monika-jewellers-luxury-logo.jpg"
+              src="/logo-mj-horizontal.png"
               alt=""
-              className="w-[420px] max-w-[80%] opacity-[0.055] grayscale-[15%] object-contain"
+              className="w-[420px] max-w-[70%] opacity-[0.04] object-contain"
             />
           </div>
 
@@ -888,22 +877,17 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
           <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 relative z-10">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-              <div className="flex items-start gap-3.5">
+              <div className="flex flex-col items-start min-w-0">
                 <img
-                  src="/monika-jewellers-luxury-logo.jpg"
+                  src="/logo-mj-horizontal.png"
                   alt="Monika Jewellers Logo"
-                  className="w-13 h-13 sm:w-15 sm:h-15 object-cover rounded border border-[#B59A6C]/40 shadow-xs shrink-0"
+                  className="h-10 sm:h-12 md:h-13 w-auto object-contain mb-1.5 shrink-0"
                 />
-                <div>
-                  <h2 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] tracking-wider leading-tight">
-                    {STORE_CONFIG.name.toUpperCase()}
-                  </h2>
-                  <p className="text-[10px] font-body text-gray-500 uppercase tracking-[0.15em] mt-0.5">{STORE_CONFIG.tagline}</p>
-                  <p className="text-[9px] font-body text-gray-500 mt-0.5">
-                    GSTIN: <span className="font-mono font-bold text-slate-800">{STORE_CONFIG.gstin}</span> | HSN: {STORE_CONFIG.hsn} | BIS: {STORE_CONFIG.bisLicense}
-                  </p>
-                  <p className="text-[9px] font-body text-gray-400">{STORE_CONFIG.address.full}</p>
-                </div>
+                <p className="text-[10px] font-body text-gray-500 uppercase tracking-[0.15em] font-semibold">{STORE_CONFIG.tagline}</p>
+                <p className="text-[9px] font-body text-gray-600 mt-0.5">
+                  GSTIN: <span className="font-mono font-bold text-slate-800">{STORE_CONFIG.gstin}</span> | HSN: {STORE_CONFIG.hsn} | BIS: {STORE_CONFIG.bisLicense}
+                </p>
+                <p className="text-[9px] font-body text-gray-400">{STORE_CONFIG.address.full}</p>
               </div>
               <div className="text-left sm:text-right shrink-0">
                 <span className="text-[9px] font-body font-bold text-[#B59A6C] uppercase tracking-[0.15em] block">{rateNum > 0 ? 'Tax Invoice' : 'Bill of Supply'}</span>

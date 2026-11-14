@@ -85,6 +85,91 @@ router.post('/', async (req, res) => {
 });
 
 // ============================================================
+// 1B. POST /items - Create new Item Master directly from POS Billing
+// ============================================================
+router.post('/items', async (req, res) => {
+  try {
+    const Product = require('../models/Product');
+    const {
+      name,
+      category = 'others',
+      material = 'gold',
+      karat = 22,
+      purityPercentage,
+      grossWeight = 0,
+      stoneWeight = 0,
+      netWeight,
+      makingChargePerGram = 450,
+      huid = '',
+      barcode = '',
+      location = 'Showroom Floor',
+      stock = 1,
+      image = '',
+      images = [],
+      description = ''
+    } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Item name is required.' });
+    }
+
+    const parsedGross = Math.max(0, parseFloat(grossWeight) || 0);
+    const parsedStone = Math.max(0, parseFloat(stoneWeight) || 0);
+    const calculatedNet = netWeight !== undefined && !isNaN(parseFloat(netWeight))
+      ? Math.max(0, parseFloat(netWeight))
+      : Math.max(0, parsedGross - parsedStone);
+
+    const calculatedWeight = calculatedNet > 0 ? calculatedNet : parsedGross || 1;
+
+    // Generate Barcode / SKU if not provided
+    const karatPrefix = String(material).toLowerCase() === 'gold' ? `${karat}K` : 'SLV';
+    const catCode = String(category).substring(0, 3).toUpperCase();
+    const generatedBarcode = barcode?.trim() || `MJ-${karatPrefix}-${catCode}-${Date.now().toString().slice(-6)}`;
+
+    // Prepare image list
+    const finalImages = Array.isArray(images) && images.length > 0 
+      ? images 
+      : image ? [image] : ['/images/placeholder-jewelry.jpg'];
+
+    const newProduct = new Product({
+      name: name.trim(),
+      description: description.trim() || `${karatPrefix} Hallmarked ${category.charAt(0).toUpperCase() + category.slice(1)} - BIS Certified`,
+      category: category.toLowerCase().trim(),
+      material: material.toLowerCase().trim(),
+      karat: Number(karat) || 22,
+      purityPercentage: purityPercentage ? Number(purityPercentage) : (Number(karat) === 24 ? 99.9 : Number(karat) === 18 ? 75.0 : Number(karat) === 14 ? 58.5 : 91.6),
+      weight: calculatedWeight,
+      grossWeight: parsedGross || calculatedWeight,
+      stoneWeight: parsedStone,
+      netWeight: calculatedNet || calculatedWeight,
+      metalWeight: calculatedNet || calculatedWeight,
+      makingChargePerGram: Number(makingChargePerGram) || 450,
+      huid: huid?.trim().toUpperCase(),
+      barcode: generatedBarcode,
+      sku: generatedBarcode,
+      location: location || 'Showroom Floor',
+      stock: Number(stock) || 1,
+      images: finalImages,
+      hallmarkDetails: huid ? `BIS Hallmarked (${huid.trim().toUpperCase()})` : 'BIS Hallmarked'
+    });
+
+    const savedProduct = await newProduct.save();
+
+    res.status(201).json({
+      success: true,
+      product: savedProduct,
+      message: 'Item Master successfully created in showroom inventory.'
+    });
+  } catch (err) {
+    console.error('Error creating billing item master:', err);
+    res.status(500).json({
+      error: 'Failed to create item master.',
+      details: err.message
+    });
+  }
+});
+
+// ============================================================
 // 2. POST /sync - Batch sync offline bills
 // ============================================================
 router.post('/sync', staffAuth, async (req, res) => {
