@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2pdf from 'html2pdf.js';
 import { ShieldCheckIcon, DownloadIcon, CheckCircleIcon } from './Icons';
 import { numberToIndianWords } from '../utils/numberToIndianWords';
 import { STORE_CONFIG } from '../config/storeConfig';
@@ -78,6 +79,8 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     return `${val}%`;
   };
 
+  const invoiceRef = useRef(null);
+
   const loadImageAsBase64 = (src) => {
     return new Promise((resolve) => {
       if (!src) { resolve(null); return; }
@@ -86,12 +89,15 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
+          const w = img.naturalWidth || img.width || 400;
+          const h = img.naturalHeight || img.height || 100;
           const canvas = document.createElement('canvas');
-          canvas.width = 80;
-          canvas.height = 80;
+          canvas.width = w;
+          canvas.height = h;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, 80, 80);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          ctx.clearRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/png'));
         } catch { resolve(null); }
       };
       img.onerror = () => resolve(null);
@@ -102,6 +108,33 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
   const handleDownloadPDF = async () => {
     setDownloading(true);
 
+    // Primary: High-Resolution HTML2PDF rendering of the official registered bill
+    if (invoiceRef.current) {
+      try {
+        const element = invoiceRef.current;
+        const opt = {
+          margin: [4, 4, 4, 4],
+          filename: `Monika_Jewellers_Invoice_${billNumber}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            letterRendering: true,
+            scrollY: 0
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        await html2pdf().set(opt).from(element).save();
+        setDownloading(false);
+        return;
+      } catch (pdfErr) {
+        console.warn('html2pdf generation error, using enhanced vector fallback:', pdfErr);
+      }
+    }
+
+    // Secondary / Fallback: Enhanced jsPDF vector generator
     if (!window.jspdf) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -121,80 +154,98 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
     const imagePromises = safeItems.map((d) => loadImageAsBase64(d.image));
     const [logoBase64, ...imageDataArr] = await Promise.all([logoPromise, ...imagePromises]);
 
+    // Top Brand Gold Accent Bar
     doc.setFillColor(181, 154, 108);
     doc.rect(0, 0, 210, 4, 'F');
 
+    // Subtle Anti-Counterfeit Background Watermark
     if (logoBase64) {
       try {
-        doc.addImage(logoBase64, 'PNG', 15, 9, 45, 11);
+        if (doc.saveGraphicsState && doc.setGState) {
+          doc.saveGraphicsState();
+          doc.setGState(new doc.GState({ opacity: 0.04 }));
+          doc.addImage(logoBase64, 'PNG', 45, 100, 120, 29);
+          doc.restoreGraphicsState();
+        }
       } catch { /* skip */ }
     }
 
-    doc.setFont('times', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(17, 17, 17);
-    doc.text(STORE_CONFIG.name.toUpperCase(), 15, 24);
+    // Header Logo
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', 15, 9, 46, 11.2);
+      } catch { /* skip */ }
+    }
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(120, 120, 120);
-    doc.text(STORE_CONFIG.tagline.toUpperCase(), 15, 28);
-    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN: ${STORE_CONFIG.hsn}   |   BIS: ${STORE_CONFIG.bisLicense}`, 15, 31.5);
-    doc.text(STORE_CONFIG.address.full, 15, 35);
+    doc.setTextColor(100, 100, 100);
+    doc.text(STORE_CONFIG.tagline.toUpperCase(), 15, 23.5);
+    doc.text(`GSTIN: ${STORE_CONFIG.gstin}   |   HSN: ${STORE_CONFIG.hsn}   |   BIS: ${STORE_CONFIG.bisLicense}`, 15, 27);
+    doc.text(STORE_CONFIG.address.full, 15, 30.5);
 
+    // Bill Meta
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(181, 154, 108);
-    doc.text(rateNum > 0 ? 'TAX INVOICE' : 'BILL OF SUPPLY', 195, 18, { align: 'right' });
+    doc.text(rateNum > 0 ? 'TAX INVOICE' : 'BILL OF SUPPLY', 195, 16, { align: 'right' });
 
     doc.setFontSize(11);
     doc.setTextColor(17, 17, 17);
-    doc.text(billNumber, 195, 24, { align: 'right' });
+    doc.text(billNumber, 195, 21.5, { align: 'right' });
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Date: ${invoiceDate}  |  ${invoiceTime}`, 195, 29, { align: 'right' });
+    doc.text(`Date: ${invoiceDate}  |  ${invoiceTime}`, 195, 26, { align: 'right' });
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(16, 122, 59);
-    doc.text(`Payment: ${paymentMethod.toUpperCase()}`, 195, 34, { align: 'right' });
+    doc.text(`Payment: ${paymentMethod.toUpperCase()}`, 195, 30.5, { align: 'right' });
 
-    doc.setDrawColor(229, 226, 217);
-    doc.setLineWidth(0.4);
-    doc.line(15, 38, 195, 38);
-
+    // Tamper-Proof Security Microprint Strip
     doc.setFillColor(250, 249, 247);
-    doc.rect(15, 42, 180, 20, 'F');
+    doc.rect(15, 34, 180, 5, 'F');
     doc.setDrawColor(229, 226, 217);
-    doc.rect(15, 42, 180, 20, 'S');
+    doc.setLineWidth(0.3);
+    doc.rect(15, 34, 180, 5, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(140, 109, 55);
+    doc.text('MONIKA JEWELLERS DIDWANA • 100% BIS HALLMARKED • OFFICIAL CERTIFIED GST TAX INVOICE • TAMPER PROOF COUNTER BILL', 105, 37.5, { align: 'center' });
+
+    // Customer & Rates Box
+    doc.setFillColor(250, 249, 247);
+    doc.rect(15, 41, 180, 20, 'F');
+    doc.setDrawColor(229, 226, 217);
+    doc.rect(15, 41, 180, 20, 'S');
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(181, 154, 108);
-    doc.text('CUSTOMER DETAILS', 20, 48);
+    doc.text('CUSTOMER DETAILS', 20, 47);
 
     doc.setFont('times', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(17, 17, 17);
-    doc.text(customer.name || 'Walk-in Customer', 20, 53);
+    doc.text(customer.name || 'Walk-in Customer', 20, 52);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(80, 80, 80);
-    doc.text(`Phone: ${customer.phone || 'N/A'}${customer.panNumber ? '  |  PAN: ' + customer.panNumber : ''}`, 20, 58);
+    doc.text(`Phone: ${customer.phone || 'N/A'}${customer.panNumber ? '  |  PAN: ' + customer.panNumber : ''}`, 20, 57);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(181, 154, 108);
-    doc.text('METAL RATES APPLIED', 120, 48);
+    doc.text('METAL RATES APPLIED', 120, 47);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(80, 80, 80);
-    doc.text(`Gold: Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g`, 120, 53);
-    doc.text(`Silver: Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g  |  Operator: ${operator}`, 120, 58);
+    doc.text(`Gold: Rs. ${Number(goldRateUsed).toLocaleString('en-IN')}/g`, 120, 52);
+    doc.text(`Silver: Rs. ${Number(silverRateUsed).toLocaleString('en-IN')}/g  |  Operator: ${operator}`, 120, 57);
 
-    let y = 68;
+    let y = 64;
     doc.setFillColor(17, 17, 17);
     doc.rect(15, y, 180, 8, 'F');
 
@@ -864,17 +915,19 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
           transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
           className="w-full max-w-3xl bg-white border border-gray-200 shadow-[0_25px_70px_rgba(0,0,0,0.2)] my-auto max-h-[95vh] overflow-y-auto relative"
         >
-          {/* Subtle Anti-Counterfeit Background Watermark */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
-            <img
-              src="/logo-mj-horizontal.png"
-              alt=""
-              className="w-[420px] max-w-[70%] opacity-[0.04] object-contain"
-            />
-          </div>
+          {/* Official Registered Bill Canvas for Screen & High-Fidelity PDF Export */}
+          <div ref={invoiceRef} className="bg-white relative">
+            {/* Subtle Anti-Counterfeit Background Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden select-none">
+              <img
+                src="/logo-mj-horizontal.png"
+                alt=""
+                className="w-[420px] max-w-[70%] opacity-[0.04] object-contain"
+              />
+            </div>
 
-          <div className="h-1 bg-[#B59A6C] w-full relative z-10" />
-          <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 relative z-10">
+            <div className="h-1 bg-[#B59A6C] w-full relative z-10" />
+            <div className="p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 relative z-10">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div className="flex flex-col items-start min-w-0">
@@ -1128,20 +1181,24 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
+            </div>
+          </div>
+
+          {/* Action Buttons (Excluded from PDF download) */}
+          <div className="p-3 sm:p-6 pt-3 border-t border-gray-200 bg-gray-50/70 relative z-20">
+            <div className="flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={handleDownloadPDF}
                   disabled={downloading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#222222] text-white py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#07162C] text-white py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#B59A6C] hover:text-[#07162C] transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
                 >
                   <DownloadIcon size={16} />
-                  {downloading ? 'Generating PDF...' : 'Download PDF'}
+                  {downloading ? 'Generating Official PDF...' : 'Download Official PDF'}
                 </button>
                 <button
                   onClick={handlePrint}
-                  className="flex-1 flex items-center justify-center gap-2 border border-[#222222] text-[#222222] py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 border border-[#07162C] text-[#07162C] py-3 text-xs font-body font-bold uppercase tracking-wider hover:bg-[#07162C] hover:text-white transition-colors cursor-pointer"
                 >
                   <ShieldCheckIcon size={16} />
                   Print A4 Invoice
@@ -1163,7 +1220,7 @@ const BillingInvoice = ({ isOpen, onClose, billData }) => {
               </div>
               <button
                 onClick={onClose}
-                className="px-6 py-2.5 text-gray-500 text-xs font-body font-bold uppercase tracking-wider hover:text-[#111111] transition-colors cursor-pointer"
+                className="px-6 py-2 text-gray-500 text-xs font-body font-bold uppercase tracking-wider hover:text-[#111111] transition-colors cursor-pointer text-center"
               >
                 Close
               </button>
