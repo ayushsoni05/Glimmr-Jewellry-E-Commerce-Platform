@@ -13,14 +13,31 @@ import {
   AlertCircle,
   Eye,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  Split,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import {
-  STUDIO_PRESETS,
-  LUSTER_MODES,
-  processStudioImage
-} from '../utils/aiImageEnhancer';
+  ADVANCED_STUDIO_PRESETS,
+  ADVANCED_LUSTER_MODES,
+  processAdvancedStudioImage
+} from '../utils/advancedAiStudioEngine';
 
+/**
+ * PhotoCaptureModal
+ * High-definition live camera capture and AI Jewelry Studio background engine
+ * Designed for Monika Jewellers counter POS billing and official GST tax invoices.
+ *
+ * Features:
+ * - Live device webcam snap with center crosshairs and shutter animation
+ * - Drag-and-drop file upload with support for mobile camera exports
+ * - Multi-pass AI Studio background removal, bilateral edge matting & contact grounding shadow
+ * - Interactive Before/After Split Comparison Slider with draggable divider
+ * - 6 Luxury Studio presets (Pristine White, Champagne Silk, Noir Obsidian, Carrara Marble, Transparent, Original)
+ * - 4 Precious Metal and Gemstone Luster calibration profiles
+ * - Strictly zero emojis in code and comments
+ */
 export default function PhotoCaptureModal({
   isOpen,
   onClose,
@@ -31,14 +48,19 @@ export default function PhotoCaptureModal({
   const [activeTab, setActiveTab] = useState('camera'); // 'camera' | 'upload' | 'enhance'
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraError, setCameraError] = useState('');
-  const [facingMode, setFacingMode] = useState('environment'); // 'environment' (back) | 'user' (front)
+  const [facingMode, setFacingMode] = useState('environment'); // 'environment' (rear) | 'user' (front)
   const [rawPhoto, setRawPhoto] = useState(initialPhoto || '');
   const [processedPhoto, setProcessedPhoto] = useState(initialPhoto || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState('white');
   const [selectedLuster, setSelectedLuster] = useState('gold');
-  const [showOriginal, setShowOriginal] = useState(false);
   const [shutterFlash, setShutterFlash] = useState(false);
+
+  // Before / After Split Slider State
+  const [isSplitView, setIsSplitView] = useState(true);
+  const [splitPos, setSplitPos] = useState(50); // 0% to 100%
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const sliderContainerRef = useRef(null);
 
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -113,7 +135,7 @@ export default function PhotoCaptureModal({
     }
   };
 
-  // Flip front/back camera
+  // Flip front/rear camera
   const handleToggleFacingMode = () => {
     const nextMode = facingMode === 'environment' ? 'user' : 'environment';
     setFacingMode(nextMode);
@@ -175,16 +197,17 @@ export default function PhotoCaptureModal({
     }
   };
 
-  // Run AI Enhancement on current raw photo
+  // Run AI Studio Multi-Pass Enhancement
   const runAIEnhancement = async (src, preset, luster) => {
     if (!src) return;
     setIsProcessing(true);
     setActiveTab('enhance');
     try {
-      const enhanced = await processStudioImage(src, {
+      const enhanced = await processAdvancedStudioImage(src, {
         preset,
         luster,
-        quality: 0.92
+        quality: 0.94,
+        shadowIntensity: 0.35
       });
       setProcessedPhoto(enhanced || src);
     } catch {
@@ -205,6 +228,50 @@ export default function PhotoCaptureModal({
     runAIEnhancement(rawPhoto, selectedPreset, lusterId);
   };
 
+  // Before / After Slider Drag Calculations
+  const updateSliderPosFromEvent = (clientX) => {
+    if (!sliderContainerRef.current) return;
+    const rect = sliderContainerRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setSplitPos(Math.round(pct));
+  };
+
+  const handlePointerDown = (e) => {
+    setIsDraggingSlider(true);
+    updateSliderPosFromEvent(e.clientX || (e.touches && e.touches[0].clientX));
+  };
+
+  useEffect(() => {
+    const handlePointerMove = (e) => {
+      if (!isDraggingSlider) return;
+      const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX);
+      if (clientX !== undefined) {
+        updateSliderPosFromEvent(clientX);
+      }
+    };
+
+    const handlePointerUp = () => {
+      if (isDraggingSlider) {
+        setIsDraggingSlider(false);
+      }
+    };
+
+    if (isDraggingSlider) {
+      window.addEventListener('mousemove', handlePointerMove);
+      window.addEventListener('mouseup', handlePointerUp);
+      window.addEventListener('touchmove', handlePointerMove);
+      window.addEventListener('touchend', handlePointerUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+    };
+  }, [isDraggingSlider]);
+
   // Confirm and attach photo to voucher row
   const handleConfirmPhoto = () => {
     const finalImage = processedPhoto || rawPhoto;
@@ -220,7 +287,7 @@ export default function PhotoCaptureModal({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
+        className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 overflow-y-auto"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             stopCamera();
@@ -233,18 +300,18 @@ export default function PhotoCaptureModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25 }}
-          className="w-full max-w-xl bg-[#0D1B2A] text-white border border-[#B59A6C]/40 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.8)] overflow-hidden font-mono flex flex-col max-h-[92vh]"
+          className="w-full max-w-2xl bg-[#0B1524] text-white border border-[#B59A6C]/40 rounded-2xl shadow-[0_25px_80px_rgba(0,0,0,0.85)] overflow-hidden font-mono flex flex-col max-h-[94vh]"
         >
           {/* Header */}
-          <div className="p-3.5 sm:p-4 bg-[#07162C] border-b border-[#1E3A5F] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
+          <div className="p-3.5 sm:p-4 bg-[#07111D] border-b border-[#1A2E47] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#B59A6C] animate-pulse" />
               <div>
                 <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100 flex items-center gap-1.5">
                   <span>{title}</span>
                 </h3>
                 <p className="text-[10px] text-[#B59A6C]">
-                  Live Camera Snap & AI Studio Background Calibration for Bill Proof
+                  Live Camera Snap, Multi-Pass AI Studio Backdrop & Specular Luster Engine
                 </p>
               </div>
             </div>
@@ -254,20 +321,20 @@ export default function PhotoCaptureModal({
                 stopCamera();
                 onClose();
               }}
-              className="w-7 h-7 rounded-full bg-[#102A4C] hover:bg-rose-900 border border-[#1E3A5F] flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+              className="w-7 h-7 rounded-full bg-[#0F2238] hover:bg-rose-900 border border-[#1A2E47] flex items-center justify-center text-slate-300 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Mode Navigation Tabs */}
-          <div className="grid grid-cols-3 border-b border-[#1E3A5F] bg-[#0A192F] text-xs shrink-0">
+          <div className="grid grid-cols-3 border-b border-[#1A2E47] bg-[#091523] text-xs shrink-0">
             <button
               type="button"
               onClick={() => handleTabChange('camera')}
               className={`py-2.5 px-3 flex items-center justify-center gap-1.5 transition-colors border-b-2 font-bold ${
                 activeTab === 'camera'
-                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E233E]'
+                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E1E33]'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -280,7 +347,7 @@ export default function PhotoCaptureModal({
               onClick={() => handleTabChange('upload')}
               className={`py-2.5 px-3 flex items-center justify-center gap-1.5 transition-colors border-b-2 font-bold ${
                 activeTab === 'upload'
-                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E233E]'
+                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E1E33]'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -294,7 +361,7 @@ export default function PhotoCaptureModal({
               onClick={() => handleTabChange('enhance')}
               className={`py-2.5 px-3 flex items-center justify-center gap-1.5 transition-colors border-b-2 font-bold disabled:opacity-40 ${
                 activeTab === 'enhance'
-                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E233E]'
+                  ? 'border-[#B59A6C] text-[#B59A6C] bg-[#0E1E33]'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -324,7 +391,7 @@ export default function PhotoCaptureModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="relative aspect-square max-h-[380px] w-full mx-auto bg-black rounded-xl overflow-hidden border border-[#1E3A5F] flex items-center justify-center group">
+                  <div className="relative aspect-square max-h-[380px] w-full mx-auto bg-black rounded-xl overflow-hidden border border-[#1A2E47] flex items-center justify-center group">
                     <video
                       ref={videoRef}
                       playsInline
@@ -345,9 +412,9 @@ export default function PhotoCaptureModal({
                       <div className="w-8 h-8 border-b-2 border-l-2 border-[#B59A6C] absolute bottom-0 left-0" />
                       <div className="w-8 h-8 border-b-2 border-r-2 border-[#B59A6C] absolute bottom-0 right-0" />
 
-                      <div className="w-3 h-3 rounded-full border border-[#B59A6C]/80" />
-                      <div className="text-[9px] uppercase tracking-widest text-[#B59A6C] font-bold absolute bottom-2 bg-black/60 px-2 py-0.5 rounded">
-                        Position Ornament Centered
+                      <div className="w-4 h-4 rounded-full border border-[#B59A6C]/80" />
+                      <div className="text-[9px] uppercase tracking-widest text-[#B59A6C] font-bold absolute bottom-2 bg-black/70 px-2.5 py-0.5 rounded border border-[#B59A6C]/30">
+                        Center Ornament in Frame
                       </div>
                     </div>
 
@@ -368,7 +435,7 @@ export default function PhotoCaptureModal({
                     <button
                       type="button"
                       onClick={handleCaptureSnapshot}
-                      className="px-6 py-2.5 bg-[#B59A6C] hover:bg-white text-[#07162C] font-black uppercase tracking-wider rounded-full shadow-lg transition-all flex items-center gap-2 cursor-pointer text-xs"
+                      className="px-6 py-2.5 bg-[#B59A6C] hover:bg-white text-[#07111D] font-black uppercase tracking-wider rounded-full shadow-lg transition-all flex items-center gap-2 cursor-pointer text-xs"
                     >
                       <Camera className="w-4 h-4" />
                       <span>Capture Ornament Snapshot</span>
@@ -384,7 +451,7 @@ export default function PhotoCaptureModal({
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#B59A6C]/60 hover:border-[#B59A6C] rounded-2xl p-8 sm:p-12 text-center bg-[#07172A] cursor-pointer transition-colors space-y-3"
+                className="border-2 border-dashed border-[#B59A6C]/60 hover:border-[#B59A6C] rounded-2xl p-8 sm:p-12 text-center bg-[#071322] cursor-pointer transition-colors space-y-3"
               >
                 <input
                   type="file"
@@ -393,7 +460,7 @@ export default function PhotoCaptureModal({
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <div className="w-14 h-14 mx-auto rounded-full bg-[#102A4C] border border-[#B59A6C]/40 flex items-center justify-center text-[#B59A6C]">
+                <div className="w-14 h-14 mx-auto rounded-full bg-[#0F2238] border border-[#B59A6C]/40 flex items-center justify-center text-[#B59A6C]">
                   <Upload className="w-7 h-7" />
                 </div>
                 <div>
@@ -404,7 +471,7 @@ export default function PhotoCaptureModal({
                     Accepts JPG, PNG, WEBP, or HEIC camera exports directly from device.
                   </p>
                 </div>
-                <div className="inline-block px-3 py-1 bg-[#102A4C] text-[#B59A6C] border border-[#1E3A5F] rounded text-[10px] font-bold uppercase tracking-wider">
+                <div className="inline-block px-3 py-1 bg-[#0F2238] text-[#B59A6C] border border-[#1A2E47] rounded text-[10px] font-bold uppercase tracking-wider">
                   Select Photo from Gallery / Disk
                 </div>
               </div>
@@ -413,8 +480,48 @@ export default function PhotoCaptureModal({
             {/* TAB 3: AI STUDIO BACKGROUND & ENHANCER */}
             {activeTab === 'enhance' && (
               <div className="space-y-4">
-                {/* Image Preview Canvas */}
-                <div className="relative aspect-square max-h-[300px] w-full mx-auto bg-[#050C15] rounded-xl overflow-hidden border border-[#B59A6C]/40 flex items-center justify-center">
+                {/* View Mode Controls: Split Slider vs Full Enhanced */}
+                <div className="flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">View Mode:</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsSplitView(true)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 ${
+                        isSplitView
+                          ? 'border-[#B59A6C] bg-[#0F2238] text-[#B59A6C]'
+                          : 'border-[#1A2E47] bg-[#07111D] text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <Split className="w-3 h-3" />
+                      <span>Before / After Split Slider</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsSplitView(false)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 ${
+                        !isSplitView
+                          ? 'border-[#B59A6C] bg-[#0F2238] text-[#B59A6C]'
+                          : 'border-[#1A2E47] bg-[#07111D] text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <ImageIcon className="w-3 h-3" />
+                      <span>Full Studio Bill Preview</span>
+                    </button>
+                  </div>
+
+                  <div className="text-[10px] text-slate-400 hidden sm:block">
+                    {isSplitView ? 'Drag slider handle left / right' : 'Official bill rendering'}
+                  </div>
+                </div>
+
+                {/* Interactive Split Comparison Viewport */}
+                <div
+                  ref={sliderContainerRef}
+                  onMouseDown={isSplitView ? handlePointerDown : undefined}
+                  onTouchStart={isSplitView ? handlePointerDown : undefined}
+                  className="relative aspect-square max-h-[320px] w-full mx-auto bg-[#040911] rounded-xl overflow-hidden border border-[#B59A6C]/40 select-none cursor-ew-resize flex items-center justify-center"
+                >
                   {isProcessing ? (
                     <div className="text-center space-y-2 p-4">
                       <RefreshCw className="w-8 h-8 text-[#B59A6C] animate-spin mx-auto" />
@@ -427,29 +534,65 @@ export default function PhotoCaptureModal({
                     </div>
                   ) : (
                     <>
+                      {/* Layer 1: Enhanced Studio Image (Bottom Layer) */}
                       <img
-                        src={showOriginal ? rawPhoto : (processedPhoto || rawPhoto)}
-                        alt="Jewelry Piece Preview"
-                        className="w-full h-full object-contain"
+                        src={processedPhoto || rawPhoto}
+                        alt="AI Studio Enhanced"
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                       />
 
-                      {/* Before / After Peek Button */}
-                      <button
-                        type="button"
-                        onMouseDown={() => setShowOriginal(true)}
-                        onMouseUp={() => setShowOriginal(false)}
-                        onTouchStart={() => setShowOriginal(true)}
-                        onTouchEnd={() => setShowOriginal(false)}
-                        className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/75 hover:bg-black text-[10px] rounded border border-white/20 text-slate-200 flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <Eye className="w-3 h-3 text-[#B59A6C]" />
-                        <span>Hold to View Original</span>
-                      </button>
+                      {/* Layer 2: Raw Original Image (Clipped Left Layer) */}
+                      {isSplitView && rawPhoto && (
+                        <div
+                          className="absolute inset-y-0 left-0 overflow-hidden pointer-events-none"
+                          style={{ width: `${splitPos}%` }}
+                        >
+                          <div className="relative w-full h-full" style={{ width: sliderContainerRef.current?.clientWidth || 320, height: '100%' }}>
+                            <img
+                              src={rawPhoto}
+                              alt="Raw Counter Capture"
+                              className="absolute inset-0 w-full h-full object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                      {/* Active Preset Watermark Badge */}
-                      <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/75 rounded border border-[#B59A6C]/40 text-[9px] text-amber-300 font-bold uppercase tracking-wider">
-                        {STUDIO_PRESETS.find(p => p.id === selectedPreset)?.name}
-                      </div>
+                      {/* Split Divider Line and Draggable Handle */}
+                      {isSplitView && rawPhoto && (
+                        <div
+                          className="absolute inset-y-0 z-20 pointer-events-none"
+                          style={{ left: `${splitPos}%`, transform: 'translateX(-50%)' }}
+                        >
+                          {/* Vertical Line */}
+                          <div className="w-[2px] h-full bg-[#B59A6C] shadow-[0_0_8px_rgba(181,154,108,0.8)] mx-auto" />
+
+                          {/* Center Grab Handle */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#07111D] border-2 border-[#B59A6C] shadow-lg flex items-center justify-center text-[#B59A6C] pointer-events-auto cursor-ew-resize">
+                            <div className="flex items-center -space-x-1">
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Floating Badges */}
+                      {isSplitView && (
+                        <>
+                          <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/80 rounded border border-white/20 text-[9px] text-slate-300 font-bold uppercase tracking-wider pointer-events-none z-10">
+                            Raw Camera Capture
+                          </div>
+                          <div className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-black/80 rounded border border-[#B59A6C]/60 text-[9px] text-[#B59A6C] font-bold uppercase tracking-wider pointer-events-none z-10">
+                            AI Studio Enhanced
+                          </div>
+                        </>
+                      )}
+
+                      {!isSplitView && (
+                        <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-black/80 rounded border border-[#B59A6C]/40 text-[9px] text-amber-300 font-bold uppercase tracking-wider pointer-events-none z-10">
+                          {ADVANCED_STUDIO_PRESETS.find(p => p.id === selectedPreset)?.name}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -457,10 +600,10 @@ export default function PhotoCaptureModal({
                 {/* Studio Background Presets Selection */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-bold text-[#B59A6C] tracking-wider block">
-                    1. Select Studio Background Backdrop:
+                    1. Select Studio Backdrop Style:
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {STUDIO_PRESETS.map((preset) => {
+                    {ADVANCED_STUDIO_PRESETS.map((preset) => {
                       const isSelected = selectedPreset === preset.id;
                       return (
                         <button
@@ -469,8 +612,8 @@ export default function PhotoCaptureModal({
                           onClick={() => handlePresetSelect(preset.id)}
                           className={`p-2 rounded-lg border text-left flex items-start gap-2 transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-[#B59A6C] bg-[#102A4C] shadow-sm'
-                              : 'border-[#1E3A5F] bg-[#07172A] hover:border-slate-500'
+                              ? 'border-[#B59A6C] bg-[#0F2238] shadow-sm'
+                              : 'border-[#1A2E47] bg-[#071322] hover:border-slate-500'
                           }`}
                         >
                           <div
@@ -482,7 +625,7 @@ export default function PhotoCaptureModal({
                               {preset.name}
                             </span>
                             <span className="block text-[9px] text-slate-400 leading-tight">
-                              {preset.id === 'white' ? 'Official Invoices' : preset.id === 'champagne' ? 'Luxury Silk' : preset.id === 'obsidian' ? 'Deep Velvet' : 'Cutout'}
+                              {preset.subtitle}
                             </span>
                           </div>
                         </button>
@@ -496,8 +639,8 @@ export default function PhotoCaptureModal({
                   <label className="text-[10px] uppercase font-bold text-[#B59A6C] tracking-wider block">
                     2. Precious Metal & Diamond Luster Calibration:
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {LUSTER_MODES.map((luster) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {ADVANCED_LUSTER_MODES.map((luster) => {
                       const isSelected = selectedLuster === luster.id;
                       return (
                         <button
@@ -506,8 +649,8 @@ export default function PhotoCaptureModal({
                           onClick={() => handleLusterSelect(luster.id)}
                           className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-amber-400 bg-[#163359] text-white font-bold'
-                              : 'border-[#1E3A5F] bg-[#07172A] text-slate-300 hover:text-white'
+                              ? 'border-amber-400 bg-[#142A45] text-white font-bold'
+                              : 'border-[#1A2E47] bg-[#071322] text-slate-300 hover:text-white'
                           }`}
                         >
                           <span className="block text-[11px]">{luster.name}</span>
@@ -521,16 +664,16 @@ export default function PhotoCaptureModal({
           </div>
 
           {/* Modal Footer Actions */}
-          <div className="p-3 sm:p-4 bg-[#07162C] border-t border-[#1E3A5F] flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="p-3 sm:p-4 bg-[#07111D] border-t border-[#1A2E47] flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
               {activeTab === 'enhance' && (
                 <button
                   type="button"
                   onClick={() => handleTabChange('camera')}
-                  className="px-3 py-1.5 bg-[#102A4C] hover:bg-[#1C4170] text-slate-300 rounded text-xs flex items-center gap-1 border border-[#1E3A5F] cursor-pointer"
+                  className="px-3 py-1.5 bg-[#0F2238] hover:bg-[#1A385C] text-slate-300 rounded text-xs flex items-center gap-1 border border-[#1A2E47] cursor-pointer"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  <span>Retake / Change</span>
+                  <span>Retake / Snap Again</span>
                 </button>
               )}
             </div>
@@ -542,7 +685,7 @@ export default function PhotoCaptureModal({
                   stopCamera();
                   onClose();
                 }}
-                className="px-3 py-1.5 bg-[#102A4C] hover:bg-slate-700 text-slate-300 rounded text-xs border border-[#1E3A5F] cursor-pointer"
+                className="px-3 py-1.5 bg-[#0F2238] hover:bg-slate-700 text-slate-300 rounded text-xs border border-[#1A2E47] cursor-pointer"
               >
                 Cancel
               </button>
@@ -551,7 +694,7 @@ export default function PhotoCaptureModal({
                 type="button"
                 disabled={!rawPhoto || isProcessing}
                 onClick={handleConfirmPhoto}
-                className="px-4 py-1.5 bg-[#B59A6C] hover:bg-white text-[#07162C] font-black uppercase tracking-wider rounded text-xs shadow transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                className="px-4 py-1.5 bg-[#B59A6C] hover:bg-white text-[#07111D] font-black uppercase tracking-wider rounded text-xs shadow transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Attach to Voucher Row</span>

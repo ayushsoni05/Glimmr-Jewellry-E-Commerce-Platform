@@ -15,6 +15,8 @@ import RecordPaymentDrawer from '../components/RecordPaymentDrawer';
 import { useBarcodeScanner } from '../utils/useBarcodeScanner';
 import { playScannerSound } from '../utils/barcodeTagGenerator';
 import BusyMagicBilling from '../components/BusyMagicBilling';
+import CustomerSuggestInput from '../components/CustomerSuggestInput';
+import CustomerHistoryDrawer from '../components/CustomerHistoryDrawer';
 
 export const calculateItemMakingAmount = (type, value, rawMetalCost, netWeight) => {
   const numVal = Math.max(0, parseFloat(value) || 0);
@@ -313,6 +315,7 @@ const OfflineBilling = () => {
   const [customerGstin, setCustomerGstin] = useState(''); // Strict 15-char limit
   const [customerPan, setCustomerPan] = useState(''); // 10-char PAN for Rule 114B
   const [recognizedPatron, setRecognizedPatron] = useState(null);
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
   const [billNotes, setBillNotes] = useState('');
 
   // Fast customer CRM lookup on 10-digit phone
@@ -320,15 +323,18 @@ const OfflineBilling = () => {
     const clean = customerPhone.replace(/\D/g, '');
     if (clean.length === 10) {
       let isSubscribed = true;
-      api.get(`/customers/lookup/${clean}`)
+      api.get('/billing/customers/search', { params: { q: clean } })
         .then(res => {
-          if (!isSubscribed || !res.data?.customer) return;
-          const c = res.data.customer;
-          setRecognizedPatron(c);
-          if (!customerName || customerName === 'Walk-in Customer') setCustomerName(c.name || '');
-          if (!customerAddress) setCustomerAddress(c.address || '');
-          if (!customerGstin) setCustomerGstin(c.gstin || '');
-          if (!customerPan) setCustomerPan(c.panNumber || '');
+          if (!isSubscribed) return;
+          const matches = res.data?.customers || [];
+          if (matches.length > 0) {
+            const c = matches.find(m => m.phone.replace(/\D/g, '').endsWith(clean)) || matches[0];
+            setRecognizedPatron(c);
+            if (!customerName || customerName === 'Walk-in Customer') setCustomerName(c.name || '');
+            if (!customerAddress && c.address) setCustomerAddress(c.address);
+            if (!customerGstin && c.gstin) setCustomerGstin(c.gstin);
+            if (!customerPan && c.panNumber) setCustomerPan(c.panNumber);
+          }
         })
         .catch(() => {
           if (isSubscribed) setRecognizedPatron(null);
@@ -2951,28 +2957,58 @@ const OfflineBilling = () => {
                       </div>
                     </div>
 
-                    {/* Patron Auto-Recognition Pill */}
+                    {/* Patron Auto-Recognition Pill with Dossier Trigger */}
                     {recognizedPatron && (
-                      <div className="bg-emerald-50 border border-emerald-200 p-2.5 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
+                      <div className="bg-emerald-50 border border-emerald-200 p-2.5 flex items-center justify-between text-xs rounded">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[9px] font-mono font-bold text-emerald-800 uppercase px-1.5 py-0.5 bg-white border border-emerald-300">
                             {recognizedPatron.patronTier} Patron
                           </span>
                           <span className="font-bold text-emerald-950">{recognizedPatron.name}</span>
+                          <span className="text-[10px] text-emerald-700 font-mono">
+                            LTV: Rs.{(recognizedPatron.totalSpent || 0).toLocaleString('en-IN')}
+                          </span>
+                          {recognizedPatron.lastPurchaseDate && (
+                            <span className="text-[9px] text-gray-500">
+                              (Last visit: {new Date(recognizedPatron.lastPurchaseDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })})
+                            </span>
+                          )}
                         </div>
-                        <span className="text-[10px] text-emerald-700 font-mono">
-                          LTV: Rs.{(recognizedPatron.totalSpent || 0).toLocaleString('en-IN')}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsHistoryDrawerOpen(true)}
+                          className="px-2 py-0.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded text-[10px] font-bold shrink-0 ml-2 cursor-pointer"
+                        >
+                          View Dossier
+                        </button>
                       </div>
                     )}
 
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-[8px] font-body font-bold uppercase tracking-wider text-gray-500 mb-0.5">Customer Name</label>
-                        <input
-                          type="text"
+                        <div className="flex justify-between items-center mb-0.5">
+                          <label className="block text-[8px] font-body font-bold uppercase tracking-wider text-gray-500">Customer Name</label>
+                          {recognizedPatron && (
+                            <button
+                              type="button"
+                              onClick={() => setIsHistoryDrawerOpen(true)}
+                              className="text-[8px] text-[#B59A6C] hover:text-[#0B2545] font-bold"
+                            >
+                              History
+                            </button>
+                          )}
+                        </div>
+                        <CustomerSuggestInput
                           value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
+                          onChange={setCustomerName}
+                          onSelectCustomer={(patron) => {
+                            setRecognizedPatron(patron);
+                            if (patron.name) setCustomerName(patron.name);
+                            if (patron.phone) setCustomerPhone(patron.phone);
+                            if (patron.address) setCustomerAddress(patron.address);
+                            if (patron.panNumber) setCustomerPan(patron.panNumber);
+                            if (patron.gstin) setCustomerGstin(patron.gstin);
+                          }}
                           placeholder="Walk-in Customer"
                           className="w-full px-2.5 py-1.5 bg-white border border-gray-200 text-xs font-body text-[#222222] focus:outline-none focus:border-[#222222]"
                         />
@@ -4135,6 +4171,14 @@ const OfflineBilling = () => {
         accept="image/*"
         onChange={handleLineItemFileSelected}
         className="hidden"
+      />
+
+      {/* Showroom Patron Purchase Timeline & Dossier Drawer */}
+      <CustomerHistoryDrawer
+        isOpen={isHistoryDrawerOpen}
+        onClose={() => setIsHistoryDrawerOpen(false)}
+        phone={customerPhone || recognizedPatron?.phone}
+        customer={recognizedPatron}
       />
 
     </div>

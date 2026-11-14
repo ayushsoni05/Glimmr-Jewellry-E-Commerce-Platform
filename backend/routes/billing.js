@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const OfflineBill = require('../models/OfflineBill');
 const BillCounter = require('../models/BillCounter');
+const Customer = require('../models/Customer');
 const { staffAuth, managerOrAdminAuth } = require('../middleware/admin');
 const { escapeRegex } = require('../utils/regexSanitizer');
 const {
@@ -656,6 +657,227 @@ router.get('/pending', async (req, res) => {
 
     res.json({ bills, count: bills.length });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// 12B. GET /customers/search - Fast real-time customer auto-suggest with LTV and purchase history
+// ============================================================
+router.get('/customers/search', async (req, res) => {
+  try {
+    const rawQuery = String(req.query.q || '').trim();
+    if (!rawQuery) {
+      return res.json({ customers: [] });
+    }
+
+    const cleanQ = escapeRegex(rawQuery);
+    const rgx = new RegExp(cleanQ, 'i');
+
+    // 1. Search in Customer CRM collection
+    const crmMatches = await Customer.find({
+      $or: [
+        { name: { $regex: rgx } },
+        { phone: { $regex: cleanQ } },
+        { panNumber: { $regex: rgx } },
+        { gstin: { $regex: rgx } }
+      ]
+    })
+      .sort({ lastPurchaseDate: -1, totalSpent: -1 })
+      .limit(8)
+      .lean();
+
+    const seenPhones = new Set(crmMatches.map(c => c.phone).filter(Boolean));
+    const mergedList = [...crmMatches];
+
+    // 2. Fallback / supplement from OfflineBill if fewer than 8 matches found
+    if (mergedList.length < 8) {
+      const billMatches = await OfflineBill.find({
+        $or: [
+          { 'customer.name': { $regex: rgx } },
+          { 'customer.phone': { $regex: cleanQ } },
+          { 'customer.panNumber': { $regex: rgx } }
+        ]
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+
+      for (const b of billMatches) {
+        const phone = (b.customer?.phone || '').trim();
+        if (phone && !seenPhones.has(phone)) {
+          seenPhones.add(phone);
+          mergedList.push({
+            _id: b._id,
+            name: b.customer?.name || 'Valued Patron',
+            phone,
+            address: b.customer?.address || '',
+            panNumber: b.customer?.panNumber || '',
+            gstin: b.customer?.gstin || '',
+            totalSpent: b.totalPayable || 0,
+            totalBillsCount: 1,
+            totalOutstanding: b.balanceRemaining || 0,
+            firstPurchaseDate: b.createdAt || b.date,
+            lastPurchaseDate: b.createdAt || b.date,
+            patronTier: (b.totalPayable || 0) >= 1500000 ? 'Royal Patron' : (b.totalPayable || 0) >= 500000 ? 'Gold' : (b.totalPayable || 0) >= 100000 ? 'Silver' : 'Bronze'
+          });
+          if (mergedList.length >= 8) break;
+        }
+      }
+    }
+
+    // 3. Enrich all matches with their recent bills and purchased jewelry items
+    const phones = mergedList.map(c => c.phone).filter(Boolean);
+    const relatedBills = await OfflineBill.find({
+      'customer.phone': { $in: phones },
+      status: { $ne: 'cancelled' }
+    })
+      .sort({ createdAt: -1 })
+      .select('billNumber date createdAt totalPayable items paymentMethod status customer')
+      .lean();
+
+    // Map bills to phone
+    const billsByPhone = {};
+    for (const bill of relatedBills) {
+      const p = (bill.customer?.phone || '').trim();
+      if (!p) continue;
+      if (!billsByPhone[p]) billsByPhone[p] = [];
+      billsByPhone[p].push(bill);
+    }
+
+    const enrichedCustomers = mergedList.map(customer => {
+      const custBills = billsByPhone[customer.phone] || [];
+      const latestBill = custBills[0] || null;
+
+      // Extract recent items (up to 4 items)
+      const recentItems = [];
+      const seenItemNames = new Set();
+      for (const b of custBills) {
+        for (const item of (b.items || [])) {
+          const itemKey = `${item.name}-${item.netWeight || item.weight}`;
+          if (!seenItemNames.has(itemKey)) {
+            seenItemNames.add(itemKey);
+            recentItems.push({
+              name: item.name,
+              weight: item.netWeight || item.weight || 0,
+              karat: item.karat || 22,
+              material: item.material || 'gold',
+              huid: item.huid || '',
+              image: item.image || '',
+              billNumber: b.billNumber,
+              date: b.date || b.createdAt
+            });
+            if (recentItems.length >= 4) break;
+          }
+        }
+        if (recentItems.length >= 4) break;
+      }
+
+      // Compute aggregates if missing
+      const computedLtv = customer.totalSpent > 0 ? customer.totalSpent : custBills.reduce((acc, b) => acc + (b.totalPayable || 0), 0);
+      const computedBillsCount = customer.totalBillsCount > 0 ? customer.totalBillsCount : custBills.length;
+      const computedLastDate = customer.lastPurchaseDate || (latestBill ? (latestBill.date || latestBill.createdAt) : null);
+      const computedFirstDate = customer.firstPurchaseDate || (custBills.length > 0 ? (custBills[custBills.length - 1].date || custBills[custBills.length - 1].createdAt) : null);
+
+      // Determine Patron Tier display
+      let tier = customer.patronTier || 'Bronze';
+      if (computedLtv >= 1500000) tier = 'Royal Patron';
+      else if (computedLtv >= 500000) tier = 'Gold';
+      else if (computedLtv >= 100000) tier = 'Silver';
+      else tier = 'Bronze';
+
+      return {
+        _id: customer._id,
+        name: customer.name || 'Valued Patron',
+        phone: customer.phone,
+        address: customer.address || '',
+        city: customer.city || '',
+        state: customer.state || '',
+        pincode: customer.pincode || '',
+        panNumber: customer.panNumber || '',
+        gstin: customer.gstin || '',
+        patronTier: tier,
+        totalBillsCount: computedBillsCount,
+        totalSpent: computedLtv,
+        totalOutstanding: customer.totalOutstanding || 0,
+        firstPurchaseDate: computedFirstDate,
+        lastPurchaseDate: computedLastDate,
+        lastBillNumber: latestBill?.billNumber || '',
+        lastBillAmount: latestBill?.totalPayable || 0,
+        recentItems,
+        anniversaryDate: customer.anniversaryDate || null,
+        birthdayDate: customer.birthdayDate || null
+      };
+    });
+
+    res.json({ customers: enrichedCustomers });
+  } catch (error) {
+    console.error('[CUSTOMER_SEARCH_ERROR]', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// 12C. GET /customers/:phone/history - Complete billing history for customer drawer
+// ============================================================
+router.get('/customers/:phone/history', async (req, res) => {
+  try {
+    const rawPhone = String(req.params.phone || '').trim();
+    if (!rawPhone) {
+      return res.status(400).json({ error: 'Valid customer phone is required' });
+    }
+
+    const cleanQ = rawPhone.replace(/\D/g, '').slice(-10);
+    const rgx = new RegExp(cleanQ);
+
+    const [customer, bills] = await Promise.all([
+      Customer.findOne({ phone: { $regex: rgx } }).lean(),
+      OfflineBill.find({ 'customer.phone': { $regex: rgx } })
+        .sort({ createdAt: -1 })
+        .lean()
+    ]);
+
+    let totalSpent = 0;
+    let totalPaid = 0;
+    let totalOutstanding = 0;
+    let goldGrams = 0;
+    let silverGrams = 0;
+
+    bills.forEach(b => {
+      if (b.status !== 'cancelled') {
+        totalSpent += b.totalPayable || 0;
+        totalPaid += b.amountPaid || 0;
+        totalOutstanding += b.balanceRemaining || 0;
+        (b.items || []).forEach(item => {
+          const mat = String(item.material || 'gold').toLowerCase();
+          const wt = (Number(item.netWeight || item.weight) || 0) * (item.quantity || 1);
+          if (mat === 'gold') goldGrams += wt;
+          else if (mat === 'silver') silverGrams += wt;
+        });
+      }
+    });
+
+    res.json({
+      customer: customer || {
+        name: bills[0]?.customer?.name || 'Valued Patron',
+        phone: rawPhone,
+        address: bills[0]?.customer?.address || '',
+        panNumber: bills[0]?.customer?.panNumber || '',
+        gstin: bills[0]?.customer?.gstin || '',
+        patronTier: totalSpent >= 1500000 ? 'Royal Patron' : totalSpent >= 500000 ? 'Gold' : totalSpent >= 100000 ? 'Silver' : 'Bronze'
+      },
+      summary: {
+        totalBills: bills.length,
+        totalSpent,
+        totalPaid,
+        totalOutstanding,
+        totalGoldGrams: Math.round(goldGrams * 1000) / 1000,
+        totalSilverGrams: Math.round(silverGrams * 1000) / 1000
+      },
+      bills
+    });
+  } catch (error) {
+    console.error('[CUSTOMER_HISTORY_ERROR]', error.message);
     res.status(500).json({ error: error.message });
   }
 });

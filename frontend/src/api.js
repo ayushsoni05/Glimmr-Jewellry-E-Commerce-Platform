@@ -20,13 +20,14 @@ const api = axios.create({
   timeout: 90000, // 90 seconds for Render cold starts + SMTP sending
 });
 
-// Add request interceptor to automatically include auth token
+// Add request interceptor to automatically include auth token and showroom terminal key
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    config.headers['x-showroom-terminal-key'] = localStorage.getItem('pos_terminal_key') || 'MONIKA-POS-SECURE-TERMINAL-2026';
     return config;
   },
   (error) => Promise.reject(error)

@@ -36,6 +36,9 @@ import {
 } from 'lucide-react';
 import PhotoCaptureModal from './PhotoCaptureModal';
 import ItemMasterModal from './ItemMasterModal';
+import CustomerSuggestInput from './CustomerSuggestInput';
+import CustomerHistoryDrawer from './CustomerHistoryDrawer';
+import api from '../api';
 
 const KARATS_OPTIONS = [
   { value: 24, label: '24K (99.9% Pure Gold)', purity: 99.9, material: 'gold' },
@@ -179,6 +182,41 @@ export default function BusyMagicBilling({
 
   // Daily Board Rates Drawer in BUSY Magic Style
   const [showRatesEditor, setShowRatesEditor] = useState(false);
+
+  // Patron Intelligence & Purchase History Drawer States
+  const [selectedPatron, setSelectedPatron] = useState(null);
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false);
+
+  // Fast customer profile lookup when 10-digit phone number is entered
+  useEffect(() => {
+    const clean = (customerPhone || '').replace(/\D/g, '');
+    if (clean.length === 10) {
+      let isSubscribed = true;
+      api.get('/billing/customers/search', { params: { q: clean } })
+        .then(res => {
+          if (!isSubscribed) return;
+          const matches = res.data?.customers || [];
+          if (matches.length > 0) {
+            const matched = matches.find(c => c.phone.replace(/\D/g, '').endsWith(clean)) || matches[0];
+            setSelectedPatron(matched);
+            if (!customerName || customerName === 'Walk-in Customer') {
+              setCustomerName(matched.name || '');
+            }
+            if (!customerAddress && matched.address) {
+              setCustomerAddress(matched.address);
+            }
+            if (!customerPan && matched.panNumber) {
+              setCustomerPan(matched.panNumber);
+            }
+            if (!customerGstin && matched.gstin) {
+              setCustomerGstin(matched.gstin);
+            }
+          }
+        })
+        .catch(() => {});
+      return () => { isSubscribed = false; };
+    }
+  }, [customerPhone]);
 
   // Quick Catalog Filter for Fast Entry (searches real store inventory)
   const quickCatalogMatches = useMemo(() => {
@@ -715,15 +753,34 @@ export default function BusyMagicBilling({
               </select>
             </div>
 
-            {/* Customer Name */}
+            {/* Customer Name with Real-Time Autosuggest & Past Purchases */}
             <div className="md:col-span-3 space-y-1">
-              <label className="block text-[10px] font-bold uppercase text-slate-500">Party Account / Customer Name</label>
-              <input
-                type="text"
+              <div className="flex justify-between items-center">
+                <label className="block text-[10px] font-bold uppercase text-slate-500">Party Account / Customer Name</label>
+                {selectedPatron && (
+                  <button
+                    type="button"
+                    onClick={() => setIsHistoryDrawerOpen(true)}
+                    className="text-[9px] text-[#B59A6C] hover:text-[#0B2545] font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Clock className="w-2.5 h-2.5" />
+                    <span>View History</span>
+                  </button>
+                )}
+              </div>
+              <CustomerSuggestInput
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Walk-in Customer"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 text-slate-800 rounded font-bold focus:outline-none focus:border-[#0B2545]"
+                onChange={setCustomerName}
+                onSelectCustomer={(patron) => {
+                  setSelectedPatron(patron);
+                  if (patron.name) setCustomerName(patron.name);
+                  if (patron.phone) setCustomerPhone(patron.phone);
+                  if (patron.address) setCustomerAddress(patron.address);
+                  if (patron.panNumber) setCustomerPan(patron.panNumber);
+                  if (patron.gstin) setCustomerGstin(patron.gstin);
+                }}
+                placeholder="Type customer name or mobile..."
+                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 text-slate-800 rounded font-bold text-xs focus:outline-none focus:border-[#0B2545]"
               />
             </div>
 
@@ -798,6 +855,63 @@ export default function BusyMagicBilling({
               />
             </div>
           </div>
+
+          {/* Active Patron Intelligence & Past Purchases Strip */}
+          {selectedPatron && (
+            <div className="mt-2.5 p-2.5 bg-[#071322] border border-[#B59A6C]/60 rounded-lg text-white font-mono flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-bold text-slate-100 text-sm">{selectedPatron.name}</span>
+                  <span className="px-2 py-0.5 rounded text-[9px] bg-amber-950/80 border border-amber-600/60 text-amber-300 font-bold uppercase">
+                    {selectedPatron.patronTier || 'Bronze'}
+                  </span>
+                </div>
+                <div className="text-slate-300 text-[11px]">
+                  Total Spent: <span className="font-bold text-emerald-400">Rs. {(selectedPatron.totalSpent || 0).toLocaleString('en-IN')}</span> ({selectedPatron.totalBillsCount || 1} {selectedPatron.totalBillsCount === 1 ? 'bill' : 'bills'})
+                </div>
+                {selectedPatron.lastPurchaseDate && (
+                  <div className="text-slate-300 text-[11px] flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#B59A6C]" />
+                    <span>Last Bought:</span>
+                    <span className="font-bold text-amber-200">
+                      {new Date(selectedPatron.lastPurchaseDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                )}
+                {selectedPatron.lastBillAmount > 0 && (
+                  <div className="text-slate-300 text-[11px]">
+                    Last Bill: <span className="font-bold text-white">Rs. {selectedPatron.lastBillAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                {selectedPatron.totalOutstanding > 0 && (
+                  <div className="px-2 py-0.5 bg-rose-950/90 border border-rose-600 text-rose-300 rounded font-bold text-[10px] flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-rose-400" />
+                    <span>Pending Dues: Rs. {selectedPatron.totalOutstanding.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryDrawerOpen(true)}
+                  className="px-3 py-1 bg-[#102A4C] hover:bg-[#B59A6C] hover:text-[#071322] text-[#B59A6C] rounded text-[11px] font-bold border border-[#1E3A5F] transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>View All Invoices Timeline</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPatron(null)}
+                  className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
+                  title="Dismiss Dossier Banner"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ========================================================================= */}
@@ -1874,6 +1988,16 @@ export default function BusyMagicBilling({
         gstRate={gstRate}
         onItemCreatedAndAdded={handleItemCreatedAndAdded}
         onItemCreatedOnly={handleItemCreatedOnly}
+      />
+
+      {/* ========================================================================= */}
+      {/* 12. SHOWROOM PATRON PURCHASE TIMELINE & DOSSIER DRAWER                     */}
+      {/* ========================================================================= */}
+      <CustomerHistoryDrawer
+        isOpen={isHistoryDrawerOpen}
+        onClose={() => setIsHistoryDrawerOpen(false)}
+        phone={customerPhone || selectedPatron?.phone}
+        customer={selectedPatron}
       />
     </div>
   );
